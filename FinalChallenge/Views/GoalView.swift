@@ -7,7 +7,7 @@ struct GoalView: View {
     
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea().ignoresSafeArea(edges: .all)
+            Color.white.ignoresSafeArea()
             
             VStack(spacing: 28) {
                 Spacer()
