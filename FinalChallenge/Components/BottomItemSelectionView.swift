@@ -1,19 +1,17 @@
 import SwiftUI
 
 struct BottomItemSelectionView: View {
-    let goalOrange: Color
-    let greenBackground: Color
-    @State private var isExpanded = true
+    @State private var isExpanded = false
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            greenBackground
+            Color.black
                 .frame(height: 180)
             
             HStack(spacing: 24) {
                 ForEach(0..<4) { index in
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(goalOrange)
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Color.yellow)
                         .frame(width: 160, height: 100)
                         .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 4)
                         .overlay {
@@ -43,7 +41,7 @@ struct BottomItemSelectionView: View {
                     .scaledToFit()
                     .frame(width: 80, height: 55)
                     .padding(8)
-                    .background(goalOrange)
+                    .background(Color.yellow)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                     .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
             }
@@ -51,13 +49,10 @@ struct BottomItemSelectionView: View {
             .offset(x: 50, y: -70)
             .zIndex(2)
         }
-        .offset(y: isExpanded ? 0 : 100)
+        .offset(y: isExpanded ? 30: 130)
     }
 }
 
 #Preview {
-    BottomItemSelectionView(
-        goalOrange: .orange,
-        greenBackground: .green.opacity(0.6)
-    )
+    BottomItemSelectionView()
 }
