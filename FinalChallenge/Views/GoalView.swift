@@ -9,7 +9,7 @@ struct GoalView: View {
     
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea().ignoresSafeArea(edges: .all)
+            Color.white.ignoresSafeArea()
             
             VStack(spacing: 28) {
                 Spacer()
@@ -20,14 +20,18 @@ struct GoalView: View {
                     activeStep = 1
                     showGoalModal = true
                 }
-                CircleStepView()
+                
+                ScrollView(.vertical, showsIndicators: false) {
+                    CircleStepView(
+                                totalSteps: 7,
+                                passedSteps: 2
+                            )
+                }
                 
                 Spacer()
                 
                 BottomItemSelectionView()
             }
-            
-            MaskotView()
             
             if showGoalModal {
                 CenteredModal(isPresented: $showGoalModal) {
