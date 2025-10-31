@@ -61,22 +61,27 @@ struct GoalModalStep2View: View {
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(.black.opacity(0.08)))
 
                 HStack(spacing: 16) {
-                    Button("Back", action: onBack)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(.white)
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(.black.opacity(0.10)))
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .buttonStyle(.plain)
-
-                    Button("Done", action: onDone)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .foregroundStyle(.black)
-                        .background(goalOrange)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .buttonStyle(.plain)
-                        .disabled(!vm.isStep2Valid)
+                    Button(action: { onBack() }) {
+                        Text("Back")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(.white)
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(.black.opacity(0.10)))
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .buttonStyle(.plain)
+                    }
+                    
+                    Button(action: { onDone() }) {
+                        Text("Done")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .foregroundStyle(.black)
+                            .background(goalOrange)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .buttonStyle(.plain)
+                            .disabled(!vm.isStep2Valid)
+                    }
                 }
                 .padding(.top, 4)
             }
