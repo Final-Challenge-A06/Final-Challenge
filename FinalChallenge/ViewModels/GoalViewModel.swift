@@ -10,17 +10,28 @@ import PhotosUI
 import Combine
 import SwiftData
 
+protocol GoalSaving {
+    func insert(_ goal: GoalModel)
+    func save() throws
+}
+
+extension ModelContext: GoalSaving {
+    func insert(_ goal: GoalModel) {
+        self.insert(goal)
+    }
+}
+
 @MainActor
 final class GoalViewModel: ObservableObject {
     // MARK: - Step 1 Fields
-    @Published private var _goalName: String = ""
-    @Published private var _priceText: Int = 0
-    @Published var selectedItem: PhotosPickerItem? = nil
-    @Published var selectedImage: UIImage? = nil
+    private var _goalName: String = ""
+    private var _priceText: Int = 0
+    var selectedItem: PhotosPickerItem? = nil
+    var selectedImage: UIImage? = nil
     
     // MARK: - Step 2 Fields
-    @Published var selectedDays: Set<String> = []
-    @Published private var _amountText: Int = 0
+    var selectedDays: Set<String> = []
+    private var _amountText: Int = 0
     
     // MARK: - Public computed accessors (Getter + Setter)
     var goalName: String {
@@ -40,59 +51,51 @@ final class GoalViewModel: ObservableObject {
     }
     
     var amountText: String {
-            get { _amountText == 0 ? "" : "\(_amountText)" }
-            set {
-                _amountText = Int(newValue) ?? 0
-                validateStep2()
-            }
+        get { _amountText == 0 ? "" : "\(_amountText)" }
+        set {
+            _amountText = Int(newValue) ?? 0
+            validateStep2()
         }
-    
-    @Published var isStep1Valid: Bool = false
-    @Published var isStep2Valid: Bool = false
+    }
     
     // MARK: - Validation Logic
-    private func validateStep1() {
-            isStep1Valid = !goalName.trimmingCharacters(in: .whitespaces).isEmpty && _priceText > 0 && selectedImage != nil
-        }
-
-        private func validateStep2() {
-            isStep2Valid = !selectedDays.isEmpty && _amountText > 0
-        }
+    var isStep1Valid: Bool = false
+    var isStep2Valid: Bool = false
+    
+    func validateStep1() {
+        isStep1Valid = !goalName.trimmingCharacters(in: .whitespaces).isEmpty && _priceText > 0 && selectedImage != nil
+    }
+    
+    func validateStep2() {
+        isStep2Valid = !selectedDays.isEmpty && _amountText > 0
+    }
     
     // MARK: - Save Logic
-//    func saveGoal() {
-//        guard isStep1Valid, isStep2Valid else {
-//            print("❌ Tidak bisa simpan, data belum lengkap")
-//            return
-//        }
-//        print("✅ Goal saved: \(_goalName) — Rp\(_priceText), days: \(selectedDays), amount: \(_amountText), selectedImage: \(String(describing: selectedImage))")
-//    }
-    
-    func saveGoal(context: ModelContext) {
-            guard !goalName.isEmpty,
-                  let price = Int(priceText),
-                  let amount = Int(amountText),
-                  !selectedDays.isEmpty else {
-                print("❌ Tidak bisa simpan, data belum lengkap")
-                return
-            }
-
-            let imageData = selectedImage?.jpegData(compressionQuality: 0.8)
-
+    func saveGoal(context: GoalSaving) {
+        guard !goalName.isEmpty,
+              let price = Int(priceText),
+              let amount = Int(amountText),
+              !selectedDays.isEmpty else {
+            print("❌ Tidak bisa simpan, data belum lengkap")
+            return
+        }
+        
+        let imageData = selectedImage?.jpegData(compressionQuality: 0.8)
+        
         let goal = GoalModel(
-                name: goalName,
-                targetPrice: _priceText,
-                imageData: imageData,
-                savingDays: Array(selectedDays),
-                amountPerSave: _amountText
-            )
-            context.insert(goal)
-            try? context.save()
-                do {
-                    try context.save()
-                    print("✅ Berhasil simpan goal:", goal.name)
-                } catch {
-                    print("❌ Gagal simpan:", error.localizedDescription)
-                }
-            }
+            name: goalName,
+            targetPrice: _priceText,
+            imageData: imageData,
+            savingDays: Array(selectedDays),
+            amountPerSave: _amountText
+        )
+        context.insert(goal)
+        try? context.save()
+        do {
+            try context.save()
+            print("✅ Berhasil simpan goal:", goal.name)
+        } catch {
+            print("❌ Gagal simpan:", error.localizedDescription)
+        }
+    }
 }
