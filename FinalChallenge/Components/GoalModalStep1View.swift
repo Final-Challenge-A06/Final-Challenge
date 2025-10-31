@@ -9,14 +9,14 @@ import SwiftUI
 import PhotosUI
 
 struct GoalModalStep1View: View {
-    
+    @ObservedObject var vm = GoalViewModel()
     var onNext: () -> Void
     var onClose: () -> Void
     
-    @State private var goalName = ""
-    @State private var priceText = ""
-    @State private var selectedItem: PhotosPickerItem? = nil
-    @State private var selectedImage: UIImage? = nil
+//    @State private var goalName = ""
+//    @State private var priceText = ""
+//    @State private var selectedItem: PhotosPickerItem? = nil
+//    @State private var selectedImage: UIImage? = nil
     
     private let goalOrange = Color(red: 0.91, green: 0.55, blue: 0.30)
     private let cardMint   = Color(red: 0.83, green: 0.95, blue: 0.90)
@@ -26,14 +26,14 @@ struct GoalModalStep1View: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Name your dream thing").font(.headline)
                 
-                TextField("Type here…", text: $goalName)
+                TextField("Type here…", text: $vm.goalName)
                     .textInputAutocapitalization(.words)
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(.white, in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(.black.opacity(0.08)))
                 
                 PhotosPicker(
-                    selection: $selectedItem,
+                    selection: $vm.selectedItem,
                     matching: .images,
                     photoLibrary: .shared()
                 ) {
@@ -46,7 +46,7 @@ struct GoalModalStep1View: View {
                                     .stroke(.black.opacity(0.08), style: StrokeStyle(lineWidth: 1, dash: [5]))
                             )
                         
-                        if let ui = selectedImage {
+                        if let ui = vm.selectedImage {
                             Image(uiImage: ui)
                                 .resizable()
                                 .scaledToFill()
@@ -68,23 +68,23 @@ struct GoalModalStep1View: View {
                     }
                     .contentShape(Rectangle())
                 }
-                .onChange(of: selectedItem) { newItem in
+                .onChange(of: vm.selectedItem) { newItem in
                     Task {
                         if let data = try? await newItem?.loadTransferable(type: Data.self),
                            let ui = UIImage(data: data) {
-                            selectedImage = ui
+                            vm.selectedImage = ui
                         }
                     }
                 }
                 
                 Text("How much does it cost?").font(.headline)
                 
-                TextField("e.g., 180000", text: $priceText)
+                TextField("e.g., 180000", text: $vm.priceText)
                     .keyboardType(.numberPad)
-                    .onChange(of: priceText) { newValue in
+                    .onChange(of: vm.priceText) { newValue in
                         let filtered = newValue.filter { $0.isNumber }
                         if filtered != newValue {
-                            priceText = filtered
+                            vm.priceText = filtered
                         }
                     }
                     .padding(.horizontal, 14).padding(.vertical, 12)
@@ -101,6 +101,7 @@ struct GoalModalStep1View: View {
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
                 .padding(.top, 8)
+                .disabled(!vm.isStep1Valid)
                 
             }
             .padding(20)

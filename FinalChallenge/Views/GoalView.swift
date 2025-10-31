@@ -2,6 +2,8 @@ import SwiftUI
 
 struct GoalView: View {
     
+    @StateObject private var vm = GoalViewModel()
+    @Environment(\.modelContext) private var context
     @State private var showGoalModal = false
     @State private var activeStep = 1
     
@@ -35,12 +37,14 @@ struct GoalView: View {
                 CenteredModal(isPresented: $showGoalModal) {
                     if activeStep == 1 {
                         GoalModalStep1View(
+                            vm: vm,
                             onNext: { activeStep = 2 },
                             onClose: { showGoalModal = false }
                         )
                     } else {
                         GoalModalStep2View(
-                            onDone: { showGoalModal = false },
+                            vm: vm,
+                            onDone: { vm.saveGoal(context: context); showGoalModal = false },
                             onBack: { activeStep = 1 }
                         )
                     }
@@ -54,3 +58,7 @@ struct GoalView: View {
 #Preview {
     GoalView()
 }
+
+
+//simpan inputan di swiftdata
+//stlh disimpan dikalkulasi untuk jadi ss
