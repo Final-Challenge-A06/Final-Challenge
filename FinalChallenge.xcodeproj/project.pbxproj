@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		BEC594A62EB3BA88004E25DA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A02C77E22EA8DB6400F25AB0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A02C77E92EA8DB6400F25AB0;
+			remoteInfo = FinalChallenge;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		A02C77EA2EA8DB6400F25AB0 /* FinalChallenge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FinalChallenge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BEC594A22EB3BA88004E25DA /* FinalChallengeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinalChallengeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -29,10 +40,22 @@
 			path = FinalChallenge;
 			sourceTree = "<group>";
 		};
+		BEC594A32EB3BA88004E25DA /* FinalChallengeTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FinalChallengeTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A02C77E72EA8DB6400F25AB0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BEC5949F2EB3BA88004E25DA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -46,6 +69,7 @@
 			isa = PBXGroup;
 			children = (
 				A02C77EC2EA8DB6400F25AB0 /* FinalChallenge */,
+				BEC594A32EB3BA88004E25DA /* FinalChallengeTests */,
 				A02C77EB2EA8DB6400F25AB0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				A02C77EA2EA8DB6400F25AB0 /* FinalChallenge.app */,
+				BEC594A22EB3BA88004E25DA /* FinalChallengeTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,6 +108,29 @@
 			productReference = A02C77EA2EA8DB6400F25AB0 /* FinalChallenge.app */;
 			productType = "com.apple.product-type.application";
 		};
+		BEC594A12EB3BA88004E25DA /* FinalChallengeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BEC594A82EB3BA88004E25DA /* Build configuration list for PBXNativeTarget "FinalChallengeTests" */;
+			buildPhases = (
+				BEC5949E2EB3BA88004E25DA /* Sources */,
+				BEC5949F2EB3BA88004E25DA /* Frameworks */,
+				BEC594A02EB3BA88004E25DA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BEC594A72EB3BA88004E25DA /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				BEC594A32EB3BA88004E25DA /* FinalChallengeTests */,
+			);
+			name = FinalChallengeTests;
+			packageProductDependencies = (
+			);
+			productName = FinalChallengeTests;
+			productReference = BEC594A22EB3BA88004E25DA /* FinalChallengeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -95,6 +143,10 @@
 				TargetAttributes = {
 					A02C77E92EA8DB6400F25AB0 = {
 						CreatedOnToolsVersion = 26.0.1;
+					};
+					BEC594A12EB3BA88004E25DA = {
+						CreatedOnToolsVersion = 26.0.1;
+						TestTargetID = A02C77E92EA8DB6400F25AB0;
 					};
 				};
 			};
@@ -113,12 +165,20 @@
 			projectRoot = "";
 			targets = (
 				A02C77E92EA8DB6400F25AB0 /* FinalChallenge */,
+				BEC594A12EB3BA88004E25DA /* FinalChallengeTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A02C77E82EA8DB6400F25AB0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BEC594A02EB3BA88004E25DA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -135,7 +195,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BEC5949E2EB3BA88004E25DA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		BEC594A72EB3BA88004E25DA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A02C77E92EA8DB6400F25AB0 /* FinalChallenge */;
+			targetProxy = BEC594A62EB3BA88004E25DA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A02C77F32EA8DB6500F25AB0 /* Debug */ = {
@@ -264,10 +339,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S85UPZ5PRQ;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				DEVELOPMENT_TEAM = 88TL95M2JT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinalChallenge/Info.plist;
@@ -300,10 +372,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S85UPZ5PRQ;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				DEVELOPMENT_TEAM = 88TL95M2JT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FinalChallenge/Info.plist;
@@ -329,6 +398,48 @@
 			};
 			name = Release;
 		};
+		BEC594A92EB3BA88004E25DA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 88TL95M2JT;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = name.euginiag.FinalChallengeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FinalChallenge.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FinalChallenge";
+			};
+			name = Debug;
+		};
+		BEC594AA2EB3BA88004E25DA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 88TL95M2JT;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = name.euginiag.FinalChallengeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FinalChallenge.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FinalChallenge";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -346,6 +457,15 @@
 			buildConfigurations = (
 				A02C77F62EA8DB6500F25AB0 /* Debug */,
 				A02C77F72EA8DB6500F25AB0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BEC594A82EB3BA88004E25DA /* Build configuration list for PBXNativeTarget "FinalChallengeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BEC594A92EB3BA88004E25DA /* Debug */,
+				BEC594AA2EB3BA88004E25DA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

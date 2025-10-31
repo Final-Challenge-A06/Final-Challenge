@@ -8,11 +8,12 @@
 import SwiftUI
 
 struct GoalModalStep2View: View {
+    @ObservedObject var vm = GoalViewModel()
     var onDone: () -> Void
     var onBack: () -> Void
 
-    @State private var selectedDays: Set<Int> = []
-    @State private var amountText = ""
+//    @State private var selectedDays: Set<Int> = []
+//    @State private var amountText = ""
 
     private let days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
     private let goalOrange = Color(red: 0.91, green: 0.55, blue: 0.30)
@@ -25,19 +26,23 @@ struct GoalModalStep2View: View {
 
                 VStack(spacing: 18) {
                     HStack(spacing: 18) {
-                        ForEach(0..<4, id: \.self) { i in
-                            DayChipView(title: days[i],
-                                    isSelected: selectedDays.contains(i),
-                                    goalOrange: goalOrange) { toggle(i) }
+                        ForEach(days.prefix(4), id: \.self) { day in
+                            DayChipView(
+                                title: day,
+                                isSelected: vm.selectedDays.contains(day),
+                                goalOrange: goalOrange
+                            ) { toggle(day) }
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
 
                     HStack(spacing: 18) {
-                        ForEach(4..<7, id: \.self) { i in
-                            DayChipView(title: days[i],
-                                    isSelected: selectedDays.contains(i),
-                                    goalOrange: goalOrange) { toggle(i) }
+                        ForEach(days.suffix(3), id: \.self) { day in
+                            DayChipView(
+                                title: day,
+                                isSelected: vm.selectedDays.contains(day),
+                                goalOrange: goalOrange
+                            ) { toggle(day) }
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -45,11 +50,11 @@ struct GoalModalStep2View: View {
 
                 Text("How much will you save each time?").font(.headline)
 
-                TextField("e.g., 180000", text: $amountText)
+                TextField("e.g., 180000", text: $vm.amountText)
                     .keyboardType(.numberPad)
-                    .onChange(of: amountText) { v in
+                    .onChange(of: vm.amountText) { v in
                         let digits = v.filter(\.isNumber)
-                        if digits != v { amountText = digits }
+                        if digits != v { vm.amountText = digits }
                     }
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(.white, in: RoundedRectangle(cornerRadius: 12))
@@ -71,6 +76,7 @@ struct GoalModalStep2View: View {
                         .background(goalOrange)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                         .buttonStyle(.plain)
+                        .disabled(!vm.isStep2Valid)
                 }
                 .padding(.top, 4)
             }
@@ -96,8 +102,12 @@ struct GoalModalStep2View: View {
         }
     }
 
-    private func toggle(_ i: Int) {
-        if selectedDays.contains(i) { selectedDays.remove(i) } else { selectedDays.insert(i) }
+    private func toggle(_ day: String) {
+        if vm.selectedDays.contains(day) {
+            vm.selectedDays.remove(day)
+        } else {
+            vm.selectedDays.insert(day)
+        }
     }
 }
 
