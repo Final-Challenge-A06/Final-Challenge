@@ -21,12 +21,6 @@ struct SetGoalView: View {
                 Text("Set").font(.largeTitle.bold())
                 Text("Goals").font(.largeTitle.bold())
             }
-            
-            Image("robotHead")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 180)
-                .offset(y: -190)
         }
         .contentShape(Rectangle())
         .onTapGesture { onTap() }

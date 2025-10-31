@@ -18,14 +18,18 @@ struct GoalView: View {
                     activeStep = 1
                     showGoalModal = true
                 }
-                CircleStepView()
+                
+                ScrollView(.vertical, showsIndicators: false) {
+                    CircleStepView(
+                                totalSteps: 7,
+                                passedSteps: 2
+                            )
+                }
                 
                 Spacer()
                 
                 BottomItemSelectionView()
             }
-            
-            MaskotView()
             
             if showGoalModal {
                 CenteredModal(isPresented: $showGoalModal) {

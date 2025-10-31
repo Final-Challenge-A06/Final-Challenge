@@ -1,21 +1,44 @@
-//
-//  CircleStepView.swift
-//  FinalChallenge
-//
-//  Created by Ahmad Zuhal Zhafran on 30/10/25.
-//
-
 import SwiftUI
 
 struct CircleStepView: View {
+    @StateObject private var viewModel: CircleStepViewModel
+
+    // Initializer untuk meneruskan data ke ViewModel
+    init(totalSteps: Int, passedSteps: Int) {
+        _viewModel = StateObject(wrappedValue: CircleStepViewModel(
+            totalSteps: totalSteps,
+            passedSteps: passedSteps
+        ))
+    }
+
     var body: some View {
-        Circle().fill(Color.yellow).frame(width: 72, height: 72).offset(x: 32)
-        Circle().fill(Color.yellow).frame(width: 114, height: 114).offset(x: -32)
-        Circle().fill(Color.yellow).frame(width: 72, height: 72).offset(x: 32)
-        Circle().fill(Color.yellow).frame(width: 114, height: 114).offset(x: -44)
+        VStack(spacing: 0) {
+            // Loop data dari ViewModel, bukan menghitung di sini
+            ForEach(viewModel.steps) { step in
+                Image(step.imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: step.size, height: step.size)
+                    .rotationEffect(.degrees(step.rotation))
+                    .offset(x: step.xOffset)
+            }
+        }
+        // ViewModel juga memberi tahu kita lebar yang benar
+        .frame(width: viewModel.requiredWidth)
     }
 }
 
+// Preview tetap sama, tidak akan merusak apa pun
 #Preview {
-    CircleStepView()
+    ZStack {
+        Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40)
+            .ignoresSafeArea()
+        ScrollView {
+            CircleStepView(
+                totalSteps: 7,
+                passedSteps: 2
+            )
+            .padding(.vertical, 40)
+        }
+    }
 }
