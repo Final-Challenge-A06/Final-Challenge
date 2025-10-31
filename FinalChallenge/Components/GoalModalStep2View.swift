@@ -68,7 +68,6 @@ struct GoalModalStep2View: View {
                             .background(.white)
                             .overlay(RoundedRectangle(cornerRadius: 14).stroke(.black.opacity(0.10)))
                             .clipShape(RoundedRectangle(cornerRadius: 14))
-                            .buttonStyle(.plain)
                     }
                     
                     Button(action: { onDone() }) {
@@ -79,7 +78,6 @@ struct GoalModalStep2View: View {
                             .foregroundStyle(.black)
                             .background(goalOrange)
                             .clipShape(RoundedRectangle(cornerRadius: 14))
-                            .buttonStyle(.plain)
                             .disabled(!vm.isStep2Valid)
                     }
                 }
