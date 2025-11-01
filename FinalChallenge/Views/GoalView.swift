@@ -9,6 +9,10 @@ struct GoalView: View {
     // View tetap memegang @Query, lalu diteruskan ke VM
     @Query var goals: [GoalModel]
     
+    // State untuk Saving Input Modal
+    @State private var showSavingModal: Bool = false
+    @State private var savingAmountText: String = ""
+    
     // Warna-warna yang mendekati mockup
     private let boardBackground = Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40)
     private let panelTeal = Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51)
@@ -89,6 +93,11 @@ struct GoalView: View {
                                 title: "My Saving",
                                 amountText: "10.000"
                             )
+                            .onTapGesture {
+                                // Buka modal input saving
+                                savingAmountText = ""
+                                showSavingModal = true
+                            }
                             Spacer()
                         }
                         .padding(.leading, 24)
@@ -159,6 +168,28 @@ struct GoalView: View {
                 }
                 .zIndex(3)
             }
+            
+            // Modal Input Saving
+            if showSavingModal {
+                CenteredModal(isPresented: $showSavingModal) {
+                    SavingInputModalView(
+                        title: "Add Saving",
+                        amountText: $savingAmountText,
+                        onCancel: {
+                            showSavingModal = false
+                        },
+                        onSave: { amount in
+                            // TODO: Integrasikan ke model tabungan.
+                            // Sementara: contoh sederhana menambah passedSteps jika akumulasi cukup.
+                            // Misal: 1 step per simpanan (atau logika lain sesuai kebutuhan).
+                            vm.incrementPassedStep()
+                            showSavingModal = false
+                            vm.loadRewardsForView(context: context)
+                        }
+                    )
+                }
+                .zIndex(4)
+            }
         }
         .onAppear {
             vm.updateGoals(goals)
@@ -181,3 +212,4 @@ struct GoalView: View {
 #Preview {
     GoalView()
 }
+

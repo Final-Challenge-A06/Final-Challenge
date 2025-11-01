@@ -246,5 +246,17 @@ final class GoalViewModel: ObservableObject {
     // MARK: - Navigasi modal goal
     func goToNextStep() { activeStep = 2 }
     func closeModal() { showGoalModal = false }
+
+    // MARK: - Progress update intents
+    func incrementPassedStep() {
+        passedSteps = min(passedSteps + 1, totalSteps)
+    }
+    
+    func applySaving(amount: Int) {
+        // If you want amount-based progress later:
+        // For now, treat any positive amount as one step.
+        guard amount > 0 else { return }
+        incrementPassedStep()
+    }
 }
 
