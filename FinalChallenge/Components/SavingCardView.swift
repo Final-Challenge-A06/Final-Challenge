@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SavingCardView: View {
     let title: String
-    let amountText: String
+    let totalSaving: String
     var backgroundColor: Color = Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51)
     var cornerRadius: CGFloat = 22
     var horizontalPadding: CGFloat = 24
@@ -18,7 +18,7 @@ struct SavingCardView: View {
             Text(title)
                 .font(.system(size: 28, weight: .heavy, design: .rounded))
                 .foregroundStyle(.white)
-            Text(amountText)
+            Text(totalSaving)
                 .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundStyle(.white.opacity(0.9))
         }
@@ -40,7 +40,7 @@ struct SavingCardView: View {
     ZStack {
         Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40).ignoresSafeArea()
         HStack {
-            SavingCardView(title: "My Saving", amountText: "10.000")
+            SavingCardView(title: "My Saving", totalSaving: "10.000")
             Spacer()
         }
         .padding(.leading, 24)

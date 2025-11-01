@@ -91,7 +91,7 @@ struct GoalView: View {
                         HStack {
                             SavingCardView(
                                 title: "My Saving",
-                                amountText: "10.000"
+                                totalSaving: vm.formattedTotalSaving
                             )
                             .onTapGesture {
                                 // Buka modal input saving
@@ -179,10 +179,9 @@ struct GoalView: View {
                             showSavingModal = false
                         },
                         onSave: { amount in
-                            // TODO: Integrasikan ke model tabungan.
-                            // Sementara: contoh sederhana menambah passedSteps jika akumulasi cukup.
-                            // Misal: 1 step per simpanan (atau logika lain sesuai kebutuhan).
-                            vm.incrementPassedStep()
+                            // Tambah total saving dan (opsional) progress step
+                            vm.addSaving(amount: amount)
+                            vm.applySaving(amount: amount)
                             showSavingModal = false
                             vm.loadRewardsForView(context: context)
                         }

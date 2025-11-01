@@ -53,6 +53,19 @@ final class GoalViewModel: ObservableObject {
     @Published private(set) var rewardViewItems: [RewardViewData] = []
     private var rewardCatalog: [RewardMeta] = []
     
+    // MARK: - Saving (in-memory for now)
+    @Published private(set) var totalSaving: Int = 0
+    var formattedTotalSaving: String {
+        numberFormatter.string(from: NSNumber(value: totalSaving)) ?? "\(totalSaving)"
+    }
+    private let numberFormatter: NumberFormatter = {
+        let nf = NumberFormatter()
+        nf.numberStyle = .decimal
+        nf.groupingSeparator = "."
+        nf.decimalSeparator = ","
+        return nf
+    }()
+
     // MARK: - Public computed accessors
     var goalName: String {
         get { _goalName }
@@ -257,6 +270,12 @@ final class GoalViewModel: ObservableObject {
         // For now, treat any positive amount as one step.
         guard amount > 0 else { return }
         incrementPassedStep()
+    }
+
+    // MARK: - Saving intents
+    func addSaving(amount: Int) {
+        guard amount > 0 else { return }
+        totalSaving += amount
     }
 }
 
