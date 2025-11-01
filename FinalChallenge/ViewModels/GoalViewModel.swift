@@ -128,8 +128,10 @@ final class GoalViewModel: ObservableObject {
             print("Berhasil simpan goal:", goal.name)
             // Setelah simpan, jadikan goal ini sebagai latest dan update steps dari model
             latestGoal = goal
-            totalSteps = goal.targetPrice / goal.amountPerSave
-            // passedSteps tetap 0 sampai ada mekanisme progress
+            totalSteps = goal.totalSteps
+            // Reset progress & saving ketika membuat goal baru
+            passedSteps = 0
+            totalSaving = 0
             // Refresh katalog reward sesuai totalSteps baru
             rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
         } catch {
@@ -139,14 +141,23 @@ final class GoalViewModel: ObservableObject {
     
     // MARK: - Logic dari View
     func updateGoals(_ goals: [GoalModel]) {
+        let previousGoalId = latestGoal?.name
         latestGoal = goals.last
         if let goal = latestGoal {
             totalSteps = goal.totalSteps
+            // Jika goal berubah (mis. user membuat goal baru), reset progress
+            if previousGoalId != goal.name {
+                passedSteps = 0
+                totalSaving = 0
+            } else {
+                // Jika goal sama, jaga konsistensi passedSteps terhadap totalSaving
+                recalcPassedStepsFromSaving()
+            }
         } else {
             totalSteps = 0
+            passedSteps = 0
+            totalSaving = 0
         }
-        // TODO: ganti dengan progress real
-        passedSteps = 0
 
         // refresh catalog & view items
         rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
@@ -160,11 +171,8 @@ final class GoalViewModel: ObservableObject {
 
     // MARK: - Reward Claim Flow
     func tryOpenClaim(for step: Int, context: ModelContext) {
-        // hanya checkpoint di catalog
         guard let meta = rewardCatalog.first(where: { $0.step == step }) else { return }
-        // hanya jika step sudah passed
         guard step <= passedSteps else { return }
-        // cek apakah sudah diklaim
         let alreadyClaimed = fetchRewardEntity(id: meta.id, context: context)?.claimed == true
         guard !alreadyClaimed else { return }
 
@@ -173,9 +181,7 @@ final class GoalViewModel: ObservableObject {
     }
 
     func openClaim(for meta: RewardMeta, context: ModelContext) {
-        // ensure step is passed
         guard meta.step <= passedSteps else { return }
-        // prevent duplicate claim
         let alreadyClaimed = fetchRewardEntity(id: meta.id, context: context)?.claimed == true
         guard !alreadyClaimed else { return }
         pendingClaim = meta
@@ -184,7 +190,6 @@ final class GoalViewModel: ObservableObject {
 
     func confirmClaim(context: ModelContext) {
         guard let meta = pendingClaim else { return }
-        // upsert entity
         if let existing = fetchRewardEntity(id: meta.id, context: context) {
             existing.claimed = true
             existing.claimedAt = Date()
@@ -215,7 +220,6 @@ final class GoalViewModel: ObservableObject {
 
     func loadRewardsForView(context: ModelContext) {
         let entities = fetchAllRewards(context: context)
-        // Buat 3 slot dari catalog
         rewardViewItems = rewardCatalog.map { meta in
             if let ent = entities.first(where: { $0.id == meta.id }) {
                 return RewardViewData(
@@ -265,14 +269,28 @@ final class GoalViewModel: ObservableObject {
         passedSteps = min(passedSteps + 1, totalSteps)
     }
     
+    // Perbaikan: progress berbasis akumulasi totalSaving dan amountPerSave
     func applySaving(amount: Int) {
-        // If you want amount-based progress later:
-        // For now, treat any positive amount as one step.
         guard amount > 0 else { return }
-        incrementPassedStep()
+        // Tambah akumulasi saving
+        totalSaving += amount
+        // Hitung ulang passedSteps berdasarkan kelipatan amountPerSave
+        recalcPassedStepsFromSaving()
     }
 
-    // MARK: - Saving intents
+    private func recalcPassedStepsFromSaving() {
+        guard let goal = latestGoal, goal.amountPerSave > 0 else {
+            passedSteps = 0
+            return
+        }
+        let stepsBySaving = totalSaving / goal.amountPerSave
+        let clamped = min(stepsBySaving, totalSteps)
+        if clamped != passedSteps {
+            passedSteps = clamped
+        }
+    }
+
+    // MARK: - Saving intents (menambah totalSaving tanpa mempengaruhi step langsung)
     func addSaving(amount: Int) {
         guard amount > 0 else { return }
         totalSaving += amount

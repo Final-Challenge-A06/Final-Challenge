@@ -179,8 +179,7 @@ struct GoalView: View {
                             showSavingModal = false
                         },
                         onSave: { amount in
-                            // Tambah total saving dan (opsional) progress step
-                            vm.addSaving(amount: amount)
+                            // Perbaikan: jangan double-increment totalSaving
                             vm.applySaving(amount: amount)
                             showSavingModal = false
                             vm.loadRewardsForView(context: context)
@@ -211,4 +210,3 @@ struct GoalView: View {
 #Preview {
     GoalView()
 }
-
