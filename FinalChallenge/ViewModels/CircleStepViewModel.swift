@@ -42,23 +42,25 @@ class CircleStepViewModel: ObservableObject {
         var calculatedSteps: [StepDisplayModel] = []
         
         for step in (1...totalSteps).reversed() {
-            // Tentukan tipe lingkaran
+            // Tipe
             let isGoal = (step == totalSteps)
             let isCheckpoint = (step == 1 || (step % 7 == 0 && !isGoal))
             let isLarge = isCheckpoint || isGoal
 
-            // Tentukan ukuran lingkaran
+            // Ukuran
             let size = isLarge ? sizeCheckpoint : sizeNormal
 
-            // Tentukan posisi zigzag (kiri-kanan)
+            // Posisi zigzag
             let isLeft = (step % 2 == 0)
             let xOffset = isLarge ? 0 : (isLeft ? -zigzagNormal : zigzagNormal)
 
-            // Tentukan gambar (merah/biru)
-            let isPassed = (step <= passedSteps)
-            let imageName = isPassed ? "ss_after" : "ss_before"
+            // Status progress
+            let isUnlocked = (step <= passedSteps)
 
-            // Tentukan rotasi
+            // Gambar (merah/biru)
+            let imageName = isUnlocked ? "ss_after" : "ss_before"
+
+            // Rotasi
             let rotation: Double = isLarge ? -10 : (isLeft ? tiltAngle : -tiltAngle - 10)
 
             // Buat model dan tambahkan ke array
@@ -67,7 +69,10 @@ class CircleStepViewModel: ObservableObject {
                 size: size,
                 xOffset: xOffset,
                 imageName: imageName,
-                rotation: rotation
+                rotation: rotation,
+                isUnlocked: isUnlocked,
+                isCheckpoint: isCheckpoint,
+                isGoal: isGoal
             )
             calculatedSteps.append(stepModel)
         }
