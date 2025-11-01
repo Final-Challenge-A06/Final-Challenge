@@ -6,18 +6,22 @@ struct CircleStepView: View {
     // Callback untuk parent saat circle ditekan (hanya dipanggil jika unlocked)
     var onTap: (StepDisplayModel) -> Void = { _ in }
 
+    private let totalSteps: Int
+    private let passedSteps: Int
+
     init(totalSteps: Int, passedSteps: Int, onTap: @escaping (StepDisplayModel) -> Void = { _ in }) {
         _viewModel = StateObject(wrappedValue: CircleStepViewModel(
             totalSteps: totalSteps,
             passedSteps: passedSteps
         ))
+        self.totalSteps = totalSteps
+        self.passedSteps = passedSteps
         self.onTap = onTap
     }
 
     var body: some View {
         VStack(spacing: 0) {
             ForEach(viewModel.steps) { step in
-                // Button agar dapat fokus/tap effect; disabled bila terkunci
                 Button {
                     onTap(step)
                 } label: {
@@ -29,7 +33,6 @@ struct CircleStepView: View {
                             .rotationEffect(.degrees(step.rotation))
                             .offset(x: step.xOffset)
 
-                        // Overlay lock untuk checkpoint/goal yang belum terbuka
                         if (step.isCheckpoint || step.isGoal) && !step.isUnlocked {
                             Image(systemName: "lock.fill")
                                 .font(.system(size: 28, weight: .bold))
@@ -46,6 +49,13 @@ struct CircleStepView: View {
             }
         }
         .frame(width: viewModel.requiredWidth)
+        // Sinkronkan perubahan props dari parent ke VM
+        .onChange(of: totalSteps) { newValue in
+            viewModel.update(totalSteps: newValue, passedSteps: passedSteps)
+        }
+        .onChange(of: passedSteps) { newValue in
+            viewModel.update(totalSteps: totalSteps, passedSteps: newValue)
+        }
     }
 }
 

@@ -42,7 +42,8 @@ final class GoalViewModel: ObservableObject {
     @Published private(set) var pendingClaim: RewardMeta? = nil
     
     // MARK: - Steps Output untuk UI
-    @Published private(set) var totalSteps: Int = 7
+    // Ambil dari GoalModel.totalSteps (fallback 0 jika belum ada goal)
+    @Published private(set) var totalSteps: Int = 0
     @Published private(set) var passedSteps: Int = 0
     
     // MARK: - Source data dari @Query (dioper dari View)
@@ -112,6 +113,12 @@ final class GoalViewModel: ObservableObject {
         do {
             try context.save()
             print("Berhasil simpan goal:", goal.name)
+            // Setelah simpan, jadikan goal ini sebagai latest dan update steps dari model
+            latestGoal = goal
+            totalSteps = goal.targetPrice / goal.amountPerSave
+            // passedSteps tetap 0 sampai ada mekanisme progress
+            // Refresh katalog reward sesuai totalSteps baru
+            rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
         } catch {
             print("Gagal simpan:", error.localizedDescription)
         }
@@ -123,7 +130,7 @@ final class GoalViewModel: ObservableObject {
         if let goal = latestGoal {
             totalSteps = goal.totalSteps
         } else {
-            totalSteps = 7
+            totalSteps = 0
         }
         // TODO: ganti dengan progress real
         passedSteps = 0

@@ -14,10 +14,6 @@ struct GoalView: View {
     private let panelTeal = Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51)
     private let panelOverlay = Color.white.opacity(0.10)
     private let buttonGreen = Color(.sRGB, red: 0.73, green: 0.84, blue: 0.49)
-
-    // State untuk modal "My Saving"
-    @State private var showSavingModal: Bool = false
-    @State private var savingAmountText: String = ""
     
     var body: some View {
         ZStack {
@@ -43,7 +39,7 @@ struct GoalView: View {
                             Button {
                                 vm.onCircleTap()
                             } label: {
-                                Text("Set New Goals")
+                                Text("Set New Goal")
                                     .font(.system(size: 28, weight: .heavy, design: .rounded))
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, 28)
@@ -93,10 +89,6 @@ struct GoalView: View {
                                 title: "My Saving",
                                 amountText: "10.000"
                             )
-                            .onTapGesture {
-                                savingAmountText = ""
-                                withAnimation { showSavingModal = true }
-                            }
                             Spacer()
                         }
                         .padding(.leading, 24)
@@ -166,24 +158,6 @@ struct GoalView: View {
                     )
                 }
                 .zIndex(3)
-            }
-
-            // Modal "My Saving" input nominal
-            if showSavingModal {
-                CenteredModal(isPresented: $showSavingModal) {
-                    SavingInputModalView(
-                        amountText: $savingAmountText,
-                        onCancel: {
-                            withAnimation { showSavingModal = false }
-                        },
-                        onSave: { amount in
-                            // TODO: sambungkan ke logic penyimpanan/progress
-                            print("Nominal nabung hari ini:", amount)
-                            withAnimation { showSavingModal = false }
-                        }
-                    )
-                }
-                .zIndex(4)
             }
         }
         .onAppear {
