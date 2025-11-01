@@ -16,22 +16,22 @@ protocol GoalSaving {
 }
 
 extension ModelContext: GoalSaving {
-    func insert(_ goal: GoalModel) {
-        self.insert(goal)
+    func insertGoal(_ goal: GoalModel) {
+        insert(goal)
     }
 }
 
 @MainActor
 final class GoalViewModel: ObservableObject {
     // MARK: - Step 1 Fields
-    private var _goalName: String = ""
-    private var _priceText: Int = 0
-    var selectedItem: PhotosPickerItem? = nil
-    var selectedImage: UIImage? = nil
+    @Published private var _goalName: String = ""
+    @Published private var _priceText: Int = 0
+    @Published var selectedItem: PhotosPickerItem? = nil
+    @Published var selectedImage: UIImage? = nil
     
     // MARK: - Step 2 Fields
-    var selectedDays: Set<String> = []
-    private var _amountText: Int = 0
+    @Published var selectedDays: Set<String> = []
+    @Published private var _amountText: Int = 0
     
     // MARK: - Modal & Flow State
     @Published var showGoalModal: Bool = false
@@ -78,8 +78,8 @@ final class GoalViewModel: ObservableObject {
     }
     
     // MARK: - Validation Logic
-    var isStep1Valid: Bool = false
-    var isStep2Valid: Bool = false
+    @Published var isStep1Valid: Bool = false
+    @Published var isStep2Valid: Bool = false
     
     func validateStep1() {
         isStep1Valid = !goalName.trimmingCharacters(in: .whitespaces).isEmpty && _priceText > 0 && selectedImage != nil
@@ -92,10 +92,10 @@ final class GoalViewModel: ObservableObject {
     // MARK: - Save Goal
     func saveGoal(context: GoalSaving) {
         guard !goalName.isEmpty,
-              let price = Int(priceText),
-              let amount = Int(amountText),
+              Int(priceText) != nil,
+              Int(amountText) != nil,
               !selectedDays.isEmpty else {
-            print("❌ Tidak bisa simpan, data belum lengkap")
+            print("Tidak bisa simpan, data belum lengkap")
             return
         }
         
@@ -111,9 +111,9 @@ final class GoalViewModel: ObservableObject {
         context.insert(goal)
         do {
             try context.save()
-            print("✅ Berhasil simpan goal:", goal.name)
+            print("Berhasil simpan goal:", goal.name)
         } catch {
-            print("❌ Gagal simpan:", error.localizedDescription)
+            print("Gagal simpan:", error.localizedDescription)
         }
     }
     
