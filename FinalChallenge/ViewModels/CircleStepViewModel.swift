@@ -13,8 +13,8 @@ class CircleStepViewModel: ObservableObject {
     @Published private(set) var steps: [StepDisplayModel] = []
     
     // Input
-    private let totalSteps: Int
-    private let passedSteps: Int
+    private var totalSteps: Int
+    private var passedSteps: Int
 
     // Konstanta (dipindahkan dari View)
     private let sizeNormal: CGFloat = 172
@@ -32,33 +32,51 @@ class CircleStepViewModel: ObservableObject {
     init(totalSteps: Int, passedSteps: Int) {
         self.totalSteps = totalSteps
         self.passedSteps = passedSteps
-        
-        // Panggil fungsi untuk menghitung logic-nya
+        calculateSteps()
+    }
+
+    // Public updater supaya View bisa menyinkronkan perubahan input
+    func update(totalSteps: Int, passedSteps: Int) {
+        // Hindari kerja ulang jika tidak berubah
+        guard self.totalSteps != totalSteps || self.passedSteps != passedSteps else { return }
+        self.totalSteps = totalSteps
+        self.passedSteps = passedSteps
         calculateSteps()
     }
 
     // Ini adalah LOGIC UTAMA yang kita pindahkan dari View
     private func calculateSteps() {
+        // Lindungi dari range invalid: jika totalSteps <= 0, kosongkan steps
+        guard totalSteps > 0 else {
+            self.steps = []
+            return
+        }
+
+        // Clamp passedSteps agar tidak negatif dan tidak melebihi totalSteps
+        let safePassed = max(0, min(passedSteps, totalSteps))
+
         var calculatedSteps: [StepDisplayModel] = []
         
         for step in (1...totalSteps).reversed() {
-            // Tentukan tipe lingkaran
+            // Tipe
             let isGoal = (step == totalSteps)
             let isCheckpoint = (step == 1 || (step % 7 == 0 && !isGoal))
             let isLarge = isCheckpoint || isGoal
 
-            // Tentukan ukuran lingkaran
+            // Ukuran
             let size = isLarge ? sizeCheckpoint : sizeNormal
 
-            // Tentukan posisi zigzag (kiri-kanan)
+            // Posisi zigzag
             let isLeft = (step % 2 == 0)
             let xOffset = isLarge ? 0 : (isLeft ? -zigzagNormal : zigzagNormal)
 
-            // Tentukan gambar (merah/biru)
-            let isPassed = (step <= passedSteps)
-            let imageName = isPassed ? "ss_after" : "ss_before"
+            // Status progress
+            let isUnlocked = (step <= safePassed)
 
-            // Tentukan rotasi
+            // Gambar (merah/biru)
+            let imageName = isUnlocked ? "ss_after" : "ss_before"
+
+            // Rotasi
             let rotation: Double = isLarge ? -10 : (isLeft ? tiltAngle : -tiltAngle - 10)
 
             // Buat model dan tambahkan ke array
@@ -67,7 +85,10 @@ class CircleStepViewModel: ObservableObject {
                 size: size,
                 xOffset: xOffset,
                 imageName: imageName,
-                rotation: rotation
+                rotation: rotation,
+                isUnlocked: isUnlocked,
+                isCheckpoint: isCheckpoint,
+                isGoal: isGoal
             )
             calculatedSteps.append(stepModel)
         }
@@ -75,3 +96,4 @@ class CircleStepViewModel: ObservableObject {
         self.steps = calculatedSteps
     }
 }
+

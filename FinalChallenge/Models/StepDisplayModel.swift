@@ -14,4 +14,10 @@ struct StepDisplayModel: Identifiable {
     let xOffset: CGFloat
     let imageName: String
     let rotation: Double
+
+    // Status untuk interaksi & overlay
+    let isUnlocked: Bool
+    let isCheckpoint: Bool
+    let isGoal: Bool
 }
+

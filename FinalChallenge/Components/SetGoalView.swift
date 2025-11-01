@@ -19,7 +19,7 @@ struct SetGoalView: View {
             
             VStack(spacing: 8) {
                 Text("Set").font(.largeTitle.bold())
-                Text("Goals").font(.largeTitle.bold())
+                Text("Goal").font(.largeTitle.bold())
             }
         }
         .contentShape(Rectangle())
