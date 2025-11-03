@@ -3,15 +3,6 @@ import SwiftUI
 struct SavingCardView: View {
     let title: String
     let totalSaving: String
-    var backgroundColor: Color = Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51)
-    var cornerRadius: CGFloat = 22
-    var horizontalPadding: CGFloat = 24
-    var verticalPadding: CGFloat = 20
-    var shadowColor: Color = .black.opacity(0.25)
-    var shadowRadius: CGFloat = 10
-    var shadowX: CGFloat = 0
-    var shadowY: CGFloat = 6
-    var strokeColor: Color = Color.white.opacity(0.15)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -22,16 +13,16 @@ struct SavingCardView: View {
                 .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundStyle(.white.opacity(0.9))
         }
-        .padding(.horizontal, horizontalPadding)
-        .padding(.vertical, verticalPadding)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 20)
         .background(
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(backgroundColor.opacity(0.9))
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51).opacity(0.9))
                 .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius)
+                    RoundedRectangle(cornerRadius: 22)
                         .stroke(Color.white, lineWidth: 1)
                 )
-                .shadow(color: shadowColor, radius: shadowRadius, x: shadowX, y: shadowY)
+                .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 6)
         )
     }
 }

@@ -19,6 +19,9 @@ struct GoalView: View {
     // Bottom items view model
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
 
+    // Circle steps view model
+    @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
+
     // Warna
     private let boardBackground = Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40)
     private let panelTeal        = Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51)
@@ -67,8 +70,7 @@ struct GoalView: View {
                             .padding(.bottom, 16)
 
                             CircleStepView(
-                                totalSteps: vm.totalSteps,
-                                passedSteps: vm.passedSteps
+                                viewModel: circleVM
                             ) { step in
                                 // 1) checkpoint/goal yang sudah dilewati → buka klaim
                                 if (step.isCheckpoint || step.isGoal), step.id <= vm.passedSteps {
@@ -206,11 +208,21 @@ struct GoalView: View {
             vm.updateGoals(goals)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
+            // sync circle VM initial state
+            circleVM.update(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
         .onChange(of: goals) { newGoals in
             vm.updateGoals(newGoals)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
+            // sync circle VM when goals change might affect totals
+            circleVM.update(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+        }
+        .onChange(of: vm.totalSteps) { _ in
+            circleVM.update(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+        }
+        .onChange(of: vm.passedSteps) { _ in
+            circleVM.update(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
     }
 

@@ -1,4 +1,3 @@
-// Components/SavingInputModalView.swift
 import SwiftUI
 
 struct SavingInputModalView: View {
@@ -17,7 +16,8 @@ struct SavingInputModalView: View {
 
             TextField("e.g., 50000", text: $amountText)
                 .keyboardType(.numberPad)
-                .onChange(of: amountText) { v in
+                .onChange(of: amountText) {
+                    let v = amountText
                     let digits = v.filter(\.isNumber)
                     if digits != v { amountText = digits }
                 }

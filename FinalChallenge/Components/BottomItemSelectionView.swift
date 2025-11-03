@@ -1,4 +1,3 @@
-// FinalChallenge/Components/BottomItemSelectionView.swift
 import SwiftUI
 
 struct BottomItemSelectionView: View {
@@ -8,7 +7,7 @@ struct BottomItemSelectionView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 24)
                 .fill(panelTeal.opacity(0.9))
                 .overlay(
                     RoundedRectangle(cornerRadius: 24)
@@ -35,9 +34,9 @@ struct BottomItemSelectionView: View {
 
     @ViewBuilder
     private func content(for item: RewardViewData) -> some View {
-        switch item.state {
-        case .claimed:
-            Image(uiImage: UIImage(named: item.imageName) ?? UIImage(systemName: "gift.fill")!)
+        switch viewModel.presentation(for: item) {
+        case .claimed(let imageName):
+            Image(uiImage: UIImage(named: imageName) ?? UIImage(systemName: "gift.fill")!)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 120, height: 80)
@@ -61,7 +60,6 @@ struct BottomItemSelectionView: View {
 }
 
 #Preview {
-    // Preview model data
     let demoItems: [RewardViewData] = [
         .init(id: "r1", title: "Glasses", imageName: "glasses", state: .claimed),
         .init(id: "r2", title: "Reward2", imageName: "reward2", state: .claimable),

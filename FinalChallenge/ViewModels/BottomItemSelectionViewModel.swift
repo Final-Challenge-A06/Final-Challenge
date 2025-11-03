@@ -11,7 +11,7 @@ import Combine
 final class BottomItemSelectionViewModel: ObservableObject {
     @Published private(set) var items: [RewardViewData] = []
 
-    /// Pangkal callback kalau parent ingin merespons (opsional)
+    /// Callback opsional untuk memberi tahu parent saat ada interaksi
     var onSelect: ((RewardViewData) -> Void)?
 
     init(items: [RewardViewData] = [], onSelect: ((RewardViewData) -> Void)? = nil) {
@@ -38,4 +38,23 @@ final class BottomItemSelectionViewModel: ObservableObject {
             onSelect?(items[idx])              // tetap beritahu parent bila ingin
         }
     }
+
+    // MARK: - Presentation mapping (UI-agnostic)
+    enum RewardPresentation: Equatable {
+        case claimed(imageName: String)
+        case claimable
+        case locked
+    }
+
+    func presentation(for item: RewardViewData) -> RewardPresentation {
+        switch item.state {
+        case .claimed:
+            return .claimed(imageName: item.imageName)
+        case .claimable:
+            return .claimable
+        case .locked:
+            return .locked
+        }
+    }
 }
+
