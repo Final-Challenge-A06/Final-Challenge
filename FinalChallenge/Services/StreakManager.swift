@@ -8,19 +8,26 @@
 import Foundation
 
 final class StreakManager {
-    private let defaults = UserDefaults.standard
-    private let calendar = Calendar.current
+    private let defaults:  UserDefaults
+    private let calendar: Calendar
     private let streakKey = "current_streak"
     private let lastSaveKey = "last_save_date"
     private let lastCheckKey = "last_check_date"
     
-    // Getter
+    // Getter Setter
+    init(defaults: UserDefaults = .standard, calendar: Calendar = .current) {
+        self.defaults = defaults
+        self.calendar = calendar
+    }
+    
     var currentStreak: Int {
         defaults.integer(forKey: streakKey)
     }
     
     // Dipanggil setiap kali device ngirim trigger nabung
     func recordSaving(for selectedDays: [String]) {
+        print("STREAK SEKARANG", currentStreak)
+        
         let today = calendar.startOfDay(for: Date())
         let todayName = weekdayString(from: today)
         let lastDate = defaults.object(forKey: lastSaveKey) as? Date
@@ -41,10 +48,13 @@ final class StreakManager {
         defaults.set(today, forKey: lastSaveKey)
         defaults.set(today, forKey: lastCheckKey)
         print("Nabung: (\(todayName)) -> streak \(newStreak)")
+        print("STREAK SETELAH JALAN", currentStreak)
     }
     
     // Buat cek apakah miss nabung saat today sesuai dengan schedule nabung
     func evaluateMissedDay(for scheduledDays: [String]) {
+        print("STREAK SEKARANG", currentStreak)
+        
         let today = calendar.startOfDay(for: Date())
         let todayName = weekdayString(from: today)
         guard let lastCheck = defaults.object(forKey: lastCheckKey) as? Date else {
@@ -61,9 +71,11 @@ final class StreakManager {
             defaults.set(0, forKey: streakKey)
         }
         defaults.set(today, forKey: lastCheckKey)
+        
+        print("STREAK SETELAH JALAN", currentStreak)
     }
     
-    private func weekdayString(from date: Date) -> String {
+    func weekdayString(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "EEE"

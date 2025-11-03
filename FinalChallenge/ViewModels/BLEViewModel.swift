@@ -29,6 +29,7 @@ final class BLEViewModel: ObservableObject {
         self.goalVM = goalVM ?? GoalViewModel()
         setupCallbacks()
         streakCount = streakManager.currentStreak
+        dailyCheck()
     }
 
     private func setupCallbacks() {
@@ -104,19 +105,6 @@ final class BLEViewModel: ObservableObject {
         mgr.writeString(text)
     }
     
-    // MARK: Ambil jadwal dari Goal VM
-//    init(goalVM: GoalViewModel) {
-//        self.goalVM = goalVM
-//        mgr.onValueUpdate = { [weak self] data in
-//            guard let self else { return }
-//            if let s = String(data: data, encoding: .utf8), s.contains("TRIGGER") {
-//                let days = self.goalVM.savingDaysArray
-//                self.streakManager.recordSaving(for: days)
-//                self.streakCount = self.streakManager.currentStreak
-//            }
-//        }
-//    }
-    
     // MARK: belum kepanggil dimana-mana
     func dailyCheck() {
         streakManager.evaluateMissedDay(for: goalVM.savingDaysArray)
@@ -124,8 +112,8 @@ final class BLEViewModel: ObservableObject {
     }
 
     // MARK: - Test hook (internal)
-    func simulateIncoming(data: Data) {
-        handleIncoming(data: data)
-    }
+//    func simulateIncoming(data: Data) {
+//        handleIncoming(data: data)
+//    }
 }
 
