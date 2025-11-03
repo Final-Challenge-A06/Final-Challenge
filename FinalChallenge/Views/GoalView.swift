@@ -2,29 +2,34 @@ import SwiftUI
 import SwiftData
 
 struct GoalView: View {
-    
+
     @StateObject private var vm = GoalViewModel()
     @Environment(\.modelContext) private var context
-    
-    // View tetap memegang @Query, lalu diteruskan ke VM
-    @Query var goals: [GoalModel]
-    
+
+    // Penting: bikin init() sendiri agar tidak perlu 'init(goals:)'
+    @Query private var goals: [GoalModel]
+    init() {
+        _goals = Query() // tanpa filter/sort; aman untuk preview & pemakaian umum
+    }
+
     // State untuk Saving Input Modal
-    @State private var showSavingModal: Bool = false
-    @State private var savingAmountText: String = ""
-    
-    // Warna-warna yang mendekati mockup
+    @State private var showSavingModal = false
+    @State private var savingAmountText = ""
+
+    // Bottom items view model
+    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
+
+    // Warna
     private let boardBackground = Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40)
-    private let panelTeal = Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51)
-    private let panelOverlay = Color.white.opacity(0.10)
-    private let buttonGreen = Color(.sRGB, red: 0.73, green: 0.84, blue: 0.49)
-    
+    private let panelTeal        = Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51)
+    private let panelOverlay     = Color.white.opacity(0.10)
+    private let buttonGreen      = Color(.sRGB, red: 0.73, green: 0.84, blue: 0.49)
+
     var body: some View {
         ZStack {
-            // Latar belakang besar
             boardBackground.ignoresSafeArea()
-            
-            // Panel utama ber-radius besar seperti mockup
+
+            // Panel utama
             ZStack {
                 RoundedRectangle(cornerRadius: 34, style: .continuous)
                     .fill(panelTeal)
@@ -33,13 +38,12 @@ struct GoalView: View {
                             .stroke(panelOverlay, lineWidth: 2)
                     )
                     .shadow(color: .black.opacity(0.25), radius: 20, x: 0, y: 12)
-                
+
                 // Isi panel
                 ZStack {
-                    // 1) Deretan platform/circle + tombol "Set New Goals" di dalam ScrollView agar ikut scroll
+                    // 1) Scroll berisi tombol & stepping stones
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: 0) {
-                            // Tombol “Set New Goals” diletakkan di bagian atas konten scroll
                             Button {
                                 vm.onCircleTap()
                             } label: {
@@ -61,31 +65,32 @@ struct GoalView: View {
                             .buttonStyle(.plain)
                             .padding(.top, 24)
                             .padding(.bottom, 16)
-                            
+
                             CircleStepView(
                                 totalSteps: vm.totalSteps,
                                 passedSteps: vm.passedSteps
                             ) { step in
-                                // 1) Jika checkpoint/goal dan sudah passed -> buka modal klaim
-                                if (step.isCheckpoint || step.isGoal) && step.id <= vm.passedSteps {
+                                // 1) checkpoint/goal yang sudah dilewati → buka klaim
+                                if (step.isCheckpoint || step.isGoal), step.id <= vm.passedSteps {
                                     vm.tryOpenClaim(for: step.id, context: context)
                                     return
                                 }
-                                // 2) Jika yang ditekan adalah Goal besar (bukan kondisi klaim) -> buka modal set goal
+                                // 2) goal besar → buka modal set goal
                                 if step.isGoal {
                                     vm.onCircleTap()
                                     return
                                 }
-                                // 3) Circle biasa: tidak melakukan apa-apa (jangan buka modal)
+                                // 3) step biasa → no-op
                             }
                             .padding(.vertical, 60)
-                            .padding(.bottom, 180) // beri ruang untuk panel bawah
+                            .padding(.bottom, 180) // ruang panel bawah
                             .frame(maxWidth: .infinity)
                             .contentShape(Rectangle())
                         }
+                        .padding(.horizontal, 12)
                     }
-                    
-                    // 4) Kartu “My Saving” (modular component)
+
+                    // 2) Kartu “My Saving”
                     VStack {
                         Spacer()
                         HStack {
@@ -94,34 +99,40 @@ struct GoalView: View {
                                 totalSaving: vm.formattedTotalSaving
                             )
                             .onTapGesture {
-                                // Buka modal input saving
                                 savingAmountText = ""
                                 showSavingModal = true
                             }
                             Spacer()
                         }
                         .padding(.leading, 24)
-                        .padding(.bottom, 188) // ruang untuk panel bawah
+                        .padding(.bottom, 188)
                     }
 
-                    // 5) Panel Reward di bawah
+                    // 3) Panel Reward bawah
                     VStack {
                         Spacer()
-                        BottomItemSelectionView(items: vm.rewardViewItems) { item in
-                            // kalau claimable dari panel, tampilkan modal klaim juga
-                            if item.state == .claimable,
-                               let meta = vmRewardMeta(for: item) {
-                                vm.openClaim(for: meta, context: context)
+                        BottomItemSelectionView(viewModel: bottomItemsVM)
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 24)
+                            .onAppear {
+                                // Hook selection callback
+                                bottomItemsVM.onSelect = { item in
+                                    if item.state == .claimable,
+                                       let meta = vmRewardMeta(for: item) {
+                                        vm.openClaim(for: meta, context: context)
+                                    }
+                                }
+                                // Initial load and sync items
+                                vm.loadRewardsForView(context: context)
+                                bottomItemsVM.setItems(vm.rewardViewItems)
                             }
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 24)
-                        .onAppear {
-                            vm.loadRewardsForView(context: context)
-                        }
-                        .onChange(of: vm.passedSteps) { _ in
-                            vm.loadRewardsForView(context: context)
-                        }
+                            .onChange(of: vm.passedSteps) { _ in
+                                vm.loadRewardsForView(context: context)
+                                bottomItemsVM.setItems(vm.rewardViewItems)
+                            }
+                            .onChange(of: vm.rewardViewItems) { newItems in
+                                bottomItemsVM.setItems(newItems)
+                            }
                     }
                 }
                 .padding(20)
@@ -129,7 +140,7 @@ struct GoalView: View {
             .padding(.horizontal, 20)
             .padding(.top, 20)
             .padding(.bottom, 40)
-            
+
             // Modal Set Goal
             if vm.showGoalModal {
                 CenteredModal(isPresented: $vm.showGoalModal) {
@@ -144,6 +155,9 @@ struct GoalView: View {
                             vm: vm,
                             onDone: {
                                 vm.saveGoal(context: context)
+                                // Segera refresh reward dan sinkronkan ke panel bawah
+                                vm.loadRewardsForView(context: context)
+                                bottomItemsVM.setItems(vm.rewardViewItems)
                                 vm.closeModal()
                             },
                             onBack: { vm.activeStep = 1 }
@@ -163,26 +177,25 @@ struct GoalView: View {
                         onClaim: {
                             vm.confirmClaim(context: context)
                             vm.loadRewardsForView(context: context)
+                            bottomItemsVM.setItems(vm.rewardViewItems)
                         }
                     )
                 }
                 .zIndex(3)
             }
-            
+
             // Modal Input Saving
             if showSavingModal {
                 CenteredModal(isPresented: $showSavingModal) {
                     SavingInputModalView(
                         title: "Add Saving",
                         amountText: $savingAmountText,
-                        onCancel: {
-                            showSavingModal = false
-                        },
+                        onCancel: { showSavingModal = false },
                         onSave: { amount in
-                            // Perbaikan: jangan double-increment totalSaving
                             vm.applySaving(amount: amount)
                             showSavingModal = false
                             vm.loadRewardsForView(context: context)
+                            bottomItemsVM.setItems(vm.rewardViewItems)
                         }
                     )
                 }
@@ -192,21 +205,22 @@ struct GoalView: View {
         .onAppear {
             vm.updateGoals(goals)
             vm.loadRewardsForView(context: context)
+            bottomItemsVM.setItems(vm.rewardViewItems)
         }
         .onChange(of: goals) { newGoals in
             vm.updateGoals(newGoals)
             vm.loadRewardsForView(context: context)
+            bottomItemsVM.setItems(vm.rewardViewItems)
         }
     }
 
-    // Helper untuk mencari RewardMeta dari item panel
+    // Helper: cari RewardMeta dari item panel
     private func vmRewardMeta(for item: RewardViewData) -> RewardMeta? {
-        // mapping sederhana: cari berdasarkan id
         let catalog = RewardCatalog.rewards(forTotalSteps: vm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
     }
 }
 
 #Preview {
-    GoalView()
+    GoalView() // sekarang aman; punya init() custom
 }

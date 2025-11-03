@@ -8,12 +8,9 @@
 import SwiftUI
 
 struct GoalModalStep2View: View {
-    @ObservedObject var vm = GoalViewModel()
+    @ObservedObject var vm: GoalViewModel
     var onDone: () -> Void
     var onBack: () -> Void
-
-//    @State private var selectedDays: Set<Int> = []
-//    @State private var amountText = ""
 
     private let days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
     private let goalOrange = Color(red: 0.91, green: 0.55, blue: 0.30)
@@ -115,7 +112,8 @@ struct GoalModalStep2View: View {
 }
 
 #Preview {
-    GoalModalStep2View(onDone: {}, onBack: {})
+    GoalModalStep2View(vm: GoalViewModel(), onDone: {}, onBack: {})
         .padding()
         .background(Color.gray.opacity(0.15))
 }
+

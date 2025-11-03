@@ -9,14 +9,9 @@ import SwiftUI
 import PhotosUI
 
 struct GoalModalStep1View: View {
-    @ObservedObject var vm = GoalViewModel()
+    @ObservedObject var vm: GoalViewModel
     var onNext: () -> Void
     var onClose: () -> Void
-    
-//    @State private var goalName = ""
-//    @State private var priceText = ""
-//    @State private var selectedItem: PhotosPickerItem? = nil
-//    @State private var selectedImage: UIImage? = nil
     
     private let goalOrange = Color(red: 0.91, green: 0.55, blue: 0.30)
     private let cardMint   = Color(red: 0.83, green: 0.95, blue: 0.90)
@@ -123,9 +118,9 @@ struct GoalModalStep1View: View {
     }
 }
 
-
 #Preview {
-    GoalModalStep1View(onNext: {}, onClose: {})
+    GoalModalStep1View(vm: GoalViewModel(), onNext: {}, onClose: {})
         .padding()
         .background(Color.gray.opacity(0.15))
 }
+
