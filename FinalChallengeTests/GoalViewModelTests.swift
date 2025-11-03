@@ -10,7 +10,7 @@ import UIKit
 @testable import FinalChallenge
 
 @Suite("All Case")
-struct FinalChallengeTests {
+struct GoalViewModelTests {
 
     @Suite("Positive Cases")
     struct GoalViewModelPositiveTests {
