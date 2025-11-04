@@ -1,10 +1,3 @@
-//
-//  BottomClaimModalView.swift
-//  FinalChallenge
-//
-//  Created by Assistant on 01/11/25.
-//
-
 import SwiftUI
 
 struct BottomClaimModalView: View {

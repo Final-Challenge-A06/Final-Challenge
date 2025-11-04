@@ -17,12 +17,30 @@ struct GoalModalStep2View: View {
     private let cardMint   = Color(red: 0.83, green: 0.95, blue: 0.90)
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack(alignment: .center) {
+            Image("modal")
+            
             VStack(alignment: .leading, spacing: 22) {
-                Text("Pick your saving days").font(.title2.bold())
+                HStack {
+                    Button(action: { onBack() }) {
+                        Image(systemName: "chevron.left")
+                            .resizable()
+                            .frame(width: 10, height: 18)
+                            .bold()
+                            .foregroundStyle(Color.black)
+                        
+                        Text("Back")
+                            .font(Font.custom("audiowide", size: 20))
+                            .foregroundStyle(Color.black)
+                    }
+                }
+                
+                Spacer()
+                
+                Text("Pick your saving days").font(.custom("audiowide", size: 24))
 
                 VStack(spacing: 18) {
-                    HStack(spacing: 18) {
+                    HStack(spacing: 40) {
                         ForEach(days.prefix(4), id: \.self) { day in
                             DayChipView(
                                 title: day,
@@ -31,9 +49,8 @@ struct GoalModalStep2View: View {
                             ) { toggle(day) }
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .center)
 
-                    HStack(spacing: 18) {
+                    HStack(spacing: 40) {
                         ForEach(days.suffix(3), id: \.self) { day in
                             DayChipView(
                                 title: day,
@@ -42,10 +59,12 @@ struct GoalModalStep2View: View {
                             ) { toggle(day) }
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .center)
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
+                
+                Spacer()
 
-                Text("How much will you save each time?").font(.headline)
+                Text("How much will you save each time?").font(.custom("audiowide", size: 24))
 
                 TextField("e.g., 180000", text: $vm.amountText)
                     .keyboardType(.numberPad)
@@ -55,51 +74,26 @@ struct GoalModalStep2View: View {
                     }
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(.white, in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(.black.opacity(0.08)))
+                
+                Spacer()
 
                 HStack(spacing: 16) {
-                    Button(action: { onBack() }) {
-                        Text("Back")
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(.white)
-                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(.black.opacity(0.10)))
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
-                    }
+                    Spacer()
                     
                     Button(action: { onDone() }) {
-                        Text("Done")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .foregroundStyle(.black)
-                            .background(goalOrange)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        Image(systemName: "arrow.right")
+                            .foregroundStyle(Color.black)
+                            .padding(16)
+                            .background(.yellow.opacity(0.6), in: Circle())
                             .disabled(!vm.isStep2Valid)
                     }
+                    
+                    Spacer()
                 }
-                .padding(.top, 4)
             }
-            .padding(20)
-            .background(cardMint)
-            .clipShape(RoundedRectangle(cornerRadius: 22))
-            .overlay(RoundedRectangle(cornerRadius: 22).stroke(.black.opacity(0.08)))
-            .shadow(color: .black.opacity(0.08), radius: 12, y: 8)
-            .frame(width: 560)
-
-            Button {
-                onBack()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.black.opacity(0.7))
-                    .padding(8)
-                    .background(.white, in: Circle())
-                    .shadow(radius: 2)
-            }
-            .buttonStyle(.plain)
-            .padding(10)
+            .frame(width: 480,  height: 550)
         }
+        .frame(width: 632, height: 700)
     }
 
     private func toggle(_ day: String) {
