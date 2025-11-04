@@ -93,4 +93,21 @@ struct StreakManagerTests {
         
         #expect(manager.currentStreak == 3)
     }
+    
+    @MainActor
+    @Test("RecordSaving only adds to the streak once a day even if called multiple times")
+    func testRecordSavingOncePerDay() async throws {
+        let mockDefaults = MockUserDefaults()
+        let manager = StreakManager(defaults: mockDefaults)
+        let selectedDays = ["Mon", "Wed", "Fri"]
+        
+        manager.recordSaving(for: selectedDays)
+        let first = mockDefaults.integer(forKey: "current_streak")
+        
+        manager.recordSaving(for: selectedDays)
+        let second = mockDefaults.integer(forKey: "current_streak")
+        
+        #expect(first == second, "Streak tidak boleh bertambah dua kali di hari yang sama")
+        #expect(first == 1, "Streak pertama kali harus mulai dari 1")
+    }
 }

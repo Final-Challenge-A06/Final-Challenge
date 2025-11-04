@@ -26,7 +26,7 @@ final class StreakManager {
     
     // Dipanggil setiap kali device ngirim trigger nabung
     func recordSaving(for selectedDays: [String]) {
-        print("STREAK SEKARANG", currentStreak)
+        print("STREAK SEKARANG - RS", currentStreak)
         
         let today = calendar.startOfDay(for: Date())
         let todayName = weekdayString(from: today)
@@ -48,12 +48,12 @@ final class StreakManager {
         defaults.set(today, forKey: lastSaveKey)
         defaults.set(today, forKey: lastCheckKey)
         print("Nabung: (\(todayName)) -> streak \(newStreak)")
-        print("STREAK SETELAH JALAN", currentStreak)
+        print("STREAK SETELAH JALAN - RS", currentStreak)
     }
     
     // Buat cek apakah miss nabung saat today sesuai dengan schedule nabung
     func evaluateMissedDay(for scheduledDays: [String]) {
-        print("STREAK SEKARANG", currentStreak)
+        print("STREAK SEKARANG - EMD", currentStreak)
         
         let today = calendar.startOfDay(for: Date())
         let todayName = weekdayString(from: today)
@@ -67,12 +67,12 @@ final class StreakManager {
         if scheduledDays.contains(todayName),
            let lastSave = defaults.object(forKey: lastSaveKey) as? Date,
            !calendar.isDateInToday(lastSave) {
-            print("Hari \(todayName) jadwal nabung tapi belum nabung -> streak reset")
+            print("Hari \(todayName) jadwal nabung tapi belum nabung")
             defaults.set(0, forKey: streakKey)
         }
         defaults.set(today, forKey: lastCheckKey)
         
-        print("STREAK SETELAH JALAN", currentStreak)
+        print("STREAK SETELAH JALAN - EMD", currentStreak)
     }
     
     func weekdayString(from date: Date) -> String {

@@ -29,6 +29,15 @@ final class BLEViewModel: ObservableObject {
     
     
     private let mgr = BLEManager()
+    private let streakManager = StreakManager()
+    private let goalVM: GoalViewModel
+    private var lastBalance: Int64 = 0
+
+    init(goalVM: GoalViewModel? = nil) {
+        self.goalVM = goalVM ?? GoalViewModel()
+        setupCallbacks()
+        streakCount = streakManager.currentStreak
+        dailyCheck()
     private var isActionBusy = false
     private var pendingPeripheral: CBPeripheral?
     
@@ -102,6 +111,34 @@ final class BLEViewModel: ObservableObject {
             self.handleLongValue(data)
         }
     }
+
+    // MARK: Handle data from device
+    private func handleIncoming(data: Data) {
+        if data.count == MemoryLayout<UInt32>.size {
+            let newBalanceRaw = data.withUnsafeBytes { $0.load(as: UInt32.self) }
+            let newBalance = UInt32(littleEndian: newBalanceRaw)
+            print("Saldo baru dari device:", newBalance)
+            
+            if Int64(newBalance) > lastBalance {
+                print("Saldo naik dari \(lastBalance) ke \(newBalance) - trigger streak")
+                let days = self.goalVM.savingDaysArray
+                self.streakManager.recordSaving(for: days)
+                DispatchQueue.main.async {
+                    self.streakCount = self.streakManager.currentStreak
+                }
+            }
+            
+            lastBalance = Int64(newBalance)
+            return
+        }
+        if let s = String(data: data, encoding: .utf8), !s.isEmpty {
+            self.incomingText = s
+            print("Notified UTF8:", s)
+        } else {
+            let hex = data.map { String(format: "%02X", $0) }.joined(separator: " ")
+            self.incomingText = hex
+            print("Notified HEX:", hex)
+        }
     
     func tapSetup() {
         guard let p = pendingPeripheral, !isActionBusy else { return }
@@ -133,6 +170,11 @@ final class BLEViewModel: ObservableObject {
         mgr.writeString(text)
     }
     
+    // MARK: Function daily check streak
+    func dailyCheck() {
+        streakManager.evaluateMissedDay(for: goalVM.savingDaysArray)
+        streakCount = streakManager.currentStreak
+        print("STREAK SEKARANG", streakCount)
     func tryReconnectOnLaunch() {
         if let id = loadLastPeripheralID(),
            let found = mgr.retrievePeripherals(with: [id]).first {
