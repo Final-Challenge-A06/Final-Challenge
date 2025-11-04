@@ -66,7 +66,7 @@ final class GoalViewModel: ObservableObject {
         return nf
     }()
 
-    // MARK: - Public computed accessors
+    // MARK: - Getter Setter
     var goalName: String {
         get { _goalName }
         set {
@@ -89,6 +89,10 @@ final class GoalViewModel: ObservableObject {
             _amountText = Int(newValue) ?? 0
             validateStep2()
         }
+    }
+    
+    var savingDaysArray: [String] {
+        Array(selectedDays)
     }
     
     // MARK: - Validation Logic
