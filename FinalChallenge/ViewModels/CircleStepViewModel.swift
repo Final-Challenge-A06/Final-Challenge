@@ -24,7 +24,7 @@ final class CircleStepViewModel: ObservableObject {
         calculateSteps()
     }
 
-    func update(totalSteps: Int, passedSteps: Int) {
+    func updateSteps(totalSteps: Int, passedSteps: Int) {
         guard self.totalSteps != totalSteps || self.passedSteps != passedSteps else { return }
         self.totalSteps = totalSteps
         self.passedSteps = passedSteps

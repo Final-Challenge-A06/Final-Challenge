@@ -8,22 +8,10 @@
 import SwiftUI
 
 struct SetGoalView: View {
-    
-    var onTap: () -> Void = {}
-    
     var body: some View {
         ZStack {
-            Circle()
-                .fill(Color.yellow)
-                .frame(width: 320, height: 320)
-            
-            VStack(spacing: 8) {
-                Text("Set").font(.largeTitle.bold())
-                Text("Goal").font(.largeTitle.bold())
-            }
+            Image("set_goal")
         }
-        .contentShape(Rectangle())
-        .onTapGesture { onTap() }
     }
 }
 

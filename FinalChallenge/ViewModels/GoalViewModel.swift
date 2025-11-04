@@ -39,7 +39,7 @@ final class GoalViewModel: ObservableObject {
 
     // MARK: - Reward Claim Modal
     @Published var showClaimModal: Bool = false
-    @Published private(set) var pendingClaim: RewardMeta? = nil
+    @Published private(set) var pendingClaim: RewardModel? = nil
     
     // MARK: - Steps Output untuk UI
     // Ambil dari GoalModel.totalSteps (fallback 0 jika belum ada goal)
@@ -50,8 +50,8 @@ final class GoalViewModel: ObservableObject {
     private var latestGoal: GoalModel? = nil
 
     // MARK: - Rewards (SwiftData)
-    @Published private(set) var rewardViewItems: [RewardViewData] = []
-    private var rewardCatalog: [RewardMeta] = []
+    @Published private(set) var rewardViewItems: [RewardState] = []
+    private var rewardCatalog: [RewardModel] = []
     
     // MARK: - Saving (in-memory for now)
     @Published private(set) var totalSaving: Int = 0
@@ -180,7 +180,7 @@ final class GoalViewModel: ObservableObject {
         showClaimModal = true
     }
 
-    func openClaim(for meta: RewardMeta, context: ModelContext) {
+    func openClaim(for meta: RewardModel, context: ModelContext) {
         guard meta.step <= passedSteps else { return }
         let alreadyClaimed = fetchRewardEntity(id: meta.id, context: context)?.claimed == true
         guard !alreadyClaimed else { return }
@@ -222,14 +222,14 @@ final class GoalViewModel: ObservableObject {
         let entities = fetchAllRewards(context: context)
         rewardViewItems = rewardCatalog.map { meta in
             if let ent = entities.first(where: { $0.id == meta.id }) {
-                return RewardViewData(
+                return RewardState(
                     id: ent.id,
                     title: ent.title,
                     imageName: ent.imageName,
                     state: ent.claimed ? .claimed : (meta.step <= passedSteps ? .claimable : .locked)
                 )
             } else {
-                return RewardViewData(
+                return RewardState(
                     id: meta.id,
                     title: meta.title,
                     imageName: meta.imageName,

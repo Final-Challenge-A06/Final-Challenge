@@ -5,24 +5,19 @@ struct SavingCardView: View {
     let totalSaving: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 12) {
             Text(title)
-                .font(.system(size: 28, weight: .heavy, design: .rounded))
+                .font(.custom("Audiowide", size: 32))
                 .foregroundStyle(.white)
             Text(totalSaving)
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.9))
+                .font(.custom("Audiowide", size: 32))
+                .foregroundStyle(.white)
         }
         .padding(.horizontal, 24)
-        .padding(.vertical, 20)
+        .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51).opacity(0.9))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22)
-                        .stroke(Color.white, lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 6)
+            RoundedRectangle(cornerRadius: 34, style: .continuous)
+                .fill(.ultraThinMaterial)
         )
     }
 }

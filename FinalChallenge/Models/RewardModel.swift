@@ -1,6 +1,7 @@
 import Foundation
+import SwiftData
 
-struct RewardMeta: Identifiable, Equatable {
+struct RewardModel: Identifiable, Equatable {
     let id: String
     let step: Int
     let title: String
@@ -8,10 +9,10 @@ struct RewardMeta: Identifiable, Equatable {
 }
 
 enum RewardCatalog {
-    static func rewards(forTotalSteps totalSteps: Int) -> [RewardMeta] {
+    static func rewards(forTotalSteps totalSteps: Int) -> [RewardModel] {
         let totalStepsClamped = max(totalSteps, 1)
 
-        var metas: [RewardMeta] = []
+        var metas: [RewardModel] = []
 
         func imageName(for index: Int, isGoal: Bool) -> String {
             if isGoal { return "reward3" }
@@ -21,10 +22,10 @@ enum RewardCatalog {
             default: return "reward3"
             }
         }
-        
+
         if totalStepsClamped >= 1 {
             metas.append(
-                RewardMeta(
+                RewardModel(
                     id: "reward.step.1",
                     step: 1,
                     title: "Checkpoint 1",
@@ -32,13 +33,13 @@ enum RewardCatalog {
                 )
             )
         }
-        
+
         if totalStepsClamped >= 7 {
             var idx = 1
             var step = 7
             while step < totalStepsClamped {
                 metas.append(
-                    RewardMeta(
+                    RewardModel(
                         id: "reward.step.\(step)",
                         step: step,
                         title: "Checkpoint \(step)",
@@ -49,20 +50,59 @@ enum RewardCatalog {
                 step += 7
             }
         }
-        
+
         metas.append(
-            RewardMeta(
+            RewardModel(
                 id: "reward.step.goal",
                 step: totalStepsClamped,
                 title: "Goal Reward",
                 imageName: imageName(for: metas.count, isGoal: true)
             )
         )
-        
+
         if totalStepsClamped == 1 {
             return metas.filter { $0.id == "reward.step.goal" }
         }
 
         return metas
+    }
+}
+
+struct RewardState: Identifiable, Equatable {
+    enum State: Equatable {
+        case locked
+        case claimable
+        case claimed
+    }
+
+    let id: String
+    let title: String
+    let imageName: String
+    var state: State
+}
+
+@Model
+final class RewardEntity {
+    @Attribute(.unique) var id: String
+    var unlockedAtStep: Int
+    var imageName: String
+    var title: String
+    var claimed: Bool
+    var claimedAt: Date?
+
+    init(
+        id: String,
+        unlockedAtStep: Int,
+        imageName: String,
+        title: String,
+        claimed: Bool = false,
+        claimedAt: Date? = nil
+    ) {
+        self.id = id
+        self.unlockedAtStep = unlockedAtStep
+        self.imageName = imageName
+        self.title = title
+        self.claimed = claimed
+        self.claimedAt = claimedAt
     }
 }

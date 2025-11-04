@@ -33,7 +33,7 @@ struct BottomItemSelectionView: View {
     }
 
     @ViewBuilder
-    private func content(for item: RewardViewData) -> some View {
+    private func content(for item: RewardState) -> some View {
         switch viewModel.presentation(for: item) {
         case .claimed(let imageName):
             Image(uiImage: UIImage(named: imageName) ?? UIImage(systemName: "gift.fill")!)
@@ -60,7 +60,7 @@ struct BottomItemSelectionView: View {
 }
 
 #Preview {
-    let demoItems: [RewardViewData] = [
+    let demoItems: [RewardState] = [
         .init(id: "r1", title: "Glasses", imageName: "glasses", state: .claimed),
         .init(id: "r2", title: "Reward2", imageName: "reward2", state: .claimable),
         .init(id: "r3", title: "Reward3", imageName: "reward3", state: .locked),
