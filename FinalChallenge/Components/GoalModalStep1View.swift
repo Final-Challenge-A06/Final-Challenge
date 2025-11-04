@@ -13,15 +13,9 @@ struct GoalModalStep1View: View {
     var onNext: () -> Void
     var onClose: () -> Void
     
-    private let goalOrange = Color(red: 0.91, green: 0.55, blue: 0.30)
-    private let cardMint   = Color(red: 0.83, green: 0.95, blue: 0.90)
-    
     var body: some View {
         ZStack(alignment: .center) {
             Image("modal")
-                .resizable()
-                .scaledToFill()
-                .clipped()
             
             VStack(alignment: .leading, spacing: 16) {
                 Text("Name your dream thing").font(.custom("audiowide", size: 28))
@@ -62,8 +56,8 @@ struct GoalModalStep1View: View {
                             VStack(spacing: 8) {
                                 Image(systemName: "photo.on.rectangle")
                                     .foregroundColor(.black)
-                                Text("Choose Photo")
-                                    .font(.subheadline)
+                                Text("Select photos to upload")
+                                    .font(.custom("audiowide", size: 16))
                                     .foregroundColor(.black)
                             }
                         }
@@ -107,7 +101,7 @@ struct GoalModalStep1View: View {
                 }
                 
             }
-            .frame(width: 400)
+            .frame(width: 480)
         }
         .frame(width: 632, height: 700)
         .overlay(alignment: .topTrailing) {
