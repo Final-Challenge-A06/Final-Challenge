@@ -5,21 +5,18 @@ struct GoalView: View {
 
     @StateObject private var vm = GoalViewModel()
     @Environment(\.modelContext) private var context
-
-    // Penting: bikin init() sendiri agar tidak perlu 'init(goals:)'
+    
     @Query private var goals: [GoalModel]
     init() {
-        _goals = Query() // tanpa filter/sort; aman untuk preview & pemakaian umum
+        _goals = Query()
     }
 
-    // State untuk Saving Input Modal
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
-
-    // Bottom items view model
+    
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
+    @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
 
-    // Warna
     private let boardBackground = Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40)
     private let panelTeal        = Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51)
     private let panelOverlay     = Color.white.opacity(0.10)
@@ -28,8 +25,7 @@ struct GoalView: View {
     var body: some View {
         ZStack {
             boardBackground.ignoresSafeArea()
-
-            // Panel utama
+            
             ZStack {
                 RoundedRectangle(cornerRadius: 34, style: .continuous)
                     .fill(panelTeal)
@@ -39,58 +35,36 @@ struct GoalView: View {
                     )
                     .shadow(color: .black.opacity(0.25), radius: 20, x: 0, y: 12)
 
-                // Isi panel
                 ZStack {
-                    // 1) Scroll berisi tombol & stepping stones
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: 0) {
                             Button {
                                 vm.onCircleTap()
                             } label: {
-                                Text("Set New Goal")
-                                    .font(.system(size: 28, weight: .heavy, design: .rounded))
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 28)
-                                    .padding(.vertical, 16)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                            .fill(buttonGreen)
-                                            .shadow(color: .black.opacity(0.25), radius: 16, x: 0, y: 10)
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 22)
-                                            .stroke(Color.black.opacity(0.15), lineWidth: 1)
-                                    )
+                                SetGoalView()
                             }
-                            .buttonStyle(.plain)
-                            .padding(.top, 24)
-                            .padding(.bottom, 16)
 
                             CircleStepView(
-                                totalSteps: vm.totalSteps,
-                                passedSteps: vm.passedSteps
+                                viewModel: circleVM
                             ) { step in
-                                // 1) checkpoint/goal yang sudah dilewati → buka klaim
                                 if (step.isCheckpoint || step.isGoal), step.id <= vm.passedSteps {
                                     vm.tryOpenClaim(for: step.id, context: context)
                                     return
                                 }
-                                // 2) goal besar → buka modal set goal
+                                
                                 if step.isGoal {
                                     vm.onCircleTap()
                                     return
                                 }
-                                // 3) step biasa → no-op
                             }
                             .padding(.vertical, 60)
-                            .padding(.bottom, 180) // ruang panel bawah
+                            .padding(.bottom, 180)
                             .frame(maxWidth: .infinity)
                             .contentShape(Rectangle())
                         }
                         .padding(.horizontal, 12)
                     }
-
-                    // 2) Kartu “My Saving”
+                    
                     VStack {
                         Spacer()
                         HStack {
@@ -206,16 +180,26 @@ struct GoalView: View {
             vm.updateGoals(goals)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
+            // sync circle VM initial state
+            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
         .onChange(of: goals) { newGoals in
             vm.updateGoals(newGoals)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
+            // sync circle VM when goals change might affect totals
+            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+        }
+        .onChange(of: vm.totalSteps) { _ in
+            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+        }
+        .onChange(of: vm.passedSteps) { _ in
+            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
     }
 
     // Helper: cari RewardMeta dari item panel
-    private func vmRewardMeta(for item: RewardViewData) -> RewardMeta? {
+    private func vmRewardMeta(for item: RewardState) -> RewardModel? {
         let catalog = RewardCatalog.rewards(forTotalSteps: vm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
     }

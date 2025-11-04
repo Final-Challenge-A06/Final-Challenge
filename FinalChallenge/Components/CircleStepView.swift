@@ -1,23 +1,8 @@
 import SwiftUI
 
 struct CircleStepView: View {
-    @StateObject private var viewModel: CircleStepViewModel
-
-    // Callback untuk parent saat circle ditekan (hanya dipanggil jika unlocked)
+    @ObservedObject var viewModel: CircleStepViewModel
     var onTap: (StepDisplayModel) -> Void = { _ in }
-
-    private let totalSteps: Int
-    private let passedSteps: Int
-
-    init(totalSteps: Int, passedSteps: Int, onTap: @escaping (StepDisplayModel) -> Void = { _ in }) {
-        _viewModel = StateObject(wrappedValue: CircleStepViewModel(
-            totalSteps: totalSteps,
-            passedSteps: passedSteps
-        ))
-        self.totalSteps = totalSteps
-        self.passedSteps = passedSteps
-        self.onTap = onTap
-    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -49,24 +34,15 @@ struct CircleStepView: View {
             }
         }
         .frame(width: viewModel.requiredWidth)
-        // Sinkronkan perubahan props dari parent ke VM
-        .onChange(of: totalSteps) { newValue in
-            viewModel.update(totalSteps: newValue, passedSteps: passedSteps)
-        }
-        .onChange(of: passedSteps) { newValue in
-            viewModel.update(totalSteps: totalSteps, passedSteps: newValue)
-        }
     }
 }
 
 #Preview {
     ZStack {
-        Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40)
-            .ignoresSafeArea()
+        Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40).ignoresSafeArea()
         ScrollView {
             CircleStepView(
-                totalSteps: 9,
-                passedSteps: 2
+                viewModel: CircleStepViewModel(totalSteps: 9, passedSteps: 2)
             ) { step in
                 print("Tapped step:", step.id)
             }
@@ -74,4 +50,3 @@ struct CircleStepView: View {
         }
     }
 }
-

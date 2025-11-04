@@ -1,13 +1,7 @@
-//
-//  RewardCatalog.swift
-//  FinalChallenge
-//
-//  Created by Assistant on 01/11/25.
-//
-
 import Foundation
+import SwiftData
 
-struct RewardMeta: Identifiable, Equatable {
+struct RewardModel: Identifiable, Equatable {
     let id: String
     let step: Int
     let title: String
@@ -15,15 +9,10 @@ struct RewardMeta: Identifiable, Equatable {
 }
 
 enum RewardCatalog {
-    /// Menghasilkan daftar reward berdasarkan totalSteps:
-    /// - Checkpoint di step 1 (jika totalStepsClamped >= 1)
-    /// - Checkpoint tiap kelipatan 7 (kecuali step terakhir/goal)
-    /// - Goal di step terakhir
-    /// Selalu minimal ada 1 reward (goal) dengan step = max(totalSteps, 1).
-    static func rewards(forTotalSteps totalSteps: Int) -> [RewardMeta] {
+    static func rewards(forTotalSteps totalSteps: Int) -> [RewardModel] {
         let totalStepsClamped = max(totalSteps, 1)
 
-        var metas: [RewardMeta] = []
+        var metas: [RewardModel] = []
 
         func imageName(for index: Int, isGoal: Bool) -> String {
             if isGoal { return "reward3" }
@@ -34,10 +23,9 @@ enum RewardCatalog {
             }
         }
 
-        // 1) Checkpoint step 1 jika ada lebih dari 1 step
         if totalStepsClamped >= 1 {
             metas.append(
-                RewardMeta(
+                RewardModel(
                     id: "reward.step.1",
                     step: 1,
                     title: "Checkpoint 1",
@@ -46,13 +34,12 @@ enum RewardCatalog {
             )
         }
 
-        // 2) Checkpoint tiap kelipatan 7 yang kurang dari goal
         if totalStepsClamped >= 7 {
             var idx = 1
             var step = 7
             while step < totalStepsClamped {
                 metas.append(
-                    RewardMeta(
+                    RewardModel(
                         id: "reward.step.\(step)",
                         step: step,
                         title: "Checkpoint \(step)",
@@ -64,9 +51,8 @@ enum RewardCatalog {
             }
         }
 
-        // 3) Goal di step terakhir
         metas.append(
-            RewardMeta(
+            RewardModel(
                 id: "reward.step.goal",
                 step: totalStepsClamped,
                 title: "Goal Reward",
@@ -74,13 +60,49 @@ enum RewardCatalog {
             )
         )
 
-        // Jika totalStepsClamped == 1, di atas kita menambahkan step 1 (checkpoint)
-        // dan goal di step 1: itu berarti ada 2 entry dengan step sama. Umumnya
-        // kita ingin hanya goal untuk kasus 1 step. Deduplicate agar hanya goal:
         if totalStepsClamped == 1 {
             return metas.filter { $0.id == "reward.step.goal" }
         }
 
         return metas
+    }
+}
+
+struct RewardState: Identifiable, Equatable {
+    enum State: Equatable {
+        case locked
+        case claimable
+        case claimed
+    }
+
+    let id: String
+    let title: String
+    let imageName: String
+    var state: State
+}
+
+@Model
+final class RewardEntity {
+    @Attribute(.unique) var id: String
+    var unlockedAtStep: Int
+    var imageName: String
+    var title: String
+    var claimed: Bool
+    var claimedAt: Date?
+
+    init(
+        id: String,
+        unlockedAtStep: Int,
+        imageName: String,
+        title: String,
+        claimed: Bool = false,
+        claimedAt: Date? = nil
+    ) {
+        self.id = id
+        self.unlockedAtStep = unlockedAtStep
+        self.imageName = imageName
+        self.title = title
+        self.claimed = claimed
+        self.claimedAt = claimedAt
     }
 }
