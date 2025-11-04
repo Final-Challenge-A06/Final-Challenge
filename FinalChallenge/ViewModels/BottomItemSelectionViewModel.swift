@@ -9,33 +9,46 @@ import Foundation
 import Combine
 
 final class BottomItemSelectionViewModel: ObservableObject {
-    @Published private(set) var items: [RewardViewData] = []
+    @Published private(set) var items: [RewardState] = []
+    
+    var onSelect: ((RewardState) -> Void)?
 
-    /// Pangkal callback kalau parent ingin merespons (opsional)
-    var onSelect: ((RewardViewData) -> Void)?
-
-    init(items: [RewardViewData] = [], onSelect: ((RewardViewData) -> Void)? = nil) {
+    init(items: [RewardState] = [], onSelect: ((RewardState) -> Void)? = nil) {
         self.items = items
         self.onSelect = onSelect
     }
 
-    /// Inject / refresh data dari luar (misal dari GoalView)
-    func setItems(_ newItems: [RewardViewData]) {
+    func setItems(_ newItems: [RewardState]) {
         items = newItems
     }
-
-    /// Logic saat slot ditekan:
-    /// - claimable -> jadi claimed
-    /// - claimed / locked -> tetap (atau bisa tampilkan alert jika perlu)
-    func handleTap(on item: RewardViewData) {
+    
+    func handleTap(on item: RewardState) {
         guard let idx = items.firstIndex(of: item) else { return }
 
         switch items[idx].state {
         case .claimable:
             items[idx].state = .claimed
-            onSelect?(items[idx])              // beritahu parent
+            onSelect?(items[idx])
         case .claimed, .locked:
-            onSelect?(items[idx])              // tetap beritahu parent bila ingin
+            onSelect?(items[idx])
+        }
+    }
+    
+    enum RewardPresentation: Equatable {
+        case claimed(imageName: String)
+        case claimable
+        case locked
+    }
+
+    func presentation(for item: RewardState) -> RewardPresentation {
+        switch item.state {
+        case .claimed:
+            return .claimed(imageName: item.imageName)
+        case .claimable:
+            return .claimable
+        case .locked:
+            return .locked
         }
     }
 }
+
