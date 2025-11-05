@@ -7,7 +7,9 @@ struct GoalView: View {
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
 
+    @StateObject private var streakManager = StreakManager()
     @Environment(\.modelContext) private var context
+    @EnvironmentObject var bleVM: BLEViewModel
     
     @Query private var goals: [GoalModel]
     init() {
@@ -55,7 +57,35 @@ struct GoalView: View {
                         .padding(.horizontal, 12)
                     }
                     
+                    // Button complete goal
+                    if vm.passedSteps >= vm.totalSteps, vm.totalSteps > 0 {
+                        VStack(spacing: 20) {
+                            Text("Goal Complete!")
+                                .font(.title.bold())
+                                .foregroundColor(.white)
+                            
+                            Button {
+                                bleVM.sendResetToDevice()
+                                vm.resetProgress()
+                            } label: {
+                                Text("Take Your Money")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(buttonGreen)
+                                    .cornerRadius(18)
+                                    .shadow(radius: 4)
+                            }
+                            .padding(.horizontal, 40)
+                        }
+                        .padding(.bottom, 220)
+                    }
+                    
                     VStack {
+                        StreakView(streakManager: streakManager)
+                            .padding(.top, 10)
+                        Spacer()
                         HStack {
                             SavingCardView(
                                 title: "My Saving",

@@ -6,8 +6,9 @@
 //
 
 import Foundation
+import Combine
 
-final class StreakManager {
+final class StreakManager: ObservableObject {
     private let defaults:  UserDefaults
     private let calendar: Calendar
     private let streakKey = "current_streak"

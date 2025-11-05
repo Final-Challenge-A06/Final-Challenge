@@ -7,12 +7,14 @@
 
 import SwiftUI
 import CoreBluetooth
+import Combine
 
 struct BLETestView: View {
     @StateObject private var vm = BLEViewModel()
     @State private var showFindDevice = false
     @State private var showTrial = false
     @State private var showGoal = false
+    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
     
     var body: some View {
         ZStack {
@@ -167,7 +169,7 @@ struct BLETestView: View {
                 withAnimation(.spring()) { showFindDevice = show }
             }
             if vm.hasPairedOnce {
-                if UserDefaults.standard.bool(forKey: "hasCompletedTrial") {
+                if hasCompletedTrial {
                     showGoal = true
                 } else {
                     showTrial = true
@@ -181,7 +183,7 @@ struct BLETestView: View {
                 withAnimation(.spring()) { showFindDevice = true }
             case .connected:
                 withAnimation(.spring()) { showFindDevice = false }
-                if UserDefaults.standard.bool(forKey: "hasCompletedTrial") {
+                if hasCompletedTrial {
                     showGoal = true
                 } else {
                     showTrial = true
