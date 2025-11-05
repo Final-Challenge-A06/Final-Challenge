@@ -9,8 +9,8 @@ import SwiftUI
 
 struct TrialDeviceStep2View: View {
     @EnvironmentObject var vm: BLEViewModel
-    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     @State private var showReward = false
+    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
     private let zigzagNormal: CGFloat = 40
     
     var body: some View {
@@ -51,7 +51,10 @@ struct TrialDeviceStep2View: View {
                         .shadow(radius: 3)
                 }
                 .buttonStyle(.plain)
-                .onTapGesture { showReward = true }
+                .onTapGesture {
+                    hasCompletedTrial = true
+                    showReward = true
+                }
                 .offset(y: -430)
             }
             .frame(maxWidth: .infinity, alignment: .center)
@@ -72,9 +75,8 @@ struct TrialDeviceStep2View: View {
             }
             .frame(maxWidth: .infinity)
             
-            BottomItemSelectionView(viewModel: bottomItemsVM)
         }
-        .sheet(isPresented: $showReward) {
+        .fullScreenCover(isPresented: $showReward) {
             RewardClaimView(vm: vm)
                 .environmentObject(vm)
         }
