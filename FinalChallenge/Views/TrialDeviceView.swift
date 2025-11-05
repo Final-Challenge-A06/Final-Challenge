@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct TrialDeviceIntroView: View {
+    @ObservedObject var vm: BLEViewModel
     private let zigzagNormal: CGFloat = 40
+    @State private var showStep2 = false
     
     var body: some View {
         ZStack {
@@ -21,7 +23,7 @@ struct TrialDeviceIntroView: View {
                 Spacer(minLength: 40)
                 
                 Text("Fuel Up Bot With Cash")
-                    .font(.custom("Audiowide-Regular", size: 30))
+                    .font(.custom("Audiowide", size: 30))
                     .foregroundColor(.white)
                     .shadow(radius: 5)
                     .multilineTextAlignment(.center)
@@ -41,7 +43,7 @@ struct TrialDeviceIntroView: View {
                         Image("ss_before")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: isLarge ? 200 : 200)
+                            .frame(width: isLarge ? 225 : 225)
                             .offset(x: xOffset)
                     }
                 }
@@ -51,9 +53,20 @@ struct TrialDeviceIntroView: View {
             }
             .padding(.horizontal, 20)
         }
+        .onChange(of: vm.firstMoneyReceived) { _, gotFirst in
+                    if gotFirst { showStep2 = true }
+                }
+                .onAppear {
+                    if vm.lastBalance > 0 { showStep2 = true }
+                }
+                .fullScreenCover(isPresented: $showStep2) {
+                    TrialDeviceStep2View()
+                }
+                .environmentObject(vm)
     }
 }
 
 #Preview {
-    TrialDeviceIntroView()
+    TrialDeviceIntroView(vm: BLEViewModel())
+        .environmentObject(BLEViewModel())
 }
