@@ -11,6 +11,7 @@ struct TrialDeviceIntroView: View {
     @ObservedObject var vm: BLEViewModel
     private let zigzagNormal: CGFloat = 40
     @State private var showStep2 = false
+    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
     
     var body: some View {
         ZStack {
@@ -53,16 +54,25 @@ struct TrialDeviceIntroView: View {
             }
             .padding(.horizontal, 20)
         }
-        .onChange(of: vm.firstMoneyReceived) { _, gotFirst in
-                    if gotFirst { showStep2 = true }
-                }
-                .onAppear {
-                    if vm.lastBalance > 0 { showStep2 = true }
-                }
-                .fullScreenCover(isPresented: $showStep2) {
-                    TrialDeviceStep2View()
-                }
-                .environmentObject(vm)
+        .onChange(of: hasCompletedTrial) { _, done in
+            if done { showStep2 = true }
+        }
+        .onChange(of: vm.lastBalance) { _, newValue in
+            if newValue > 0 {
+                showStep2 = true
+                hasCompletedTrial = true
+            }
+        }
+        .onAppear {
+            if hasCompletedTrial || vm.lastBalance > 0 {
+                showStep2 = true
+                if vm.lastBalance > 0 { hasCompletedTrial = true }
+            }
+        }
+        .fullScreenCover(isPresented: $showStep2) {
+            TrialDeviceStep2View()
+        }
+        .environmentObject(vm)
     }
 }
 
