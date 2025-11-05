@@ -2,48 +2,38 @@ import SwiftUI
 import SwiftData
 
 struct GoalView: View {
-
+    
     @StateObject private var vm = GoalViewModel()
+    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
+    @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
+
     @Environment(\.modelContext) private var context
     
     @Query private var goals: [GoalModel]
     init() {
         _goals = Query()
     }
-
+    
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
+    @State private var isBottomVisible = true
     
-    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
-    @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
-
-    private let boardBackground = Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40)
-    private let panelTeal        = Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51)
-    private let panelOverlay     = Color.white.opacity(0.10)
-    private let buttonGreen      = Color(.sRGB, red: 0.73, green: 0.84, blue: 0.49)
-
     var body: some View {
         ZStack {
-            boardBackground.ignoresSafeArea()
+            Image("bg_main")
+                .resizable()
+                .ignoresSafeArea()
             
-            ZStack {
-                RoundedRectangle(cornerRadius: 34, style: .continuous)
-                    .fill(panelTeal)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 34)
-                            .stroke(panelOverlay, lineWidth: 2)
-                    )
-                    .shadow(color: .black.opacity(0.25), radius: 20, x: 0, y: 12)
-
-                ZStack {
+            VStack {
+                VStack {
                     ScrollView(.vertical, showsIndicators: false) {
-                        VStack(spacing: 0) {
+                        VStack() {
                             Button {
                                 vm.onCircleTap()
                             } label: {
                                 SetGoalView()
                             }
-
+                            
                             CircleStepView(
                                 viewModel: circleVM
                             ) { step in
@@ -66,7 +56,6 @@ struct GoalView: View {
                     }
                     
                     VStack {
-                        Spacer()
                         HStack {
                             SavingCardView(
                                 title: "My Saving",
@@ -78,16 +67,19 @@ struct GoalView: View {
                             }
                             Spacer()
                         }
-                        .padding(.leading, 24)
-                        .padding(.bottom, 188)
                     }
-
-                    // 3) Panel Reward bawah
-                    VStack {
-                        Spacer()
+                }
+                .frame(height: 1100)
+                .background(
+                    RoundedRectangle(cornerRadius: 34)
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.4)
+                )
+                
+                // 3) Panel Reward bawah
+                VStack {
+                    ZStack (alignment: .topLeading){
                         BottomItemSelectionView(viewModel: bottomItemsVM)
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 24)
                             .onAppear {
                                 // Hook selection callback
                                 bottomItemsVM.onSelect = { item in
@@ -107,14 +99,25 @@ struct GoalView: View {
                             .onChange(of: vm.rewardViewItems) { newItems in
                                 bottomItemsVM.setItems(newItems)
                             }
+                        
+                        Button {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                isBottomVisible.toggle()
+                            }
+                        } label: {
+                            Image(systemName: "book.closed.fill")
+                                .foregroundStyle(.white)
+                                .padding(12)
+                                .background(Color.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
-                .padding(20)
+                .padding(.vertical, 20)
+                .offset(y: isBottomVisible ? 0 : 100)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            .padding(.bottom, 40)
-
+            .padding(40)
+            
             // Modal Set Goal
             if vm.showGoalModal {
                 CenteredModal(isPresented: $vm.showGoalModal) {
@@ -140,7 +143,7 @@ struct GoalView: View {
                 }
                 .zIndex(2)
             }
-
+            
             // Modal Claim Reward
             if vm.showClaimModal, let meta = vm.pendingClaim {
                 CenteredModal(isPresented: $vm.showClaimModal) {
@@ -157,7 +160,7 @@ struct GoalView: View {
                 }
                 .zIndex(3)
             }
-
+            
             // Modal Input Saving
             if showSavingModal {
                 CenteredModal(isPresented: $showSavingModal) {
@@ -197,7 +200,7 @@ struct GoalView: View {
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
     }
-
+    
     // Helper: cari RewardMeta dari item panel
     private func vmRewardMeta(for item: RewardState) -> RewardModel? {
         let catalog = RewardCatalog.rewards(forTotalSteps: vm.totalSteps)

@@ -17,7 +17,7 @@ struct SavingCardView: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .fill(.thinMaterial.opacity(0.5))
         )
     }
 }
