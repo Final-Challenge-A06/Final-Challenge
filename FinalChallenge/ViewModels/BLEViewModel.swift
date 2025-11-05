@@ -172,7 +172,7 @@ final class BLEViewModel: ObservableObject {
     }
     
     // MARK: Handle data from device
-    private func handleIncoming(data: Data) {
+    func handleIncoming(data: Data) {
         if data.count == MemoryLayout<UInt32>.size {
             let newBalanceRaw = data.withUnsafeBytes { $0.load(as: UInt32.self) }
             let newBalance = UInt32(littleEndian: newBalanceRaw)
@@ -205,5 +205,13 @@ final class BLEViewModel: ObservableObject {
         streakManager.evaluateMissedDay(for: goalVM.savingDaysArray)
         streakCount = streakManager.currentStreak
         print("STREAK SEKARANG", streakCount)
+    }
+    
+    // MARK: Reset progress device
+    func sendResetToDevice() {
+        outText = "RESET"
+        mgr.writeString("RESET")
+        lastBalance = 0
+        print("Send RESET to device, local balance cleared")
     }
 }
