@@ -12,6 +12,7 @@ struct BLETestView: View {
     @StateObject private var vm = BLEViewModel()
     @State private var showFindDevice = false
     @State private var showTrial = false
+    @State private var showGoal = false
     
     var body: some View {
         ZStack {
@@ -31,7 +32,7 @@ struct BLETestView: View {
                 VStack(spacing: 8) {
                     if case .scanning = vm.state {
                         Text("SCANNING...")
-                            .font(.custom("Audiowide-Regular", size: 26))
+                            .font(.custom("Audiowide", size: 26))
                             .kerning(1)
                             .textCase(.uppercase)
                             .foregroundColor(.white)
@@ -39,18 +40,18 @@ struct BLETestView: View {
                         HStack(spacing: 8) {
                             ProgressView().tint(.white)
                             Text("Scanning nearby devices…")
-                                .font(.custom("Audiowide-Regular", size: 14))
+                                .font(.custom("Audiowide", size: 14))
                                 .foregroundColor(.white)
                         }
                     } else {
                         Text("NO \"BOT\" FOUND")
-                            .font(.custom("Audiowide-Regular", size: 26))
+                            .font(.custom("Audiowide", size: 26))
                             .kerning(1)
                             .textCase(.uppercase)
                             .foregroundColor(.white)
                         
                         Text("Activate your Bot and keep it close by")
-                            .font(.custom("Audiowide-Regular", size: 16))
+                            .font(.custom("Audiowide", size: 16))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
                     }
@@ -112,7 +113,7 @@ struct BLETestView: View {
                         .overlay(
                             VStack(spacing: 14) {
                                 Text(titleForModal)
-                                    .font(.custom("Audiowide-Regular", size: 24))
+                                    .font(.custom("Audiowide", size: 24))
                                     .foregroundColor(.white)
                                     .padding(.top, 60)
                                 
@@ -124,7 +125,7 @@ struct BLETestView: View {
                                 
                                 if !vm.connectedName.isEmpty && vm.connectedName != "-" {
                                     Text(vm.connectedName)
-                                        .font(.custom("Audiowide-Regular", size: 16))
+                                        .font(.custom("Audiowide-", size: 16))
                                         .foregroundColor(.white.opacity(0.9))
                                 }
                                 
@@ -166,7 +167,11 @@ struct BLETestView: View {
                 withAnimation(.spring()) { showFindDevice = show }
             }
             if vm.hasPairedOnce {
-                showTrial = true
+                if UserDefaults.standard.bool(forKey: "hasCompletedTrial") {
+                    showGoal = true
+                } else {
+                    showTrial = true
+                }
             }
         }
         .onDisappear { vm.onShowFindDevice = nil }
@@ -176,7 +181,11 @@ struct BLETestView: View {
                 withAnimation(.spring()) { showFindDevice = true }
             case .connected:
                 withAnimation(.spring()) { showFindDevice = false }
-                showTrial = true
+                if UserDefaults.standard.bool(forKey: "hasCompletedTrial") {
+                    showGoal = true
+                } else {
+                    showTrial = true
+                }
             case .failed:
                 withAnimation(.spring()) { showFindDevice = false }
             default:
@@ -184,7 +193,10 @@ struct BLETestView: View {
             }
         }
         .fullScreenCover(isPresented: $showTrial) {
-            TrialDeviceIntroView()
+            TrialDeviceIntroView(vm: vm)  
+        }
+        .fullScreenCover(isPresented: $showGoal) {
+            GoalView()
         }
     }
     
