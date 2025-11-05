@@ -299,5 +299,11 @@ final class GoalViewModel: ObservableObject {
         guard amount > 0 else { return }
         totalSaving += amount
     }
+    
+    // MARK: Reset saving progress after complete a goal
+    func resetProgress() {
+        totalSaving = 0
+        passedSteps = 0
+    }
 }
 
