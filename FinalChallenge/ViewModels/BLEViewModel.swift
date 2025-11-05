@@ -20,23 +20,24 @@ enum PairState: Equatable {
 @MainActor
 final class BLEViewModel: ObservableObject {
     @Published var state: PairState = .idle
-//    @Published var devices: [CBPeripheral] = []
-//    @Published var rssiMap: [UUID: NSNumber] = [:]
+    //    @Published var devices: [CBPeripheral] = []
+    //    @Published var rssiMap: [UUID: NSNumber] = [:]
     @Published var connectedName: String = "-"
     @Published var incomingText: String = ""
     @Published var outText: String = ""
     @Published var streakCount: Int = 0
     @Published var lastBalance: Int64 = 0
+    @Published var firstMoneyReceived: Bool = false
     
     var onShowFindDevice: ((Bool) -> Void)?
-
+    
     private let mgr = BLEManager()
     private var isActionBusy = false
     private var pendingPeripheral: CBPeripheral?
     private let targetKeyword = "esp32"
     private let streakManager = StreakManager()
     private let goalVM: GoalViewModel
-
+    
     init(goalVM: GoalViewModel? = nil) {
         self.goalVM = goalVM ?? GoalViewModel()
         setupCallbacks()
@@ -61,7 +62,7 @@ final class BLEViewModel: ObservableObject {
     var hasPairedOnce: Bool {
         UserDefaults.standard.bool(forKey: StoreKey.hasPairedOnce)
     }
-
+    
     private func setupCallbacks() {
         mgr.onStateChange = { [weak self] st in
             guard let self else { return }
@@ -113,7 +114,7 @@ final class BLEViewModel: ObservableObject {
             self.handleIncoming(data: data)
         }
     }
-
+    
     // MARK: - Intent
     func tapSetup() {
         guard let p = pendingPeripheral, !isActionBusy else { return }
@@ -185,6 +186,10 @@ final class BLEViewModel: ObservableObject {
                 DispatchQueue.main.async {
                     self.streakCount = self.streakManager.currentStreak
                 }
+            }
+            
+            if lastBalance == 0 && Int64(newBalance) > 0 {
+                DispatchQueue.main.async { self.firstMoneyReceived = true }
             }
             
             lastBalance = Int64(newBalance)
