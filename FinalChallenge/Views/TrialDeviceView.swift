@@ -9,6 +9,8 @@ import SwiftUI
 
 struct TrialDeviceIntroView: View {
     @ObservedObject var vm: BLEViewModel
+    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
+    
     private let zigzagNormal: CGFloat = 40
     @State private var showStep2 = false
     @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
@@ -20,9 +22,7 @@ struct TrialDeviceIntroView: View {
                 .scaledToFill()
                 .ignoresSafeArea()
             
-            VStack(spacing: 20) {
-                Spacer(minLength: 40)
-                
+            VStack() {
                 Text("Fuel Up Bot With Cash")
                     .font(.custom("Audiowide", size: 30))
                     .foregroundColor(.white)
@@ -44,13 +44,13 @@ struct TrialDeviceIntroView: View {
                         Image("ss_before")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: isLarge ? 225 : 225)
+                            .frame(width: 225)
                             .offset(x: xOffset)
                     }
                 }
-                .padding(.top, 16)
                 
-                Spacer()
+                BottomItemSelectionView(viewModel: bottomItemsVM)
+                    .padding(.horizontal, 30)
             }
             .padding(.horizontal, 20)
         }
