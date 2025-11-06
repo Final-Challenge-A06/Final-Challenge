@@ -11,17 +11,20 @@ import Combine
 final class BottomItemSelectionViewModel: ObservableObject {
     @Published private(set) var items: [RewardState] = []
     
-    var onSelect: ((RewardState) -> Void)?
+    var onSelect: ((RewardState) -> Void)? // Dipanggil saat item dipilih dari UI.
 
+    // Inisialisasi VM dengan daftar item awal dan callback seleksi.
     init(items: [RewardState] = [], onSelect: ((RewardState) -> Void)? = nil) {
         self.items = items
         self.onSelect = onSelect
     }
 
+    // Ganti seluruh daftar item yang ditampilkan.
     func setItems(_ newItems: [RewardState]) {
         items = newItems
     }
     
+    // Tangani tap: jika claimable ubah ke claimed lalu panggil callback; lainnya hanya panggil callback.
     func handleTap(on item: RewardState) {
         guard let idx = items.firstIndex(of: item) else { return }
 
@@ -40,6 +43,7 @@ final class BottomItemSelectionViewModel: ObservableObject {
         case locked
     }
 
+    // Petakan item ke bentuk presentasi UI (claimed/claimable/locked).
     func presentation(for item: RewardState) -> RewardPresentation {
         switch item.state {
         case .claimed:

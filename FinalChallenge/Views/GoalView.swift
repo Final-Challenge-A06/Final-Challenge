@@ -87,7 +87,7 @@ struct GoalView: View {
                         .padding(.bottom, 220)
                     }
                     
-                    VStack {
+                    ZStack (alignment: .trailing) {
                         if let streakManager = streakManagerHolder.manager {
                             StreakView(streakManager: streakManager)
                                 .padding(.top, 10)
