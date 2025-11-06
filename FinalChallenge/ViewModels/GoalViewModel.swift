@@ -10,17 +10,6 @@ import PhotosUI
 import Combine
 import SwiftData
 
-protocol GoalSaving {
-    func insert(_ goal: GoalModel)
-    func save() throws
-}
-
-extension ModelContext: GoalSaving {
-    func insertGoal(_ goal: GoalModel) {
-        insert(goal)
-    }
-}
-
 @MainActor
 final class GoalViewModel: ObservableObject {
     // MARK: - Step 1 Fields
@@ -36,24 +25,24 @@ final class GoalViewModel: ObservableObject {
     // MARK: - Modal & Flow State
     @Published var showGoalModal: Bool = false
     @Published var activeStep: Int = 1
-
+    
     // MARK: - Reward Claim Modal
     @Published var showClaimModal: Bool = false
     @Published private(set) var pendingClaim: RewardModel? = nil
     
     // MARK: - Steps Output untuk UI
-    // Ambil dari GoalModel.totalSteps (fallback 0 jika belum ada goal)
     @Published private(set) var totalSteps: Int = 0
     @Published private(set) var passedSteps: Int = 0
     
-    // MARK: - Source data dari @Query (dioper dari View)
+    // MARK: - Source data dari @Query
     private var latestGoal: GoalModel? = nil
-
-    // MARK: - Rewards (SwiftData)
+    private var currentProgress: SavingProgressEntity?
+    
+    // MARK: - Rewards
     @Published private(set) var rewardViewItems: [RewardState] = []
     private var rewardCatalog: [RewardModel] = []
     
-    // MARK: - Saving (in-memory for now)
+    // MARK: - Saving
     @Published private(set) var totalSaving: Int = 0
     var formattedTotalSaving: String {
         numberFormatter.string(from: NSNumber(value: totalSaving)) ?? "\(totalSaving)"
@@ -65,13 +54,13 @@ final class GoalViewModel: ObservableObject {
         nf.decimalSeparator = ","
         return nf
     }()
-
+    
     // MARK: - Getter Setter
     var goalName: String {
         get { _goalName }
         set {
             _goalName = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            validateStep1()
+            validateStep1() // Validasi ulang Step 1 saat nama berubah.
         }
     }
     
@@ -79,7 +68,7 @@ final class GoalViewModel: ObservableObject {
         get { _priceText == 0 ? "" : "\(_priceText)" }
         set {
             _priceText = Int(newValue) ?? 0
-            validateStep1()
+            validateStep1() // Validasi ulang Step 1 saat target price berubah.
         }
     }
     
@@ -87,33 +76,36 @@ final class GoalViewModel: ObservableObject {
         get { _amountText == 0 ? "" : "\(_amountText)" }
         set {
             _amountText = Int(newValue) ?? 0
-            validateStep2()
+            validateStep2() // Validasi ulang Step 2 saat nominal per tabung berubah.
         }
     }
     
     var savingDaysArray: [String] {
-        Array(selectedDays)
+        Array(selectedDays) // Konversi Set hari ke Array untuk penyimpanan/UI.
     }
     
     // MARK: - Validation Logic
     @Published var isStep1Valid: Bool = false
     @Published var isStep2Valid: Bool = false
     
+    // Memvalidasi input Step 1 (nama, harga, dan gambar harus terisi).
     func validateStep1() {
         isStep1Valid = !goalName.trimmingCharacters(in: .whitespaces).isEmpty && _priceText > 0 && selectedImage != nil
     }
     
+    // Memvalidasi input Step 2 (hari dipilih dan nominal > 0).
     func validateStep2() {
         isStep2Valid = !selectedDays.isEmpty && _amountText > 0
     }
     
     // MARK: - Save Goal
-    func saveGoal(context: GoalSaving) {
+    // Menyimpan goal baru ke SwiftData dan membuat entitas progress awal.
+    func saveGoal(context: ModelContext) {
         guard !goalName.isEmpty,
               Int(priceText) != nil,
               Int(amountText) != nil,
               !selectedDays.isEmpty else {
-            print("Tidak bisa simpan, data belum lengkap")
+            print("❌ Tidak bisa simpan, data belum lengkap")
             return
         }
         
@@ -127,63 +119,119 @@ final class GoalViewModel: ObservableObject {
             amountPerSave: _amountText
         )
         context.insert(goal)
+        
         do {
             try context.save()
-            print("Berhasil simpan goal:", goal.name)
-            // Setelah simpan, jadikan goal ini sebagai latest dan update steps dari model
+            print("✅ Berhasil simpan goal:", goal.name)
+            
+            // Buat progress entity baru untuk goal ini
             latestGoal = goal
             totalSteps = goal.totalSteps
-            // Reset progress & saving ketika membuat goal baru
+            
+            let progressEntity = SavingProgressEntity(
+                goalID: goal.name,
+                totalSaving: 0,
+                passedSteps: 0
+            )
+            context.insert(progressEntity)
+            try context.save()
+            
+            currentProgress = progressEntity
             passedSteps = 0
             totalSaving = 0
-            // Refresh katalog reward sesuai totalSteps baru
+            
+            // Refresh katalog reward
             rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
         } catch {
-            print("Gagal simpan:", error.localizedDescription)
+            print("❌ Gagal simpan:", error.localizedDescription)
         }
     }
     
-    // MARK: - Logic dari View
-    func updateGoals(_ goals: [GoalModel]) {
+    // MARK: - Load Progress dari SwiftData
+    // Meload progress untuk goal tertentu; jika belum ada maka buat progress baru.
+    func loadProgress(for goal: GoalModel, context: ModelContext) {
+        let goalID = goal.name // Capture nilai agar rhs predicate bukan keypath.
+        let descriptor = FetchDescriptor<SavingProgressEntity>(
+            predicate: #Predicate { $0.goalID == goalID }
+        )
+        
+        do {
+            if let progress = try context.fetch(descriptor).first {
+                currentProgress = progress
+                totalSaving = progress.totalSaving
+                passedSteps = progress.passedSteps
+            } else {
+                let newProgress = SavingProgressEntity(goalID: goal.name)
+                context.insert(newProgress)
+                try context.save()
+                currentProgress = newProgress
+                totalSaving = 0
+                passedSteps = 0
+            }
+        } catch {
+            print("❌ Load progress failed:", error.localizedDescription)
+        }
+    }
+    
+    // MARK: - Save Progress ke SwiftData
+    // Menyimpan perubahan totalSaving/passedSteps ke entitas progress.
+    private func saveProgress(context: ModelContext) {
+        guard let progress = currentProgress else { return }
+        
+        progress.totalSaving = totalSaving
+        progress.passedSteps = passedSteps
+        progress.updatedAt = Date()
+        
+        do {
+            try context.save()
+            print("✅ Progress saved: totalSaving=\(totalSaving), passedSteps=\(passedSteps)")
+        } catch {
+            print("❌ Save progress failed:", error.localizedDescription)
+        }
+    }
+    
+    // MARK: - Update Goals
+    // Mengganti goal aktif dari @Query, meload progress bila berganti, dan refresh katalog reward.
+    func updateGoals(_ goals: [GoalModel], context: ModelContext) {
         let previousGoalId = latestGoal?.name
         latestGoal = goals.last
+        
         if let goal = latestGoal {
             totalSteps = goal.totalSteps
-            // Jika goal berubah (mis. user membuat goal baru), reset progress
+            
             if previousGoalId != goal.name {
-                passedSteps = 0
-                totalSaving = 0
-            } else {
-                // Jika goal sama, jaga konsistensi passedSteps terhadap totalSaving
-                recalcPassedStepsFromSaving()
+                loadProgress(for: goal, context: context) // Load progress jika goal berubah.
             }
         } else {
             totalSteps = 0
             passedSteps = 0
             totalSaving = 0
+            currentProgress = nil
         }
-
-        // refresh catalog & view items
-        rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
+        
+        rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps) // Refresh katalog reward.
     }
     
-    // Dipanggil oleh View untuk membuka modal goal
+    // MARK: - Circle Tap
+    // Membuka modal set goal pada Step 1 saat area lingkaran ditap.
     func onCircleTap() {
         activeStep = 1
         showGoalModal = true
     }
-
+    
     // MARK: - Reward Claim Flow
+    // Mencoba membuka modal klaim untuk step tertentu jika sudah lewat dan belum diklaim.
     func tryOpenClaim(for step: Int, context: ModelContext) {
         guard let meta = rewardCatalog.first(where: { $0.step == step }) else { return }
         guard step <= passedSteps else { return }
         let alreadyClaimed = fetchRewardEntity(id: meta.id, context: context)?.claimed == true
         guard !alreadyClaimed else { return }
-
+        
         pendingClaim = meta
         showClaimModal = true
     }
-
+    
+    // Membuka modal klaim untuk meta reward tertentu jika claimable dan belum diklaim.
     func openClaim(for meta: RewardModel, context: ModelContext) {
         guard meta.step <= passedSteps else { return }
         let alreadyClaimed = fetchRewardEntity(id: meta.id, context: context)?.claimed == true
@@ -191,7 +239,8 @@ final class GoalViewModel: ObservableObject {
         pendingClaim = meta
         showClaimModal = true
     }
-
+    
+    // Menandai reward sebagai diklaim di SwiftData dan menutup modal klaim.
     func confirmClaim(context: ModelContext) {
         guard let meta = pendingClaim else { return }
         if let existing = fetchRewardEntity(id: meta.id, context: context) {
@@ -216,12 +265,14 @@ final class GoalViewModel: ObservableObject {
         showClaimModal = false
         pendingClaim = nil
     }
-
+    
+    // Menutup modal klaim tanpa perubahan data.
     func cancelClaim() {
         showClaimModal = false
         pendingClaim = nil
     }
-
+    
+    // Menyusun daftar item reward untuk UI (locked/claimable/claimed) dari katalog+entitas.
     func loadRewardsForView(context: ModelContext) {
         let entities = fetchAllRewards(context: context)
         rewardViewItems = rewardCatalog.map { meta in
@@ -242,8 +293,9 @@ final class GoalViewModel: ObservableObject {
             }
         }
     }
-
+    
     // MARK: - SwiftData helpers
+    // Mengambil semua entitas RewardEntity dari database.
     private func fetchAllRewards(context: ModelContext) -> [RewardEntity] {
         do {
             let descriptor = FetchDescriptor<RewardEntity>()
@@ -253,7 +305,8 @@ final class GoalViewModel: ObservableObject {
             return []
         }
     }
-
+    
+    // Mengambil satu entitas RewardEntity berdasarkan id uniknya.
     private func fetchRewardEntity(id: String, context: ModelContext) -> RewardEntity? {
         do {
             let descriptor = FetchDescriptor<RewardEntity>(predicate: #Predicate { $0.id == id })
@@ -263,25 +316,24 @@ final class GoalViewModel: ObservableObject {
             return nil
         }
     }
-
+    
     // MARK: - Navigasi modal goal
+    // Pindah ke Step 2 pada modal set goal.
     func goToNextStep() { activeStep = 2 }
+    
+    /// Menutup modal set goal.
     func closeModal() { showGoalModal = false }
-
-    // MARK: - Progress update intents
-    func incrementPassedStep() {
-        passedSteps = min(passedSteps + 1, totalSteps)
+    
+    // MARK: - Progress update dengan SwiftData
+    // Menambah tabungan, hitung ulang step yang sudah lewat, lalu simpan progress.
+    func applySaving(amount: Int, context: ModelContext) {
+        guard amount > 0 else { return }
+        totalSaving += amount
+        recalcPassedStepsFromSaving()
+        saveProgress(context: context)
     }
     
-    // Perbaikan: progress berbasis akumulasi totalSaving dan amountPerSave
-    func applySaving(amount: Int) {
-        guard amount > 0 else { return }
-        // Tambah akumulasi saving
-        totalSaving += amount
-        // Hitung ulang passedSteps berdasarkan kelipatan amountPerSave
-        recalcPassedStepsFromSaving()
-    }
-
+    // Hitung ulang passedSteps berdasarkan totalSaving dan amountPerSave.
     private func recalcPassedStepsFromSaving() {
         guard let goal = latestGoal, goal.amountPerSave > 0 else {
             passedSteps = 0
@@ -293,17 +345,23 @@ final class GoalViewModel: ObservableObject {
             passedSteps = clamped
         }
     }
-
-    // MARK: - Saving intents (menambah totalSaving tanpa mempengaruhi step langsung)
-    func addSaving(amount: Int) {
-        guard amount > 0 else { return }
-        totalSaving += amount
-    }
     
-    // MARK: Reset saving progress after complete a goal
-    func resetProgress() {
+    // Reset progress tabungan ke nol dan simpan ke database.
+    func resetProgress(context: ModelContext) {
         totalSaving = 0
         passedSteps = 0
+        saveProgress(context: context)
+    }
+    
+    // MARK: - Update lastBalance ke SwiftData
+    // Menyimpan saldo terakhir (mis. dari perangkat) ke entitas progress.
+    func updateLastBalance(_ balance: Int64, context: ModelContext) {
+        guard let progress = currentProgress else { return }
+        progress.lastBalance = balance
+        do {
+            try context.save()
+        } catch {
+            print("❌ Update balance failed:", error.localizedDescription)
+        }
     }
 }
-

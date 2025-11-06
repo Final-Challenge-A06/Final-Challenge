@@ -9,6 +9,8 @@ import SwiftUI
 
 struct TrialDeviceStep2View: View {
     @EnvironmentObject var vm: BLEViewModel
+    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
+    
     @State private var showReward = false
     @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
     private let zigzagNormal: CGFloat = 40

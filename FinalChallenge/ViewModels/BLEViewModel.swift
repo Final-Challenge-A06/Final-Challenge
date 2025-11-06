@@ -8,6 +8,7 @@
 import Foundation
 import CoreBluetooth
 import Combine
+import SwiftData
 
 enum PairState: Equatable {
     case idle
@@ -20,8 +21,6 @@ enum PairState: Equatable {
 @MainActor
 final class BLEViewModel: ObservableObject {
     @Published var state: PairState = .idle
-    //    @Published var devices: [CBPeripheral] = []
-    //    @Published var rssiMap: [UUID: NSNumber] = [:]
     @Published var connectedName: String = "-"
     @Published var incomingText: String = ""
     @Published var outText: String = ""
@@ -35,21 +34,31 @@ final class BLEViewModel: ObservableObject {
     private var isActionBusy = false
     private var pendingPeripheral: CBPeripheral?
     private let targetKeyword = "esp32"
-    private let streakManager = StreakManager()
+    
+    // Context untuk SwiftData
+    private var context: ModelContext?
+    private var streakManager: StreakManager?
     private let goalVM: GoalViewModel
     
     init(goalVM: GoalViewModel? = nil) {
         self.goalVM = goalVM ?? GoalViewModel()
         setupCallbacks()
-        streakCount = streakManager.currentStreak
+    }
+    
+    // Set context dari View
+    func setContext(_ context: ModelContext) {
+        self.context = context
+        self.streakManager = StreakManager(context: context)
+        streakCount = streakManager?.currentStreak ?? 0
         dailyCheck()
     }
     
     private func norm(_ s: String) -> String {
         s.lowercased()
-            .replacingOccurrences(of: "’", with: "'")
+            .replacingOccurrences(of: "'", with: "'")
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
+    
     private func isRoboo(_ name: String) -> Bool {
         norm(name).contains(norm(targetKeyword))
     }
@@ -172,19 +181,19 @@ final class BLEViewModel: ObservableObject {
         return UUID(uuidString: s)
     }
     
-    // MARK: Handle data from device
+    // MARK: - Handle data from device
     func handleIncoming(data: Data) {
         if data.count == MemoryLayout<UInt32>.size {
             let newBalanceRaw = data.withUnsafeBytes { $0.load(as: UInt32.self) }
             let newBalance = UInt32(littleEndian: newBalanceRaw)
-            print("Saldo baru dari device:", newBalance)
+            print("💰 Saldo baru dari device:", newBalance)
             
             if Int64(newBalance) > lastBalance {
-                print("Saldo naik dari \(lastBalance) ke \(newBalance) - trigger streak")
+                print("📈 Saldo naik dari \(lastBalance) ke \(newBalance) - trigger streak")
                 let days = self.goalVM.savingDaysArray
-                self.streakManager.recordSaving(for: days)
+                self.streakManager?.recordSaving(for: days)
                 DispatchQueue.main.async {
-                    self.streakCount = self.streakManager.currentStreak
+                    self.streakCount = self.streakManager?.currentStreak ?? 0
                 }
             }
             
@@ -193,30 +202,36 @@ final class BLEViewModel: ObservableObject {
             }
             
             lastBalance = Int64(newBalance)
+            
+            // Update lastBalance ke SwiftData
+            if let ctx = context {
+                goalVM.updateLastBalance(lastBalance, context: ctx)
+            }
+            
             return
         }
         else {
             if let s = String(data: data, encoding: .utf8) {
                 incomingText = s
-                print("Received text: \(s)")
+                print("📩 Received text: \(s)")
             } else {
                 incomingText = data.map { String(format: "%02X", $0) }.joined(separator: " ")
             }
         }
     }
     
-    // MARK: Function daily check streak
+    // MARK: - Daily check streak
     func dailyCheck() {
-        streakManager.evaluateMissedDay(for: goalVM.savingDaysArray)
-        streakCount = streakManager.currentStreak
-        print("STREAK SEKARANG", streakCount)
+        streakManager?.evaluateMissedDay(for: goalVM.savingDaysArray)
+        streakCount = streakManager?.currentStreak ?? 0
+        print("🔥 STREAK SEKARANG:", streakCount)
     }
     
-    // MARK: Reset progress device
+    // MARK: - Reset progress device
     func sendResetToDevice() {
         outText = "RESET"
         mgr.writeString("RESET")
         lastBalance = 0
-        print("Send RESET to device, local balance cleared")
+        print("🔄 Send RESET to device, local balance cleared")
     }
 }
