@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 struct GoalView: View {
     
@@ -7,7 +8,8 @@ struct GoalView: View {
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
 
-    @StateObject private var streakManager = StreakManager()
+    // Defer creation until context is available
+    @StateObject private var streakManagerHolder = OptionalStreakManagerHolder()
     @Environment(\.modelContext) private var context
     @EnvironmentObject var bleVM: BLEViewModel
     
@@ -19,6 +21,9 @@ struct GoalView: View {
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
     @State private var isBottomVisible = true
+    
+    // Fallback color for the button if buttonGreen isn’t defined elsewhere
+    private let buttonGreen = Color.green.opacity(0.8)
     
     var body: some View {
         ZStack {
@@ -66,7 +71,7 @@ struct GoalView: View {
                             
                             Button {
                                 bleVM.sendResetToDevice()
-                                vm.resetProgress()
+                                vm.resetProgress(context: context)
                             } label: {
                                 Text("Take Your Money")
                                     .font(.headline)
@@ -83,8 +88,10 @@ struct GoalView: View {
                     }
                     
                     VStack {
-                        StreakView(streakManager: streakManager)
-                            .padding(.top, 10)
+                        if let streakManager = streakManagerHolder.manager {
+                            StreakView(streakManager: streakManager)
+                                .padding(.top, 10)
+                        }
                         Spacer()
                         HStack {
                             SavingCardView(
@@ -199,7 +206,7 @@ struct GoalView: View {
                         amountText: $savingAmountText,
                         onCancel: { showSavingModal = false },
                         onSave: { amount in
-                            vm.applySaving(amount: amount)
+                            vm.applySaving(amount: amount, context: context)
                             showSavingModal = false
                             vm.loadRewardsForView(context: context)
                             bottomItemsVM.setItems(vm.rewardViewItems)
@@ -210,14 +217,21 @@ struct GoalView: View {
             }
         }
         .onAppear {
-            vm.updateGoals(goals)
+            // Create StreakManager once when context is available
+            if streakManagerHolder.manager == nil {
+                streakManagerHolder.manager = StreakManager(context: context)
+            }
+            vm.updateGoals(goals, context: context)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
             // sync circle VM initial state
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+            
+            // Provide context to BLE VM (so it can manage streak too)
+//            bleVM.setContext(context)
         }
         .onChange(of: goals) { newGoals in
-            vm.updateGoals(newGoals)
+            vm.updateGoals(newGoals, context: context)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
             // sync circle VM when goals change might affect totals
@@ -236,6 +250,11 @@ struct GoalView: View {
         let catalog = RewardCatalog.rewards(forTotalSteps: vm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
     }
+}
+
+// Helper holder to allow optional @StateObject-like storage
+final class OptionalStreakManagerHolder: ObservableObject {
+    @Published var manager: StreakManager?
 }
 
 #Preview {
