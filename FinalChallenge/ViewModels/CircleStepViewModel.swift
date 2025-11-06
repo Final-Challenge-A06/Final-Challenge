@@ -18,12 +18,14 @@ final class CircleStepViewModel: ObservableObject {
         return max(sizeCheckpoint, zigzagWidth, sizeGoal)
     }
 
+    // Inisialisasi nilai awal dan langsung hitung model langkah untuk UI.
     init(totalSteps: Int, passedSteps: Int) {
         self.totalSteps = totalSteps
         self.passedSteps = passedSteps
         calculateSteps()
     }
 
+    // Update total/passed steps bila berubah lalu hitung ulang model langkah.
     func updateSteps(totalSteps: Int, passedSteps: Int) {
         guard self.totalSteps != totalSteps || self.passedSteps != passedSteps else { return }
         self.totalSteps = totalSteps
@@ -31,6 +33,7 @@ final class CircleStepViewModel: ObservableObject {
         calculateSteps()
     }
 
+    // Hitung daftar StepDisplayModel (ukuran, posisi, status) untuk ditampilkan melingkar.
     private func calculateSteps() {
         guard totalSteps > 0 else { steps = []; return }
 
@@ -66,3 +69,4 @@ final class CircleStepViewModel: ObservableObject {
         steps = result
     }
 }
+
