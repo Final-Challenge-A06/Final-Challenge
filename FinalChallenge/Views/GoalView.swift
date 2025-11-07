@@ -96,9 +96,10 @@ struct GoalView: View {
                         HStack {
                             SavingCardView(
                                 title: "My Saving",
-                                totalSaving: vm.formattedTotalSaving
+                                totalSaving: String(bleVM.lastBalance)
                             )
                             .onTapGesture {
+                                // Optional: kamu bisa tetap tampilkan modal, tapi tidak memengaruhi progress
                                 savingAmountText = ""
                                 showSavingModal = true
                             }
@@ -205,9 +206,10 @@ struct GoalView: View {
                         title: "Add Saving",
                         amountText: $savingAmountText,
                         onCancel: { showSavingModal = false },
-                        onSave: { amount in
-                            vm.applySaving(amount: amount, context: context)
+                        onSave: { _ in
+                            // Tidak lagi mengubah progress dari modal.
                             showSavingModal = false
+                            // Jika ingin, bisa tetap refresh UI, tapi tidak perlu mengubah vm.
                             vm.loadRewardsForView(context: context)
                             bottomItemsVM.setItems(vm.rewardViewItems)
                         }
@@ -226,21 +228,24 @@ struct GoalView: View {
             bottomItemsVM.setItems(vm.rewardViewItems)
             // sync circle VM initial state
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
-            
-            // Provide context to BLE VM (so it can manage streak too)
-//            bleVM.setContext(context)
         }
         .onChange(of: goals) { newGoals in
             vm.updateGoals(newGoals, context: context)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
-            // sync circle VM when goals change might affect totals
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
         .onChange(of: vm.totalSteps) { _ in
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
         .onChange(of: vm.passedSteps) { _ in
+            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+        }
+        // NEW: sinkronkan progress dari BLE (gunakan lastBalance kumulatif)
+        .onChange(of: bleVM.lastBalance) { _, newBalance in
+            vm.updateProgressFromBLEBalance(newBalance, context: context)
+            vm.loadRewardsForView(context: context)
+            bottomItemsVM.setItems(vm.rewardViewItems)
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
     }
@@ -260,3 +265,4 @@ final class OptionalStreakManagerHolder: ObservableObject {
 #Preview {
     GoalView() // sekarang aman; punya init() custom
 }
+

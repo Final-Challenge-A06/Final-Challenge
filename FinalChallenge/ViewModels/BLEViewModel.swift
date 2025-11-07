@@ -26,6 +26,7 @@ final class BLEViewModel: ObservableObject {
     @Published var outText: String = ""
     @Published var streakCount: Int = 0
     @Published var lastBalance: Int64 = 0
+    @Published var amount: Int64 = 0
     @Published var firstMoneyReceived: Bool = false
     
     var onShowFindDevice: ((Bool) -> Void)?
@@ -201,6 +202,12 @@ final class BLEViewModel: ObservableObject {
                 DispatchQueue.main.async { self.firstMoneyReceived = true }
             }
             
+            print("New balance:", newBalance)
+            print("Last balance:", lastBalance)
+            
+            amount = Int64(newBalance) - lastBalance
+            print("Current amount saving:", amount)
+            
             lastBalance = Int64(newBalance)
             
             // Update lastBalance ke SwiftData
@@ -229,9 +236,9 @@ final class BLEViewModel: ObservableObject {
     
     // MARK: - Reset progress device
     func sendResetToDevice() {
-        outText = "RESET"
-        mgr.writeString("RESET")
+        outText = "reset"
+        mgr.writeString("reset")
         lastBalance = 0
-        print("🔄 Send RESET to device, local balance cleared")
+        print("🔄 Send reset to device, local balance cleared")
     }
 }
