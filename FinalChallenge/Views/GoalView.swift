@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 struct GoalView: View {
     
@@ -7,7 +8,10 @@ struct GoalView: View {
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
 
+    // Defer creation until context is available
+    @StateObject private var streakManagerHolder = OptionalStreakManagerHolder()
     @Environment(\.modelContext) private var context
+    @EnvironmentObject var bleVM: BLEViewModel
     
     @Query private var goals: [GoalModel]
     init() {
@@ -17,6 +21,9 @@ struct GoalView: View {
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
     @State private var isBottomVisible = true
+    
+    // Fallback color for the button if buttonGreen isn’t defined elsewhere
+    private let buttonGreen = Color.green.opacity(0.8)
     
     var body: some View {
         ZStack {
@@ -55,13 +62,44 @@ struct GoalView: View {
                         .padding(.horizontal, 12)
                     }
                     
-                    VStack {
+                    // Button complete goal
+                    if vm.passedSteps >= vm.totalSteps, vm.totalSteps > 0 {
+                        VStack(spacing: 20) {
+                            Text("Goal Complete!")
+                                .font(.title.bold())
+                                .foregroundColor(.white)
+                            
+                            Button {
+                                bleVM.sendResetToDevice()
+                                vm.resetProgress(context: context)
+                            } label: {
+                                Text("Take Your Money")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(buttonGreen)
+                                    .cornerRadius(18)
+                                    .shadow(radius: 4)
+                            }
+                            .padding(.horizontal, 40)
+                        }
+                        .padding(.bottom, 220)
+                    }
+                    
+                    ZStack (alignment: .trailing) {
+                        if let streakManager = streakManagerHolder.manager {
+                            StreakView(streakManager: streakManager)
+                                .padding(.top, 10)
+                        }
+                        Spacer()
                         HStack {
                             SavingCardView(
                                 title: "My Saving",
-                                totalSaving: vm.formattedTotalSaving
+                                totalSaving: String(bleVM.lastBalance)
                             )
                             .onTapGesture {
+                                // Optional: kamu bisa tetap tampilkan modal, tapi tidak memengaruhi progress
                                 savingAmountText = ""
                                 showSavingModal = true
                             }
@@ -168,9 +206,10 @@ struct GoalView: View {
                         title: "Add Saving",
                         amountText: $savingAmountText,
                         onCancel: { showSavingModal = false },
-                        onSave: { amount in
-                            vm.applySaving(amount: amount)
+                        onSave: { _ in
+                            // Tidak lagi mengubah progress dari modal.
                             showSavingModal = false
+                            // Jika ingin, bisa tetap refresh UI, tapi tidak perlu mengubah vm.
                             vm.loadRewardsForView(context: context)
                             bottomItemsVM.setItems(vm.rewardViewItems)
                         }
@@ -180,23 +219,33 @@ struct GoalView: View {
             }
         }
         .onAppear {
-            vm.updateGoals(goals)
+            // Create StreakManager once when context is available
+            if streakManagerHolder.manager == nil {
+                streakManagerHolder.manager = StreakManager(context: context)
+            }
+            vm.updateGoals(goals, context: context)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
             // sync circle VM initial state
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
         .onChange(of: goals) { newGoals in
-            vm.updateGoals(newGoals)
+            vm.updateGoals(newGoals, context: context)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
-            // sync circle VM when goals change might affect totals
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
         .onChange(of: vm.totalSteps) { _ in
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
         .onChange(of: vm.passedSteps) { _ in
+            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+        }
+        // NEW: sinkronkan progress dari BLE (gunakan lastBalance kumulatif)
+        .onChange(of: bleVM.lastBalance) { _, newBalance in
+            vm.updateProgressFromBLEBalance(newBalance, context: context)
+            vm.loadRewardsForView(context: context)
+            bottomItemsVM.setItems(vm.rewardViewItems)
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
     }
@@ -208,6 +257,12 @@ struct GoalView: View {
     }
 }
 
+// Helper holder to allow optional @StateObject-like storage
+final class OptionalStreakManagerHolder: ObservableObject {
+    @Published var manager: StreakManager?
+}
+
 #Preview {
     GoalView() // sekarang aman; punya init() custom
 }
+

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct FinalChallengeApp: App {
@@ -13,5 +14,11 @@ struct FinalChallengeApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: [
+            GoalModel.self,
+            RewardEntity.self,
+            SavingProgressEntity.self,
+            StreakEntity.self
+        ])
     }
 }

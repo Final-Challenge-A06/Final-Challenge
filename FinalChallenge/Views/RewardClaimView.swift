@@ -5,6 +5,7 @@ struct RewardClaimView: View {
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     
     @Environment(\.dismiss) private var dismiss
+    @State private var showGoal = false
     
     var body: some View {
         ZStack {
@@ -42,7 +43,7 @@ struct RewardClaimView: View {
                             .offset(y: -75)
                         
                         Button {
-                            dismiss()
+                            showGoal = true
                         } label: {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 48, weight: .bold))
@@ -73,6 +74,9 @@ struct RewardClaimView: View {
             .padding(.bottom, 175),
             alignment: .bottomLeading
         )
+        .fullScreenCover(isPresented: $showGoal) {
+            GoalView()
+        }
     }
     
     private func formattedBalance(_ value: Double) -> String {
