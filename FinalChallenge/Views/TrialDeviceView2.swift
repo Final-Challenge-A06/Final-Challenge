@@ -10,7 +10,9 @@ import SwiftUI
 struct TrialDeviceStep2View: View {
     @EnvironmentObject var vm: BLEViewModel
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
+    
     @State private var showReward = false
+    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
     private let zigzagNormal: CGFloat = 40
     
     var body: some View {
@@ -46,26 +48,20 @@ struct TrialDeviceStep2View: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.horizontal, 20)
                 
-                VStack {
-                    HStack {
-                        SavingCardView(
-                            title: "My Saving",
-                            totalSaving: formattedBalance(vm.lastBalance)
-                        )
-                        .fixedSize()
-                        Spacer()
-                    }
-                    .padding(.leading, 80)
-                }
-                .frame(maxWidth: .infinity)
-                
                 BottomItemSelectionView(viewModel: bottomItemsVM)
-                    .padding(.horizontal, 50)
-                    .padding(.top, 50)
+                    .padding(.horizontal, 30)
+                    .offset(y: 350)
             }
-            .padding(.top, 550)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.horizontal, 20)
+            
+            SavingCardView(
+                title: "My Saving",
+                totalSaving: formattedBalance(vm.lastBalance)
+            )
+            .offset(x: -320, y: 330)
         }
-        .sheet(isPresented: $showReward) {
+        .fullScreenCover(isPresented: $showReward) {
             RewardClaimView(vm: vm)
                 .environmentObject(vm)
         }

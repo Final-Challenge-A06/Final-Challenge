@@ -15,21 +15,27 @@ final class GoalModel {
     var imageData: Data?
     var savingDays: [String]
     var amountPerSave: Int
+    var totalSaving: Int
+    var passedSteps: Int
     var totalSteps: Int {
         amountPerSave > 0 ? targetPrice / amountPerSave : 0
     }
 
     init(
-            name: String,
-            targetPrice: Int,
-            imageData: Data? = nil,
-            savingDays: [String],
-            amountPerSave: Int
-        ) {
-            self.name = name
-            self.targetPrice = targetPrice
-            self.imageData = imageData
-            self.savingDays = savingDays
-            self.amountPerSave = amountPerSave
-        }
+        name: String,
+        targetPrice: Int,
+        imageData: Data? = nil,
+        savingDays: [String],
+        amountPerSave: Int,
+        totalSaving: Int = 0,
+        passedSteps: Int = 0
+    ) {
+        self.name = name
+        self.targetPrice = targetPrice
+        self.imageData = imageData
+        self.savingDays = savingDays
+        self.amountPerSave = amountPerSave
+        self.totalSaving = totalSaving
+        self.passedSteps = passedSteps
+    }
 }

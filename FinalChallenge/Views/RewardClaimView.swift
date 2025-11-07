@@ -5,6 +5,7 @@ struct RewardClaimView: View {
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     
     @Environment(\.dismiss) private var dismiss
+    @State private var showGoal = false
     
     var body: some View {
         ZStack {
@@ -14,7 +15,6 @@ struct RewardClaimView: View {
                 .edgesIgnoringSafeArea(.all)
             
             VStack {
-                Spacer()
                 ZStack {
                     Image("rewardModal")
                         .resizable()
@@ -26,33 +26,29 @@ struct RewardClaimView: View {
                             .font(.custom("Audiowide", size: 26))
                             .foregroundColor(.white)
                             .shadow(radius: 3)
-                            .offset(y: -150)
                         
                         Text("3D GLASSES")
                             .font(.custom("Audiowide", size: 26))
                             .foregroundColor(.white)
                             .shadow(radius: 3)
-                            .offset(y: -100)
                         
                         Image("glasses")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 160)
                             .padding(.top, 4)
-                            .offset(y: -75)
                         
                         Button {
-                            dismiss()
+                            showGoal = true
                         } label: {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 48, weight: .bold))
                                 .foregroundColor(.yellow)
                                 .shadow(radius: 4)
                         }
-                        .offset(y: -75)
                         
                         BottomItemSelectionView(viewModel: bottomItemsVM)
-                            .offset(y: 300)
+                            .offset(y: 450)
                             .padding(.horizontal, 30)
                     }
                     .padding(.horizontal, 16)
@@ -69,10 +65,13 @@ struct RewardClaimView: View {
                 )
                 Spacer()
             }
-            .padding(.leading, 100)
-            .padding(.bottom, 175),
+            .padding(.leading, 80)
+            .padding(.bottom, 300),
             alignment: .bottomLeading
         )
+        .fullScreenCover(isPresented: $showGoal) {
+            GoalView()
+        }
     }
     
     private func formattedBalance(_ value: Double) -> String {
