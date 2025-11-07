@@ -2,6 +2,8 @@ import SwiftUI
 
 struct RewardClaimView: View {
     @ObservedObject var vm: BLEViewModel
+    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
+    
     @Environment(\.dismiss) private var dismiss
     @State private var showGoal = false
     
@@ -49,6 +51,10 @@ struct RewardClaimView: View {
                                 .shadow(radius: 4)
                         }
                         .offset(y: -75)
+                        
+                        BottomItemSelectionView(viewModel: bottomItemsVM)
+                            .offset(y: 300)
+                            .padding(.horizontal, 30)
                     }
                     .padding(.horizontal, 16)
                 }

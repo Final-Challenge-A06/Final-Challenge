@@ -21,13 +21,15 @@ enum PairState: Equatable {
 @MainActor
 final class BLEViewModel: ObservableObject {
     @Published var state: PairState = .idle
-    //    @Published var devices: [CBPeripheral] = []
-    //    @Published var rssiMap: [UUID: NSNumber] = [:]
     @Published var connectedName: String = "-"
     @Published var incomingText: String = ""
     @Published var outText: String = ""
     @Published var streakCount: Int = 0
     @Published var lastBalance: Int64 = 0
+
+    @Published var amount: Int64 = 0
+    @Published var firstMoneyReceived: Bool = false
+    @Published var streakManager: StreakManager?
     
     var onShowFindDevice: ((Bool) -> Void)?
     
@@ -35,25 +37,32 @@ final class BLEViewModel: ObservableObject {
     private var isActionBusy = false
     private var pendingPeripheral: CBPeripheral?
     private let targetKeyword = "esp32"
-    var streakManager: StreakManager?
-    private let goalVM: GoalViewModel
+//    var streakManager: StreakManager?
     
-    func setContext(_ context: ModelContext) {
-        if streakManager == nil { streakManager = StreakManager() }
-    }
+    private var context: ModelContext?
+    private let goalVM: GoalViewModel
     
     init(goalVM: GoalViewModel? = nil) {
         self.goalVM = goalVM ?? GoalViewModel()
         setupCallbacks()
         self.streakCount = self.streakManager?.currentStreak ?? 0
+    }
+    
+    // Set context dari View
+    func setContext(_ context: ModelContext) {
+//        if streakManager == nil { streakManager = StreakManager() }
+        self.context = context
+        self.streakManager = StreakManager(context: context)
+        streakCount = streakManager?.currentStreak ?? 0
         dailyCheck()
     }
     
     private func norm(_ s: String) -> String {
         s.lowercased()
-            .replacingOccurrences(of: "’", with: "'")
+            .replacingOccurrences(of: "'", with: "'")
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
+    
     private func isRoboo(_ name: String) -> Bool {
         norm(name).contains(norm(targetKeyword))
     }
@@ -176,37 +185,69 @@ final class BLEViewModel: ObservableObject {
         return UUID(uuidString: s)
     }
     
-    // MARK: Handle data from device
-    private func handleIncoming(data: Data) {
+    // MARK: - Handle data from device
+    func handleIncoming(data: Data) {
         if data.count == MemoryLayout<UInt32>.size {
             let newBalanceRaw = data.withUnsafeBytes { $0.load(as: UInt32.self) }
             let newBalance = UInt32(littleEndian: newBalanceRaw)
-            print("Saldo baru dari device:", newBalance)
+            print("💰 Saldo baru dari device:", newBalance)
             
             if Int64(newBalance) > lastBalance {
                 print("Saldo naik dari \(lastBalance) ke \(newBalance) - trigger streak")
                 let days = goalVM.savingDaysArray
                 streakManager?.recordSaving(for: days)
                 streakCount = streakManager?.currentStreak ?? streakCount
+                print("📈 Saldo naik dari \(lastBalance) ke \(newBalance) - trigger streak")
+//                let days = self.goalVM.savingDaysArray
+//                self.streakManager?.recordSaving(for: days)
+                DispatchQueue.main.async {
+                    self.streakCount = self.streakManager?.currentStreak ?? 0
+                }
             }
             
+            if lastBalance == 0 && Int64(newBalance) > 0 {
+                DispatchQueue.main.async { self.firstMoneyReceived = true }
+            }
+            
+            print("New balance:", newBalance)
+            print("Last balance:", lastBalance)
+            
+            amount = Int64(newBalance) - lastBalance
+            print("Current amount saving:", amount)
+            
             lastBalance = Int64(newBalance)
+            
+            // Update lastBalance ke SwiftData
+            if let ctx = context {
+                goalVM.updateLastBalance(lastBalance, context: ctx)
+            }
+            
             return
         }
         else {
             if let s = String(data: data, encoding: .utf8) {
                 incomingText = s
-                print("Received text: \(s)")
+                print("📩 Received text: \(s)")
             } else {
                 incomingText = data.map { String(format: "%02X", $0) }.joined(separator: " ")
             }
         }
     }
     
-    // MARK: Function daily check streak
+    // MARK: - Daily check streak
     func dailyCheck() {
         streakManager?.evaluateMissedDay(for: goalVM.savingDaysArray)
         streakCount = streakManager?.currentStreak ?? streakCount
         print("STREAK SEKARANG", streakCount)
+        streakCount = streakManager?.currentStreak ?? 0
+        print("🔥 STREAK SEKARANG:", streakCount)
+    }
+    
+    // MARK: - Reset progress device
+    func sendResetToDevice() {
+        outText = "reset"
+        mgr.writeString("reset")
+        lastBalance = 0
+        print("🔄 Send reset to device, local balance cleared")
     }
 }

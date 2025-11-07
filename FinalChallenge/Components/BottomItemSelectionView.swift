@@ -3,33 +3,57 @@ import SwiftUI
 struct BottomItemSelectionView: View {
     @ObservedObject var viewModel: BottomItemSelectionViewModel
 
-    private let panelTeal = Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51)
+    private let itemWidth: CGFloat = 160
+    private let itemHeight: CGFloat = 100
+    private let hSpacing: CGFloat = 24
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
+        ZStack(alignment: .leading) {
             RoundedRectangle(cornerRadius: 24)
-                .fill(panelTeal.opacity(0.9))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24)
-                        .stroke(Color.white, lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.25), radius: 16, x: 0, y: 8)
+                .fill(.ultraThinMaterial.opacity(0.4))
                 .frame(height: 140)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 24) {
-                    ForEach(viewModel.items) { item in
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.white.opacity(0.2))
-                            .frame(width: 160, height: 100)
-                            .overlay { content(for: item) }
+                HStack(spacing: hSpacing) {
+                    ForEach(Array(viewModel.items.enumerated()), id: \.element.id) { index, item in
+                        // Hanya konten, tanpa kartu latar per-item
+                        content(for: item)
+                            .frame(width: itemWidth, height: itemHeight)
+                            .contentShape(Rectangle())
                             .onTapGesture { viewModel.handleTap(on: item) }
+                            // Tambahkan separator di kanan setiap item kecuali yang terakhir
+                            .overlay(alignment: .trailing) {
+                                if index < viewModel.items.count - 1 {
+                                    separator
+                                        .frame(height: itemHeight - 12)
+                                        .offset(x: hSpacing / 2) // sejajarkan dengan spacing HStack
+                                }
+                            }
                     }
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 20)
             }
         }
+    }
+
+    // Garis pemisah vertikal dengan efek highlight seperti contoh
+    private var separator: some View {
+        RoundedRectangle(cornerRadius: 2)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.15),
+                        Color.white.opacity(0.6),
+                        Color.white.opacity(0.15)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .frame(width: 3)
+            .shadow(color: .white.opacity(0.25), radius: 2, x: 0, y: 0)
+            .shadow(color: .black.opacity(0.15), radius: 1, x: 0, y: 0)
     }
 
     @ViewBuilder

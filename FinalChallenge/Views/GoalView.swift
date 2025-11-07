@@ -1,9 +1,15 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 struct GoalView: View {
-
+    
     @StateObject private var vm = GoalViewModel()
+    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
+    @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
+
+    // Defer creation until context is available
+    @StateObject private var streakManagerHolder = OptionalStreakManagerHolder()
     @Environment(\.modelContext) private var context
     @EnvironmentObject var bleVM: BLEViewModel
     
@@ -11,40 +17,30 @@ struct GoalView: View {
     init() {
         _goals = Query()
     }
-
+    
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
+    @State private var isBottomVisible = true
     
-    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
-    @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
-
-    private let boardBackground = Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40)
-    private let panelTeal        = Color(.sRGB, red: 0.02, green: 0.43, blue: 0.51)
-    private let panelOverlay     = Color.white.opacity(0.10)
-    private let buttonGreen      = Color(.sRGB, red: 0.73, green: 0.84, blue: 0.49)
-
+    // Fallback color for the button if buttonGreen isn’t defined elsewhere
+    private let buttonGreen = Color.green.opacity(0.8)
+    
     var body: some View {
         ZStack {
-            boardBackground.ignoresSafeArea()
+            Image("bg_main")
+                .resizable()
+                .ignoresSafeArea()
             
-            ZStack {
-                RoundedRectangle(cornerRadius: 34, style: .continuous)
-                    .fill(panelTeal)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 34)
-                            .stroke(panelOverlay, lineWidth: 2)
-                    )
-                    .shadow(color: .black.opacity(0.25), radius: 20, x: 0, y: 12)
-
-                ZStack {
+            VStack {
+                VStack {
                     ScrollView(.vertical, showsIndicators: false) {
-                        VStack(spacing: 0) {
+                        VStack() {
                             Button {
                                 vm.onCircleTap()
                             } label: {
                                 SetGoalView()
                             }
-
+                            
                             CircleStepView(
                                 viewModel: circleVM
                             ) { step in
@@ -66,29 +62,62 @@ struct GoalView: View {
                         .padding(.horizontal, 12)
                     }
                     
-                    VStack {
+                    // Button complete goal
+                    if vm.passedSteps >= vm.totalSteps, vm.totalSteps > 0 {
+                        VStack(spacing: 20) {
+                            Text("Goal Complete!")
+                                .font(.title.bold())
+                                .foregroundColor(.white)
+                            
+                            Button {
+                                bleVM.sendResetToDevice()
+                                vm.resetProgress(context: context)
+                            } label: {
+                                Text("Take Your Money")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(buttonGreen)
+                                    .cornerRadius(18)
+                                    .shadow(radius: 4)
+                            }
+                            .padding(.horizontal, 40)
+                        }
+                        .padding(.bottom, 220)
+                    }
+                    
+                    ZStack (alignment: .trailing) {
+                        if let sm = bleVM.streakManager {
+                                StreakView(streakManager: sm)
+                                    .padding(.top, 10)
+                            }
                         Spacer()
                         HStack {
                             SavingCardView(
                                 title: "My Saving",
-                                totalSaving: vm.formattedTotalSaving
+                                totalSaving: String(bleVM.lastBalance)
                             )
                             .onTapGesture {
+                                // Optional: kamu bisa tetap tampilkan modal, tapi tidak memengaruhi progress
                                 savingAmountText = ""
                                 showSavingModal = true
                             }
                             Spacer()
                         }
-                        .padding(.leading, 24)
-                        .padding(.bottom, 188)
                     }
-
-                    // 3) Panel Reward bawah
-                    VStack {
-                        Spacer()
+                }
+                .frame(height: 1100)
+                .background(
+                    RoundedRectangle(cornerRadius: 34)
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.4)
+                )
+                
+                // 3) Panel Reward bawah
+                VStack {
+                    ZStack (alignment: .topLeading){
                         BottomItemSelectionView(viewModel: bottomItemsVM)
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 24)
                             .onAppear {
                                 // Hook selection callback
                                 bottomItemsVM.onSelect = { item in
@@ -108,14 +137,25 @@ struct GoalView: View {
                             .onChange(of: vm.rewardViewItems) { newItems in
                                 bottomItemsVM.setItems(newItems)
                             }
+                        
+                        Button {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                isBottomVisible.toggle()
+                            }
+                        } label: {
+                            Image(systemName: "book.closed.fill")
+                                .foregroundStyle(.white)
+                                .padding(12)
+                                .background(Color.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
-                .padding(20)
+                .padding(.vertical, 20)
+                .offset(y: isBottomVisible ? 0 : 100)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            .padding(.bottom, 40)
-
+            .padding(40)
+            
             // Modal Set Goal
             if vm.showGoalModal {
                 CenteredModal(isPresented: $vm.showGoalModal) {
@@ -141,7 +181,7 @@ struct GoalView: View {
                 }
                 .zIndex(2)
             }
-
+            
             // Modal Claim Reward
             if vm.showClaimModal, let meta = vm.pendingClaim {
                 CenteredModal(isPresented: $vm.showClaimModal) {
@@ -158,7 +198,7 @@ struct GoalView: View {
                 }
                 .zIndex(3)
             }
-
+            
             // Modal Input Saving
             if showSavingModal {
                 CenteredModal(isPresented: $showSavingModal) {
@@ -166,9 +206,10 @@ struct GoalView: View {
                         title: "Add Saving",
                         amountText: $savingAmountText,
                         onCancel: { showSavingModal = false },
-                        onSave: { amount in
-                            vm.applySaving(amount: amount)
+                        onSave: { _ in
+                            // Tidak lagi mengubah progress dari modal.
                             showSavingModal = false
+                            // Jika ingin, bisa tetap refresh UI, tapi tidak perlu mengubah vm.
                             vm.loadRewardsForView(context: context)
                             bottomItemsVM.setItems(vm.rewardViewItems)
                         }
@@ -178,7 +219,11 @@ struct GoalView: View {
             }
         }
         .onAppear {
-            vm.updateGoals(goals)
+            // Create StreakManager once when context is available
+            if streakManagerHolder.manager == nil {
+                streakManagerHolder.manager = StreakManager(context: context)
+            }
+            vm.updateGoals(goals, context: context)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
             // sync circle VM initial state
@@ -187,10 +232,9 @@ struct GoalView: View {
             bleVM.streakManager?.evaluateMissedDay(for: vm.savingDaysArray)
         }
         .onChange(of: goals) { newGoals in
-            vm.updateGoals(newGoals)
+            vm.updateGoals(newGoals, context: context)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
-            // sync circle VM when goals change might affect totals
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
         .onChange(of: vm.totalSteps) { _ in
@@ -199,8 +243,15 @@ struct GoalView: View {
         .onChange(of: vm.passedSteps) { _ in
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
+        // NEW: sinkronkan progress dari BLE (gunakan lastBalance kumulatif)
+        .onChange(of: bleVM.lastBalance) { _, newBalance in
+            vm.updateProgressFromBLEBalance(newBalance, context: context)
+            vm.loadRewardsForView(context: context)
+            bottomItemsVM.setItems(vm.rewardViewItems)
+            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+        }
     }
-
+    
     // Helper: cari RewardMeta dari item panel
     private func vmRewardMeta(for item: RewardState) -> RewardModel? {
         let catalog = RewardCatalog.rewards(forTotalSteps: vm.totalSteps)
@@ -208,6 +259,12 @@ struct GoalView: View {
     }
 }
 
+// Helper holder to allow optional @StateObject-like storage
+final class OptionalStreakManagerHolder: ObservableObject {
+    @Published var manager: StreakManager?
+}
+
 #Preview {
     GoalView().environmentObject(BLEViewModel())
 }
+
