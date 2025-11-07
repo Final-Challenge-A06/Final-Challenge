@@ -26,8 +26,10 @@ final class BLEViewModel: ObservableObject {
     @Published var outText: String = ""
     @Published var streakCount: Int = 0
     @Published var lastBalance: Int64 = 0
+
     @Published var amount: Int64 = 0
     @Published var firstMoneyReceived: Bool = false
+    @Published var streakManager: StreakManager?
     
     var onShowFindDevice: ((Bool) -> Void)?
     
@@ -35,19 +37,20 @@ final class BLEViewModel: ObservableObject {
     private var isActionBusy = false
     private var pendingPeripheral: CBPeripheral?
     private let targetKeyword = "esp32"
+//    var streakManager: StreakManager?
     
-    // Context untuk SwiftData
     private var context: ModelContext?
-    private var streakManager: StreakManager?
     private let goalVM: GoalViewModel
     
     init(goalVM: GoalViewModel? = nil) {
         self.goalVM = goalVM ?? GoalViewModel()
         setupCallbacks()
+        self.streakCount = self.streakManager?.currentStreak ?? 0
     }
     
     // Set context dari View
     func setContext(_ context: ModelContext) {
+//        if streakManager == nil { streakManager = StreakManager() }
         self.context = context
         self.streakManager = StreakManager(context: context)
         streakCount = streakManager?.currentStreak ?? 0
@@ -190,9 +193,13 @@ final class BLEViewModel: ObservableObject {
             print("💰 Saldo baru dari device:", newBalance)
             
             if Int64(newBalance) > lastBalance {
+                print("Saldo naik dari \(lastBalance) ke \(newBalance) - trigger streak")
+                let days = goalVM.savingDaysArray
+                streakManager?.recordSaving(for: days)
+                streakCount = streakManager?.currentStreak ?? streakCount
                 print("📈 Saldo naik dari \(lastBalance) ke \(newBalance) - trigger streak")
-                let days = self.goalVM.savingDaysArray
-                self.streakManager?.recordSaving(for: days)
+//                let days = self.goalVM.savingDaysArray
+//                self.streakManager?.recordSaving(for: days)
                 DispatchQueue.main.async {
                     self.streakCount = self.streakManager?.currentStreak ?? 0
                 }
@@ -230,6 +237,8 @@ final class BLEViewModel: ObservableObject {
     // MARK: - Daily check streak
     func dailyCheck() {
         streakManager?.evaluateMissedDay(for: goalVM.savingDaysArray)
+        streakCount = streakManager?.currentStreak ?? streakCount
+        print("STREAK SEKARANG", streakCount)
         streakCount = streakManager?.currentStreak ?? 0
         print("🔥 STREAK SEKARANG:", streakCount)
     }

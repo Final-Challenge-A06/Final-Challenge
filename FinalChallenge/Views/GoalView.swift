@@ -88,10 +88,10 @@ struct GoalView: View {
                     }
                     
                     ZStack (alignment: .trailing) {
-                        if let streakManager = streakManagerHolder.manager {
-                            StreakView(streakManager: streakManager)
-                                .padding(.top, 10)
-                        }
+                        if let sm = bleVM.streakManager {
+                                StreakView(streakManager: sm)
+                                    .padding(.top, 10)
+                            }
                         Spacer()
                         HStack {
                             SavingCardView(
@@ -228,6 +228,8 @@ struct GoalView: View {
             bottomItemsVM.setItems(vm.rewardViewItems)
             // sync circle VM initial state
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+            bleVM.setContext(context)
+            bleVM.streakManager?.evaluateMissedDay(for: vm.savingDaysArray)
         }
         .onChange(of: goals) { newGoals in
             vm.updateGoals(newGoals, context: context)
@@ -263,6 +265,6 @@ final class OptionalStreakManagerHolder: ObservableObject {
 }
 
 #Preview {
-    GoalView() // sekarang aman; punya init() custom
+    GoalView().environmentObject(BLEViewModel())
 }
 
