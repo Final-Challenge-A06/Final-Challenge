@@ -92,11 +92,11 @@ struct GoalView: View {
                                 vm.loadRewardsForView(context: context)
                                 bottomItemsVM.setItems(vm.rewardViewItems)
                             }
-                            .onChange(of: vm.passedSteps) { _ in
+                            .onChange(of: vm.passedSteps) {
                                 vm.loadRewardsForView(context: context)
                                 bottomItemsVM.setItems(vm.rewardViewItems)
                             }
-                            .onChange(of: vm.rewardViewItems) { newItems in
+                            .onChange(of: vm.rewardViewItems) { _, newItems in
                                 bottomItemsVM.setItems(newItems)
                             }
                         
@@ -186,17 +186,17 @@ struct GoalView: View {
             // sync circle VM initial state
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
-        .onChange(of: goals) { newGoals in
+        .onChange(of: goals) { _, newGoals in
             vm.updateGoals(newGoals)
             vm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(vm.rewardViewItems)
             // sync circle VM when goals change might affect totals
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
-        .onChange(of: vm.totalSteps) { _ in
+        .onChange(of: vm.totalSteps) {
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
-        .onChange(of: vm.passedSteps) { _ in
+        .onChange(of: vm.passedSteps) {
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
         }
     }

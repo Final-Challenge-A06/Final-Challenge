@@ -8,8 +8,9 @@
 import SwiftUI
 import PhotosUI
 
+@MainActor
 struct GoalModalStep1View: View {
-    @ObservedObject var vm = GoalViewModel()
+    @ObservedObject var vm: GoalViewModel
     var onNext: () -> Void
     var onClose: () -> Void
     
@@ -64,12 +65,15 @@ struct GoalModalStep1View: View {
                     }
                     .contentShape(Rectangle())
                 }
-                .onChange(of: vm.selectedItem) { newItem in
+                .onChange(of: vm.selectedItem, initial: false) { newItem, _ in
                     Task {
-                        if let data = try? await newItem?.loadTransferable(type: Data.self),
-                           let ui = UIImage(data: data) {
-                            vm.selectedImage = ui
+                        guard let item = newItem,
+                              let data = try? await item.loadTransferable(type: Data.self),
+                              let ui = UIImage(data: data) else {
+                            return
                         }
+                        vm.selectedImage = ui
+                        vm.validateStep1()
                     }
                 }
                 
@@ -77,7 +81,7 @@ struct GoalModalStep1View: View {
                 
                 TextField("e.g., 180000", text: $vm.priceText)
                     .keyboardType(.numberPad)
-                    .onChange(of: vm.priceText) { newValue in
+                    .onChange(of: vm.priceText, initial: false) { newValue, _ in
                         let filtered = newValue.filter { $0.isNumber }
                         if filtered != newValue {
                             vm.priceText = filtered
@@ -120,7 +124,7 @@ struct GoalModalStep1View: View {
 }
 
 #Preview {
-    GoalModalStep1View(onNext: {}, onClose: {})
+    GoalModalStep1View(vm: GoalViewModel(), onNext: {}, onClose: {})
         .padding()
         .background(Color.gray.opacity(0.15))
 }

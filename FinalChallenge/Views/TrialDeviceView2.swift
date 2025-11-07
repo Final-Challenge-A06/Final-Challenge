@@ -21,21 +21,7 @@ struct TrialDeviceStep2View: View {
                 .ignoresSafeArea()
             
             VStack{
-                VStack() {
-                    VStack() {
-                        ForEach(0..<4, id: \.self) { step in
-                            let isLarge = (step == 0 || step == 3)
-                            let isLeft = (step % 2 == 0)
-                            let xOffset = isLarge ? 0 : (isLeft ? -zigzagNormal : zigzagNormal)
-                            
-                            Image("ss_before")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: isLarge ? 225 : 225)
-                                .offset(x: xOffset)
-                        }
-                    }
-                    
+                VStack {
                     ZStack {
                         Image("claimButton")
                             .resizable()
@@ -47,9 +33,15 @@ struct TrialDeviceStep2View: View {
                             .foregroundColor(.white)
                             .shadow(radius: 3)
                     }
+                    .offset(y: 50)
                     .buttonStyle(.plain)
                     .onTapGesture { showReward = true }
-                    .offset(y: -430)
+                    
+                    Image("ss_before")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 225)
+                    
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.horizontal, 20)
@@ -71,6 +63,7 @@ struct TrialDeviceStep2View: View {
                     .padding(.horizontal, 50)
                     .padding(.top, 50)
             }
+            .padding(.top, 550)
         }
         .sheet(isPresented: $showReward) {
             RewardClaimView(vm: vm)
