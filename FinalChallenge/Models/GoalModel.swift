@@ -15,6 +15,9 @@ final class GoalModel {
     var imageData: Data?
     var savingDays: [String]
     var amountPerSave: Int
+    var totalSteps: Int {
+        amountPerSave > 0 ? targetPrice / amountPerSave : 0
+    }
 
     init(
             name: String,

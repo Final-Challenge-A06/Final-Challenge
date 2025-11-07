@@ -9,8 +9,8 @@ import Testing
 import UIKit
 @testable import FinalChallenge
 
-@Suite("All Case")
-struct FinalChallengeTests {
+@Suite("All Case - Goal ViewModel Test")
+struct GoalViewModelTests {
 
     @Suite("Positive Cases")
     struct GoalViewModelPositiveTests {

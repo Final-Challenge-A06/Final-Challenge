@@ -13,24 +13,20 @@ struct GoalModalStep1View: View {
     var onNext: () -> Void
     var onClose: () -> Void
     
-//    @State private var goalName = ""
-//    @State private var priceText = ""
-//    @State private var selectedItem: PhotosPickerItem? = nil
-//    @State private var selectedImage: UIImage? = nil
-    
-    private let goalOrange = Color(red: 0.91, green: 0.55, blue: 0.30)
-    private let cardMint   = Color(red: 0.83, green: 0.95, blue: 0.90)
-    
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack(alignment: .center) {
+            Image("modal")
+            
             VStack(alignment: .leading, spacing: 16) {
-                Text("Name your dream thing").font(.headline)
+                Text("Name your dream thing").font(.custom("audiowide", size: 28))
                 
                 TextField("Type here…", text: $vm.goalName)
                     .textInputAutocapitalization(.words)
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(.white, in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(.black.opacity(0.08)))
+                
+                Text("How does it look?").font(.custom("audiowide", size: 28))
                 
                 PhotosPicker(
                     selection: $vm.selectedItem,
@@ -43,7 +39,7 @@ struct GoalModalStep1View: View {
                             .frame(height: 140)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(.black.opacity(0.08), style: StrokeStyle(lineWidth: 1, dash: [5]))
+                                    .stroke(.black.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [5]))
                             )
                         
                         if let ui = vm.selectedImage {
@@ -60,8 +56,8 @@ struct GoalModalStep1View: View {
                             VStack(spacing: 8) {
                                 Image(systemName: "photo.on.rectangle")
                                     .foregroundColor(.black)
-                                Text("Choose Photo")
-                                    .font(.subheadline)
+                                Text("Select photos to upload")
+                                    .font(.custom("audiowide", size: 16))
                                     .foregroundColor(.black)
                             }
                         }
@@ -77,7 +73,7 @@ struct GoalModalStep1View: View {
                     }
                 }
                 
-                Text("How much does it cost?").font(.headline)
+                Text("How much does it cost?").font(.custom("audiowide", size: 28))
                 
                 TextField("e.g., 180000", text: $vm.priceText)
                     .keyboardType(.numberPad)
@@ -89,27 +85,26 @@ struct GoalModalStep1View: View {
                     }
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(.white, in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(.black.opacity(0.08)))
                 
-                Button(action: { onNext() }) {
-                    Text("Next")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .foregroundStyle(.black)
-                        .background(goalOrange)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                HStack () {
+                    Spacer()
+                    
+                    Button(action: { onNext() }) {
+                        Image(systemName: "arrow.right")
+                            .foregroundStyle(Color.black)
+                            .padding(16)
+                            .background(.yellow.opacity(0.6), in: Circle())
+                    }
+                    .disabled(!vm.isStep1Valid)
+                    
+                    Spacer()
                 }
-                .padding(.top, 8)
-                .disabled(!vm.isStep1Valid)
                 
             }
-            .padding(20)
-            .background(cardMint, in: RoundedRectangle(cornerRadius: 22))
-            .overlay(RoundedRectangle(cornerRadius: 22).stroke(.black.opacity(0.08)))
-            .shadow(color: .black.opacity(0.08), radius: 12, y: 8)
-            .frame(width: 560)
-            
+            .frame(width: 480)
+        }
+        .frame(width: 632, height: 700)
+        .overlay(alignment: .topTrailing) {
             Button { onClose() } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 14, weight: .bold))
@@ -118,11 +113,11 @@ struct GoalModalStep1View: View {
                     .background(.white, in: Circle())
                     .shadow(radius: 2)
             }
+            .buttonStyle(.plain)
             .padding(10)
         }
     }
 }
-
 
 #Preview {
     GoalModalStep1View(onNext: {}, onClose: {})
