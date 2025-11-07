@@ -8,6 +8,7 @@
 import Foundation
 import CoreBluetooth
 import Combine
+import SwiftData
 
 enum PairState: Equatable {
     case idle
@@ -27,7 +28,6 @@ final class BLEViewModel: ObservableObject {
     @Published var outText: String = ""
     @Published var streakCount: Int = 0
     @Published var lastBalance: Int64 = 0
-    @Published var firstMoneyReceived: Bool = false
     
     var onShowFindDevice: ((Bool) -> Void)?
     
@@ -35,13 +35,17 @@ final class BLEViewModel: ObservableObject {
     private var isActionBusy = false
     private var pendingPeripheral: CBPeripheral?
     private let targetKeyword = "esp32"
-    private let streakManager = StreakManager()
+    var streakManager: StreakManager?
     private let goalVM: GoalViewModel
+    
+    func setContext(_ context: ModelContext) {
+        if streakManager == nil { streakManager = StreakManager() }
+    }
     
     init(goalVM: GoalViewModel? = nil) {
         self.goalVM = goalVM ?? GoalViewModel()
         setupCallbacks()
-        streakCount = streakManager.currentStreak
+        self.streakCount = self.streakManager?.currentStreak ?? 0
         dailyCheck()
     }
     
@@ -181,15 +185,9 @@ final class BLEViewModel: ObservableObject {
             
             if Int64(newBalance) > lastBalance {
                 print("Saldo naik dari \(lastBalance) ke \(newBalance) - trigger streak")
-                let days = self.goalVM.savingDaysArray
-                self.streakManager.recordSaving(for: days)
-                DispatchQueue.main.async {
-                    self.streakCount = self.streakManager.currentStreak
-                }
-            }
-            
-            if lastBalance == 0 && Int64(newBalance) > 0 {
-                DispatchQueue.main.async { self.firstMoneyReceived = true }
+                let days = goalVM.savingDaysArray
+                streakManager?.recordSaving(for: days)
+                streakCount = streakManager?.currentStreak ?? streakCount
             }
             
             lastBalance = Int64(newBalance)
@@ -207,8 +205,8 @@ final class BLEViewModel: ObservableObject {
     
     // MARK: Function daily check streak
     func dailyCheck() {
-        streakManager.evaluateMissedDay(for: goalVM.savingDaysArray)
-        streakCount = streakManager.currentStreak
+        streakManager?.evaluateMissedDay(for: goalVM.savingDaysArray)
+        streakCount = streakManager?.currentStreak ?? streakCount
         print("STREAK SEKARANG", streakCount)
     }
 }

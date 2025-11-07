@@ -5,6 +5,7 @@ struct GoalView: View {
 
     @StateObject private var vm = GoalViewModel()
     @Environment(\.modelContext) private var context
+    @EnvironmentObject var bleVM: BLEViewModel
     
     @Query private var goals: [GoalModel]
     init() {
@@ -182,6 +183,8 @@ struct GoalView: View {
             bottomItemsVM.setItems(vm.rewardViewItems)
             // sync circle VM initial state
             circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+            bleVM.setContext(context)
+            bleVM.streakManager?.evaluateMissedDay(for: vm.savingDaysArray)
         }
         .onChange(of: goals) { newGoals in
             vm.updateGoals(newGoals)
@@ -206,5 +209,5 @@ struct GoalView: View {
 }
 
 #Preview {
-    GoalView() // sekarang aman; punya init() custom
+    GoalView().environmentObject(BLEViewModel())
 }

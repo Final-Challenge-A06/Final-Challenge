@@ -198,7 +198,7 @@ struct BLETestView: View {
             TrialDeviceIntroView(vm: vm)  
         }
         .fullScreenCover(isPresented: $showGoal) {
-            GoalView()
+            GoalView().environmentObject(vm)
         }
     }
     
