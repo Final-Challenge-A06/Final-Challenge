@@ -7,8 +7,7 @@ struct GoalView: View {
     @StateObject private var goalVm = GoalViewModel()
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
-
-    // Defer creation until context is available
+    
     @StateObject private var streakManagerHolder = OptionalStreakManagerHolder()
     @Environment(\.modelContext) private var context
     @EnvironmentObject var bleVM: BLEViewModel
@@ -20,10 +19,6 @@ struct GoalView: View {
     
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
-    @State private var isBottomVisible = true
-    
-    // Fallback color for the button if buttonGreen isn’t defined elsewhere
-    private let buttonGreen = Color.green.opacity(0.8)
     
     var body: some View {
         ZStack {
@@ -35,7 +30,6 @@ struct GoalView: View {
                 VStack {
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack() {
-                            // Tampilkan SetGoalView hanya jika belum ada goal
                             if goals.isEmpty {
                                 Button {
                                     goalVm.onCircleTap()
@@ -44,7 +38,6 @@ struct GoalView: View {
                                 }
                             }
                             
-                            // Selalu render CircleStepView; ketika belum ada goal, steps akan kosong sehingga tidak menampilkan apa-apa
                             CircleStepView(
                                 viewModel: circleVM
                             ) { step in
@@ -82,7 +75,6 @@ struct GoalView: View {
                                     .foregroundColor(.white)
                                     .padding()
                                     .frame(maxWidth: .infinity)
-                                    .background(buttonGreen)
                                     .cornerRadius(18)
                                     .shadow(radius: 4)
                             }
@@ -103,7 +95,6 @@ struct GoalView: View {
                                 totalSaving: String(bleVM.lastBalance)
                             )
                             .onTapGesture {
-                                // Optional: kamu bisa tetap tampilkan modal, tapi tidak memengaruhi progress
                                 savingAmountText = ""
                                 showSavingModal = true
                             }
@@ -141,22 +132,9 @@ struct GoalView: View {
                             .onChange(of: goalVm.rewardViewItems) { _, newItems in
                                 bottomItemsVM.setItems(newItems)
                             }
-                        
-                        Button {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-                                isBottomVisible.toggle()
-                            }
-                        } label: {
-                            Image(systemName: "book.closed.fill")
-                                .foregroundStyle(.white)
-                                .padding(12)
-                                .background(Color.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 14))
-                        }
-                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.vertical, 20)
-                .offset(y: isBottomVisible ? 0 : 100)
             }
             .padding(40)
             
