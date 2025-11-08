@@ -4,7 +4,7 @@ import Combine
 
 struct GoalView: View {
     
-    @StateObject private var vm = GoalViewModel()
+    @StateObject private var goalVm = GoalViewModel()
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
 
@@ -35,22 +35,26 @@ struct GoalView: View {
                 VStack {
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack() {
-                            Button {
-                                vm.onCircleTap()
-                            } label: {
-                                SetGoalView()
+                            // Tampilkan SetGoalView hanya jika belum ada goal
+                            if goals.isEmpty {
+                                Button {
+                                    goalVm.onCircleTap()
+                                } label: {
+                                    SetGoalView()
+                                }
                             }
                             
+                            // Selalu render CircleStepView; ketika belum ada goal, steps akan kosong sehingga tidak menampilkan apa-apa
                             CircleStepView(
                                 viewModel: circleVM
                             ) { step in
-                                if (step.isCheckpoint || step.isGoal), step.id <= vm.passedSteps {
-                                    vm.tryOpenClaim(for: step.id, context: context)
+                                if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
+                                    goalVm.tryOpenClaim(for: step.id, context: context)
                                     return
                                 }
                                 
                                 if step.isGoal {
-                                    vm.onCircleTap()
+                                    goalVm.onCircleTap()
                                     return
                                 }
                             }
@@ -63,7 +67,7 @@ struct GoalView: View {
                     }
                     
                     // Button complete goal
-                    if vm.passedSteps >= vm.totalSteps, vm.totalSteps > 0 {
+                    if goalVm.passedSteps >= goalVm.totalSteps, goalVm.totalSteps > 0 {
                         VStack(spacing: 20) {
                             Text("Goal Complete!")
                                 .font(.title.bold())
@@ -71,7 +75,7 @@ struct GoalView: View {
                             
                             Button {
                                 bleVM.sendResetToDevice()
-                                vm.resetProgress(context: context)
+                                goalVm.resetProgress(context: context)
                             } label: {
                                 Text("Take Your Money")
                                     .font(.headline)
@@ -123,18 +127,18 @@ struct GoalView: View {
                                 bottomItemsVM.onSelect = { item in
                                     if item.state == .claimable,
                                        let meta = vmRewardMeta(for: item) {
-                                        vm.openClaim(for: meta, context: context)
+                                        goalVm.openClaim(for: meta, context: context)
                                     }
                                 }
                                 // Initial load and sync items
-                                vm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(vm.rewardViewItems)
+                                goalVm.loadRewardsForView(context: context)
+                                bottomItemsVM.setItems(goalVm.rewardViewItems)
                             }
-                            .onChange(of: vm.passedSteps) { _ in
-                                vm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(vm.rewardViewItems)
+                            .onChange(of: goalVm.passedSteps) { _, _ in
+                                goalVm.loadRewardsForView(context: context)
+                                bottomItemsVM.setItems(goalVm.rewardViewItems)
                             }
-                            .onChange(of: vm.rewardViewItems) { newItems in
+                            .onChange(of: goalVm.rewardViewItems) { _, newItems in
                                 bottomItemsVM.setItems(newItems)
                             }
                         
@@ -157,25 +161,25 @@ struct GoalView: View {
             .padding(40)
             
             // Modal Set Goal
-            if vm.showGoalModal {
-                CenteredModal(isPresented: $vm.showGoalModal) {
-                    if vm.activeStep == 1 {
+            if goalVm.showGoalModal {
+                CenteredModal(isPresented: $goalVm.showGoalModal) {
+                    if goalVm.activeStep == 1 {
                         GoalModalStep1View(
-                            vm: vm,
-                            onNext: { vm.goToNextStep() },
-                            onClose: { vm.closeModal() }
+                            vm: goalVm,
+                            onNext: { goalVm.goToNextStep() },
+                            onClose: { goalVm.closeModal() }
                         )
                     } else {
                         GoalModalStep2View(
-                            vm: vm,
+                            vm: goalVm,
                             onDone: {
-                                vm.saveGoal(context: context)
+                                goalVm.saveGoal(context: context)
                                 // Segera refresh reward dan sinkronkan ke panel bawah
-                                vm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(vm.rewardViewItems)
-                                vm.closeModal()
+                                goalVm.loadRewardsForView(context: context)
+                                bottomItemsVM.setItems(goalVm.rewardViewItems)
+                                goalVm.closeModal()
                             },
-                            onBack: { vm.activeStep = 1 }
+                            onBack: { goalVm.activeStep = 1 }
                         )
                     }
                 }
@@ -183,16 +187,16 @@ struct GoalView: View {
             }
             
             // Modal Claim Reward
-            if vm.showClaimModal, let meta = vm.pendingClaim {
-                CenteredModal(isPresented: $vm.showClaimModal) {
+            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
+                CenteredModal(isPresented: $goalVm.showClaimModal) {
                     BottomClaimModalView(
                         title: meta.title,
                         imageName: meta.imageName,
-                        onCancel: { vm.cancelClaim() },
+                        onCancel: { goalVm.cancelClaim() },
                         onClaim: {
-                            vm.confirmClaim(context: context)
-                            vm.loadRewardsForView(context: context)
-                            bottomItemsVM.setItems(vm.rewardViewItems)
+                            goalVm.confirmClaim(context: context)
+                            goalVm.loadRewardsForView(context: context)
+                            bottomItemsVM.setItems(goalVm.rewardViewItems)
                         }
                     )
                 }
@@ -210,8 +214,8 @@ struct GoalView: View {
                             // Tidak lagi mengubah progress dari modal.
                             showSavingModal = false
                             // Jika ingin, bisa tetap refresh UI, tapi tidak perlu mengubah vm.
-                            vm.loadRewardsForView(context: context)
-                            bottomItemsVM.setItems(vm.rewardViewItems)
+                            goalVm.loadRewardsForView(context: context)
+                            bottomItemsVM.setItems(goalVm.rewardViewItems)
                         }
                     )
                 }
@@ -223,38 +227,38 @@ struct GoalView: View {
             if streakManagerHolder.manager == nil {
                 streakManagerHolder.manager = StreakManager(context: context)
             }
-            vm.updateGoals(goals, context: context)
-            vm.loadRewardsForView(context: context)
-            bottomItemsVM.setItems(vm.rewardViewItems)
+            goalVm.updateGoals(goals, context: context)
+            goalVm.loadRewardsForView(context: context)
+            bottomItemsVM.setItems(goalVm.rewardViewItems)
             // sync circle VM initial state
-            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
             bleVM.setContext(context)
-            bleVM.streakManager?.evaluateMissedDay(for: vm.savingDaysArray)
+            bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
         }
-        .onChange(of: goals) { newGoals in
-            vm.updateGoals(newGoals, context: context)
-            vm.loadRewardsForView(context: context)
-            bottomItemsVM.setItems(vm.rewardViewItems)
-            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+        .onChange(of: goals) { _, newGoals in
+            goalVm.updateGoals(newGoals, context: context)
+            goalVm.loadRewardsForView(context: context)
+            bottomItemsVM.setItems(goalVm.rewardViewItems)
+            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
         }
-        .onChange(of: vm.totalSteps) { _ in
-            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+        .onChange(of: goalVm.totalSteps) { _, _ in
+            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
         }
-        .onChange(of: vm.passedSteps) { _ in
-            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+        .onChange(of: goalVm.passedSteps) { _, _ in
+            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
         }
         // NEW: sinkronkan progress dari BLE (gunakan lastBalance kumulatif)
         .onChange(of: bleVM.lastBalance) { _, newBalance in
-            vm.updateProgressFromBLEBalance(newBalance, context: context)
-            vm.loadRewardsForView(context: context)
-            bottomItemsVM.setItems(vm.rewardViewItems)
-            circleVM.updateSteps(totalSteps: vm.totalSteps, passedSteps: vm.passedSteps)
+            goalVm.updateProgressFromBLEBalance(newBalance, context: context)
+            goalVm.loadRewardsForView(context: context)
+            bottomItemsVM.setItems(goalVm.rewardViewItems)
+            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
         }
     }
     
     // Helper: cari RewardMeta dari item panel
     private func vmRewardMeta(for item: RewardState) -> RewardModel? {
-        let catalog = RewardCatalog.rewards(forTotalSteps: vm.totalSteps)
+        let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
     }
 }
@@ -267,4 +271,3 @@ final class OptionalStreakManagerHolder: ObservableObject {
 #Preview {
     GoalView().environmentObject(BLEViewModel())
 }
-
