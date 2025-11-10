@@ -15,32 +15,29 @@ struct RewardClaimView: View {
                 .edgesIgnoringSafeArea(.all)
             
             VStack {
-                Spacer()
                 ZStack {
                     Image("rewardModal")
                         .resizable()
                         .scaledToFit()
                         .frame(maxWidth: 600)
+                        .offset(y: 100)
                     
                     VStack(spacing: 10) {
                         Text("NEW ACCESSORIES")
                             .font(.custom("Audiowide", size: 26))
                             .foregroundColor(.white)
                             .shadow(radius: 3)
-                            .offset(y: -150)
                         
                         Text("3D GLASSES")
                             .font(.custom("Audiowide", size: 26))
                             .foregroundColor(.white)
                             .shadow(radius: 3)
-                            .offset(y: -100)
                         
                         Image("glasses")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 160)
                             .padding(.top, 4)
-                            .offset(y: -75)
                         
                         Button {
                             showGoal = true
@@ -50,14 +47,13 @@ struct RewardClaimView: View {
                                 .foregroundColor(.yellow)
                                 .shadow(radius: 4)
                         }
-                        .offset(y: -75)
-                        
-                        BottomItemSelectionView(viewModel: bottomItemsVM)
-                            .offset(y: 300)
-                            .padding(.horizontal, 30)
                     }
                     .padding(.horizontal, 16)
                 }
+                
+                BottomItemSelectionView(viewModel: bottomItemsVM)
+                    .padding(.horizontal, 50)
+                    .offset(y: 150)
             }
             .frame(maxWidth: .infinity)
             .padding(.bottom, 120)
@@ -68,11 +64,8 @@ struct RewardClaimView: View {
                     title: "My Saving",
                     totalSaving: formattedBalance(Double(vm.lastBalance))
                 )
-                Spacer()
             }
-            .padding(.leading, 100)
-            .padding(.bottom, 175),
-            alignment: .bottomLeading
+                .offset(x: -320, y: 340)
         )
         .fullScreenCover(isPresented: $showGoal) {
             GoalView()
