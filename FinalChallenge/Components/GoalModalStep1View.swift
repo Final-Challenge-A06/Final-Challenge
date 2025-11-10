@@ -80,7 +80,7 @@ struct GoalModalStep1View: View {
                 
                 TextField("e.g., 180000", text: $vm.priceText)
                     .keyboardType(.numberPad)
-                    .onChange(of: vm.priceText) { newValue in
+                    .onChange(of: vm.priceText) { oldValue, newValue in
                         let filtered = newValue.filter { $0.isNumber }
                         if filtered != newValue {
                             vm.priceText = filtered

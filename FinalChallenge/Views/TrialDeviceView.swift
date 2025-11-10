@@ -23,7 +23,7 @@ struct TrialDeviceIntroView: View {
                 .ignoresSafeArea()
             
             VStack() {
-                Text("Fuel Up Bot With Cash")
+                Text("To activate bot try insert your money")
                     .font(.custom("Audiowide", size: 30))
                     .foregroundColor(.white)
                     .shadow(radius: 5)

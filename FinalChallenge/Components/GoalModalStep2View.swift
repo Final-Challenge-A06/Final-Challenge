@@ -68,7 +68,8 @@ struct GoalModalStep2View: View {
 
                 TextField("e.g., 180000", text: $vm.amountText)
                     .keyboardType(.numberPad)
-                    .onChange(of: vm.amountText) { v in
+                    .onChange(of: vm.amountText) {
+                        let v = vm.amountText
                         let digits = v.filter(\.isNumber)
                         if digits != v { vm.amountText = digits }
                     }
@@ -110,4 +111,3 @@ struct GoalModalStep2View: View {
         .padding()
         .background(Color.gray.opacity(0.15))
 }
-

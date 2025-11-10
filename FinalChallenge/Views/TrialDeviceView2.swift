@@ -13,7 +13,6 @@ struct TrialDeviceStep2View: View {
     
     @State private var showReward = false
     @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
-    private let zigzagNormal: CGFloat = 40
     
     var body: some View {
         ZStack() {
@@ -22,39 +21,13 @@ struct TrialDeviceStep2View: View {
                 .scaledToFill()
                 .ignoresSafeArea()
             
-            VStack{
-                VStack() {
-                    VStack() {
-                        ForEach(0..<4, id: \.self) { step in
-                            let isLarge = (step == 0 || step == 3)
-                            let isLeft = (step % 2 == 0)
-                            let xOffset = isLarge ? 0 : (isLeft ? -zigzagNormal : zigzagNormal)
-                            
-                            Image("ss_before")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: isLarge ? 225 : 225)
-                                .offset(x: xOffset)
-                        }
-                    }
-                    
-                    ZStack {
-                        Image("claimButton")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 200)
-                        
-                        Text("Claim")
-                            .font(.custom("Audiowide", size: 22))
-                            .foregroundColor(.white)
-                            .shadow(radius: 3)
-                    }
-                    .buttonStyle(.plain)
-                    .onTapGesture { showReward = true }
-                    .offset(y: -430)
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.horizontal, 20)
+            VStack {
+                Image("ss_before")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 246)
+                    .rotationEffect(Angle(degrees: -10))
+                    .offset(y: 270)
                 
                 ZStack {
                     Image("claimButton")
@@ -69,32 +42,22 @@ struct TrialDeviceStep2View: View {
                 }
                 .buttonStyle(.plain)
                 .onTapGesture {
-                    hasCompletedTrial = true
                     showReward = true
+                    hasCompletedTrial = true
                 }
-                .offset(y: -430)
+                
+                SavingCardView(
+                    title: "My Saving",
+                    totalSaving: formattedBalance(vm.lastBalance)
+                )
+                .offset(x:-320, y: 230)
+                
+                BottomItemSelectionView(viewModel: bottomItemsVM)
+                    .padding(.horizontal, 30)
+                    .offset(y: 300)
             }
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.horizontal, 20)
-            
-            VStack {
-                Spacer()
-                HStack {
-                    SavingCardView(
-                        title: "My Saving",
-                        totalSaving: formattedBalance(vm.lastBalance)
-                    )
-                    .fixedSize()
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity)
-                
-                BottomItemSelectionView(viewModel: bottomItemsVM)
-                    .padding(.horizontal, 50)
-                    .padding(.top, 50)
-            }
-            .frame(maxWidth: .infinity)
-            
         }
         .fullScreenCover(isPresented: $showReward) {
             RewardClaimView(vm: vm)
