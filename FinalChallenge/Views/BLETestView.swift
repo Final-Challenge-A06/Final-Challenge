@@ -18,18 +18,16 @@ struct BLETestView: View {
     
     var body: some View {
         ZStack {
-            Image("backgroundFindDevice")
+            Image("background_main")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
             
-            VStack(spacing: 28) {
-                Spacer(minLength: 0)
-                
-                Image("robot1")
+            VStack(spacing: 20) {
+                Image("robot")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: 450)
+                    .frame(maxWidth: 550)
                 
                 VStack(spacing: 8) {
                     if case .scanning = vm.state {
@@ -46,33 +44,34 @@ struct BLETestView: View {
                                 .foregroundColor(.white)
                         }
                     } else {
-                        Text("NO \"BOT\" FOUND")
+                        Text("NO \"BOT\" DETECTED")
                             .font(.custom("Audiowide", size: 26))
-                            .kerning(1)
                             .textCase(.uppercase)
                             .foregroundColor(.white)
                         
-                        Text("Activate your Bot and keep it close by")
-                            .font(.custom("Audiowide", size: 16))
+                        Text("have your bot near you at all time")
+                            .font(.custom("Audiowide", size: 24))
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
                     }
                 }
+                .padding(.bottom, 50)
                 
                 Button {
                     vm.startScan()
                 } label: {
-                    Image("buttonLinkYourBot")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 320)
+                    Text("+Link your Bot")
+                        .font(.custom("Audiowide", size: 26))
+                        .foregroundStyle(Color.white)
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 10)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 100)
+                .background(Color.yellowButton)
+                .cornerRadius(20)
                 
-                Spacer(minLength: 60)
+                Spacer()
             }
-            .padding(.horizontal, 24)
             .blur(radius: showFindDevice ? 6 : 0)
             .allowsHitTesting(!showFindDevice)
             
