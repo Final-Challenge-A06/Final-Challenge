@@ -8,6 +8,7 @@
 import SwiftUI
 import PhotosUI
 
+@MainActor
 struct GoalModalStep1View: View {
     @ObservedObject var vm = GoalViewModel()
     var onNext: () -> Void
@@ -64,11 +65,13 @@ struct GoalModalStep1View: View {
                     }
                     .contentShape(Rectangle())
                 }
-                .onChange(of: vm.selectedItem) { newItem in
+                .onChange(of: vm.selectedItem, initial: false) { oldItem, newItem in
                     Task {
                         if let data = try? await newItem?.loadTransferable(type: Data.self),
                            let ui = UIImage(data: data) {
-                            vm.selectedImage = ui
+                            await MainActor.run {
+                                vm.selectedImage = ui
+                            }
                         }
                     }
                 }
@@ -77,7 +80,7 @@ struct GoalModalStep1View: View {
                 
                 TextField("e.g., 180000", text: $vm.priceText)
                     .keyboardType(.numberPad)
-                    .onChange(of: vm.priceText) { newValue in
+                    .onChange(of: vm.priceText) { oldValue, newValue in
                         let filtered = newValue.filter { $0.isNumber }
                         if filtered != newValue {
                             vm.priceText = filtered

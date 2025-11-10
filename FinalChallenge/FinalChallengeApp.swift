@@ -10,9 +10,12 @@ import SwiftData
 
 @main
 struct FinalChallengeApp: App {
+    @StateObject private var bleVM = BLEViewModel()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(bleVM)
         }
         .modelContainer(for: [
             GoalModel.self,
