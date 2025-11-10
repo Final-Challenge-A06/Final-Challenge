@@ -24,7 +24,7 @@ struct BLETestView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
-                Image("robot")
+                Image("robot_frame")
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: 550)
@@ -80,85 +80,12 @@ struct BLETestView: View {
                     .ignoresSafeArea()
                     .transition(.opacity)
                 
-                let modalWidth: CGFloat = 450
-                let innerHorz: CGFloat = 22
-                let robotHeight: CGFloat = 128
-                let buttonWidth: CGFloat = 280
-                let buttonSpacing: CGFloat = 12
-                
-                VStack {
-                    Spacer()
-                    
-                    Image("modalFindingBot")
-                        .resizable(
-                            capInsets: EdgeInsets(top: 32, leading: 32, bottom: 32, trailing: 32),
-                            resizingMode: .stretch
-                        )
-                        .scaledToFit()
-                        .frame(width: modalWidth)
-                        .shadow(radius: 10, y: 6)
-                        .overlay(
-                            Button {
-                                withAnimation(.spring()) { showFindDevice = false }
-                            } label: {
-                                Image("closeButton")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 100, height: 100)
-                            }
-                                .buttonStyle(.plain)
-                                .padding(.top, 20)
-                                .padding(.trailing, 20),
-                            alignment: .topTrailing
-                        )
-                        .overlay(
-                            VStack(spacing: 14) {
-                                Text(titleForModal)
-                                    .font(.custom("Audiowide", size: 24))
-                                    .foregroundColor(.white)
-                                    .padding(.top, 60)
-                                
-                                Image("blueRobot")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(height: robotHeight)
-                                    .padding(.top, 4)
-                                
-                                if !vm.connectedName.isEmpty && vm.connectedName != "-" {
-                                    Text(vm.connectedName)
-                                        .font(.custom("Audiowide-", size: 16))
-                                        .foregroundColor(.white.opacity(0.9))
-                                }
-                                
-                                VStack(spacing: buttonSpacing) {
-                                    Button {
-                                        vm.tapSetup()
-                                    } label: {
-                                        Image("setupButton")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: buttonWidth)
-                                    }
-                                    .buttonStyle(.plain)
-                                    
-                                    Button { } label: {
-                                        Image("learnmoreButton")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: buttonWidth)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                                .padding(.top, 6)
-                                
-                                Spacer(minLength: 14)
-                            }
-                                .padding(.horizontal, innerHorz),
-                            alignment: .center
-                        )
-                    
-                    Spacer()
-                }
+                FindingBotModal(
+                    connectedName: (vm.connectedName.isEmpty || vm.connectedName == "-") ? nil : vm.connectedName,
+                    onClose: { withAnimation(.spring()) { showFindDevice = false } },
+                    onSetup: { vm.tapSetup() },
+                    onLearnMore: { /* TODO: action learn more */ }
+                )
                 .transition(.scale.combined(with: .opacity))
             }
         }
