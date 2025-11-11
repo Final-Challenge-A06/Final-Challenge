@@ -44,6 +44,12 @@ extension OnboardingModel {
             title: "Goal Complete!",
             imageName: "robot",
             description: "You’ve finished your goal and Billo’s ready to open! Take your savings and start a new goal to keep going."
+        ),
+        
+        OnboardingModel(
+            title: "Ready to Start Saving?",
+            imageName: "robot",
+            description: ""
         )
     ]
 }
