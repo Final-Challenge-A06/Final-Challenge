@@ -18,7 +18,7 @@ struct BLETestView: View {
     
     var body: some View {
         ZStack {
-            Image("background_main")
+            Image("background_bluetooth")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()

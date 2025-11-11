@@ -8,8 +8,11 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var viewModel = OnboardingViewModel()
+    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
+
     var body: some View {
-        BLETestView ()
+        OnboardingView(onboardingVM: viewModel, bottomItemsVM: bottomItemsVM)
     }
 }
 
