@@ -83,8 +83,7 @@ struct BLETestView: View {
                 FindingBotModal(
                     connectedName: (vm.connectedName.isEmpty || vm.connectedName == "-") ? nil : vm.connectedName,
                     onClose: { withAnimation(.spring()) { showFindDevice = false } },
-                    onSetup: { vm.tapSetup() },
-                    onLearnMore: { /* TODO: action learn more */ }
+                    onSetup: { vm.tapSetup() }
                 )
                 .transition(.scale.combined(with: .opacity))
             }

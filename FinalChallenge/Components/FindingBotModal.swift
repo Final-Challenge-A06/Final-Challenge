@@ -4,12 +4,13 @@ struct FindingBotModal: View {
     var connectedName: String?
     var onClose: () -> Void
     var onSetup: () -> Void
-    var onLearnMore: () -> Void
     
     var body: some View {
         VStack {
             ZStack() {
                 Image("background_modal")
+                    .resizable()
+                    .scaledToFit()
                 
                 // Background modal image
                 Image("modalFindingBot")
@@ -61,8 +62,6 @@ struct FindingBotModal: View {
                 .padding(.horizontal, 22)
                 .offset(y: -40)
             }
-            
-            Spacer()
         }
     }
 }
@@ -73,8 +72,7 @@ struct FindingBotModal: View {
         FindingBotModal(
             connectedName: "ESP32 Roboo",
             onClose: {},
-            onSetup: {},
-            onLearnMore: {}
+            onSetup: {}
         )
     }
 }
