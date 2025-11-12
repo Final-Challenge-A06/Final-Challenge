@@ -16,18 +16,36 @@ struct GoalModalStep1View: View {
     
     var body: some View {
         ZStack(alignment: .center) {
-            Image("modal")
+            Image("modal_goal")
             
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Name your dream thing").font(.custom("audiowide", size: 28))
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Name your dream thing *")
+                    .font(.custom("audiowide", size: 28))
+                    .foregroundStyle(Color.white)
                 
-                TextField("Type here…", text: $vm.goalName)
+                TextField("", text: $vm.goalName)
                     .textInputAutocapitalization(.words)
                     .padding(.horizontal, 14).padding(.vertical, 12)
-                    .background(.white, in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(.black.opacity(0.08)))
+                    .background(.greenButton, in: RoundedRectangle(cornerRadius: 12))
                 
-                Text("How does it look?").font(.custom("audiowide", size: 28))
+                Text("How much does it cost? *")
+                    .font(.custom("audiowide", size: 28))
+                    .foregroundStyle(Color.white)
+                
+                TextField("", text: $vm.priceText)
+                    .keyboardType(.numberPad)
+                    .onChange(of: vm.priceText) { oldValue, newValue in
+                        let filtered = newValue.filter { $0.isNumber }
+                        if filtered != newValue {
+                            vm.priceText = filtered
+                        }
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 12)
+                    .background(.greenButton, in: RoundedRectangle(cornerRadius: 12))
+                
+                Text("How does it look?")
+                    .font(.custom("audiowide", size: 28))
+                    .foregroundStyle(Color.white)
                 
                 PhotosPicker(
                     selection: $vm.selectedItem,
@@ -36,7 +54,7 @@ struct GoalModalStep1View: View {
                 ) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.white)
+                            .fill(Color.greenButton)
                             .frame(height: 140)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
@@ -56,10 +74,10 @@ struct GoalModalStep1View: View {
                         } else {
                             VStack(spacing: 8) {
                                 Image(systemName: "photo.on.rectangle")
-                                    .foregroundColor(.black)
+                                    .foregroundColor(.white)
                                 Text("Select photos to upload")
                                     .font(.custom("audiowide", size: 16))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(.white)
                             }
                         }
                     }
@@ -76,35 +94,23 @@ struct GoalModalStep1View: View {
                     }
                 }
                 
-                Text("How much does it cost?").font(.custom("audiowide", size: 28))
-                
-                TextField("e.g., 180000", text: $vm.priceText)
-                    .keyboardType(.numberPad)
-                    .onChange(of: vm.priceText) { oldValue, newValue in
-                        let filtered = newValue.filter { $0.isNumber }
-                        if filtered != newValue {
-                            vm.priceText = filtered
-                        }
-                    }
-                    .padding(.horizontal, 14).padding(.vertical, 12)
-                    .background(.white, in: RoundedRectangle(cornerRadius: 12))
-                
                 HStack () {
                     Spacer()
                     
                     Button(action: { onNext() }) {
                         Image(systemName: "arrow.right")
                             .foregroundStyle(Color.black)
-                            .padding(16)
-                            .background(.yellow.opacity(0.6), in: Circle())
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 60)
+                            .background(.yellowButton, in: Capsule())
                     }
                     .disabled(!vm.isStep1Valid)
                     
                     Spacer()
                 }
-                
+                .padding(.top, 40)
             }
-            .frame(width: 480)
+            .frame(width: 600)
         }
         .frame(width: 632, height: 700)
         .overlay(alignment: .topTrailing) {
@@ -125,5 +131,5 @@ struct GoalModalStep1View: View {
 #Preview {
     GoalModalStep1View(onNext: {}, onClose: {})
         .padding()
-        .background(Color.gray.opacity(0.15))
+//        .background(Color.gray.opacity(0.15))
 }

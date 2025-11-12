@@ -19,6 +19,7 @@ struct GoalView: View {
     
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
+    @State private var showStep3Modal = false
     
     var body: some View {
         ZStack {
@@ -138,7 +139,7 @@ struct GoalView: View {
             }
             .padding(40)
             
-            // Modal Set Goal
+            // Modal Set Goal (Step 1 & 2)
             if goalVm.showGoalModal {
                 CenteredModal(isPresented: $goalVm.showGoalModal) {
                     if goalVm.activeStep == 1 {
@@ -155,7 +156,9 @@ struct GoalView: View {
                                 // Segera refresh reward dan sinkronkan ke panel bawah
                                 goalVm.loadRewardsForView(context: context)
                                 bottomItemsVM.setItems(goalVm.rewardViewItems)
+                                // Tutup modal step 1/2 lalu tampilkan Step 3
                                 goalVm.closeModal()
+                                showStep3Modal = true
                             },
                             onBack: { goalVm.activeStep = 1 }
                         )
@@ -198,6 +201,14 @@ struct GoalView: View {
                     )
                 }
                 .zIndex(4)
+            }
+            
+            // NEW: Modal Step 3 setelah set goal
+            if showStep3Modal {
+                CenteredModal(isPresented: $showStep3Modal) {
+                    SetGoalModal3View()
+                }
+                .zIndex(5)
             }
         }
         .onAppear {

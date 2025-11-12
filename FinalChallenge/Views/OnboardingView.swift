@@ -93,10 +93,21 @@ struct OnboardingView: View {
                         .offset(x: 70, y: -100)
                     }
                     .zIndex(1)
+                    
+                    if let page = onboardingVM.currentPage {
+                        Image("robot")
+                            .offset(x: page.offsetX, y: page.offsetY)
+                            .rotationEffect(.degrees(page.rotationDegrees))
+                    } else {
+                        Image("robot")
+                            .offset(x: -400, y: -240)
+                            .rotationEffect(.degrees(20))
+                    }
                 }
                 
                 BottomItemSelectionView(viewModel: bottomItemsVM)
-                    .offset(x: 40, y: -80)
+                    .padding(.horizontal, 40)
+                    .offset(y: -80)
             }
             .offset(y: 160)
         }
@@ -115,3 +126,4 @@ private struct OnboardingPreviewContainer: View {
 #Preview {
     OnboardingPreviewContainer()
 }
+

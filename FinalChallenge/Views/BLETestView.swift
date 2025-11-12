@@ -14,6 +14,7 @@ struct BLETestView: View {
     @State private var showFindDevice = false
     @State private var showTrial = false
     @State private var showGoal = false
+    @State private var showOnboarding = false
     @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
     
     var body: some View {
@@ -83,7 +84,9 @@ struct BLETestView: View {
                 FindingBotModal(
                     connectedName: (vm.connectedName.isEmpty || vm.connectedName == "-") ? nil : vm.connectedName,
                     onClose: { withAnimation(.spring()) { showFindDevice = false } },
-                    onSetup: { vm.tapSetup() }
+                    onSetup: {
+                         vm.tapSetup()
+                    }
                 )
                 .transition(.scale.combined(with: .opacity))
             }
@@ -113,6 +116,7 @@ struct BLETestView: View {
                 } else {
                     showTrial = true
                 }
+                 showOnboarding = true
             case .failed:
                 withAnimation(.spring()) { showFindDevice = false }
             default:
@@ -124,6 +128,12 @@ struct BLETestView: View {
         }
         .fullScreenCover(isPresented: $showGoal) {
             GoalView().environmentObject(vm)
+        }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            // Buat instance VM yang dibutuhkan OnboardingView
+            let onboardingVM = OnboardingViewModel()
+            let bottomItemsVM = BottomItemSelectionViewModel()
+            OnboardingView(onboardingVM: onboardingVM, bottomItemsVM: bottomItemsVM)
         }
     }
     
