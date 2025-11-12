@@ -19,15 +19,8 @@ struct GoalModalStep2View: View {
             Image("modal_goal")
             
             VStack(alignment: .leading, spacing: 30) {
-                Button(action: { onBack() }) {
-                    Image(systemName: "chevron.left")
-                        .resizable()
-                        .frame(width: 10, height: 18)
-                        .bold()
-                        .foregroundStyle(Color.black)
-                        .padding(20)
-                        .background(Color.yellowButton, in: Circle())
-                }
+                // Removed the custom back button as requested
+                // Button(action: { onBack() }) { ... }
                 
                 Text("Pick your saving days")
                     .font(.custom("audiowide", size: 24))
@@ -54,8 +47,6 @@ struct GoalModalStep2View: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
                 
-//                Spacer()
-                
                 Text("How much will you save each time?")
                     .font(.custom("audiowide", size: 24))
                     .foregroundStyle(Color.white)
@@ -69,8 +60,6 @@ struct GoalModalStep2View: View {
                     }
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(.greenButton, in: RoundedRectangle(cornerRadius: 12))
-                
-//                Spacer()
                 
                 HStack(spacing: 16) {
                     Spacer()
@@ -92,6 +81,7 @@ struct GoalModalStep2View: View {
             .frame(width: 550,  height: 700)
         }
         .frame(width: 632, height: 700)
+        .navigationBarBackButtonHidden(true) // hide system back button
     }
     
     private func toggle(_ day: String) {

@@ -1,57 +1,86 @@
-//
-//  GoalModalStep1View.swift
-//  FinalChallenge
-//
-//  Created by Angel Aprilia Putri Lo on 30/10/25.
-//
-
 import SwiftUI
 import PhotosUI
 
 @MainActor
 struct GoalModalStep1View: View {
-    @ObservedObject var vm = GoalViewModel()
+    @ObservedObject var vm: GoalViewModel
+    @ObservedObject var bottomItemsVM: BottomItemSelectionViewModel
     var onNext: () -> Void
     var onClose: () -> Void
-    
+
     var body: some View {
-        ZStack(alignment: .center) {
-            Image("modal_goal")
+        ZStack {
+            Image("background_main")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
             
+            Image("frame_top")
+                .offset(y: -30)
+            
+            Image("modal_setgoal")
+                .offset(y: -100)
+            
+            Image("ss_before")
+                .resizable()
+                .frame(width: 246, height: 246)
+                .offset(y: 370)
+            
+            Image("modal_bottom_shadow")
+                .offset(x: -10, y: 270)
+            
+            BottomItemSelectionView(viewModel: BottomItemSelectionViewModel())
+                .offset(x: 50, y: 580)
+            
+            Image("robot")
+                .offset(x: -350, y: 250)
+                .rotationEffect(.degrees(-10))
+            
+            Text("""
+                 What do you want to save for?
+                 Add a name, price, and picture if you want!
+                 """)
+                .font(.custom("audiowide", size: 12))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .frame(maxWidth: 250, alignment: .center)
+                .fixedSize(horizontal: false, vertical: true)
+                .background(
+                    Rectangle()
+                        .fill(Color.darkBlue)
+                )
+                .offset(x: -170, y: 220)
+
             VStack(alignment: .leading, spacing: 20) {
                 Text("Name your dream thing *")
                     .font(.custom("audiowide", size: 28))
                     .foregroundStyle(Color.white)
-                
+
                 TextField("", text: $vm.goalName)
                     .textInputAutocapitalization(.words)
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(.greenButton, in: RoundedRectangle(cornerRadius: 12))
-                
+
                 Text("How much does it cost? *")
                     .font(.custom("audiowide", size: 28))
                     .foregroundStyle(Color.white)
-                
+
                 TextField("", text: $vm.priceText)
                     .keyboardType(.numberPad)
                     .onChange(of: vm.priceText) { oldValue, newValue in
                         let filtered = newValue.filter { $0.isNumber }
-                        if filtered != newValue {
-                            vm.priceText = filtered
-                        }
+                        if filtered != newValue { vm.priceText = filtered }
                     }
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(.greenButton, in: RoundedRectangle(cornerRadius: 12))
-                
+
                 Text("How does it look?")
                     .font(.custom("audiowide", size: 28))
                     .foregroundStyle(Color.white)
-                
-                PhotosPicker(
-                    selection: $vm.selectedItem,
-                    matching: .images,
-                    photoLibrary: .shared()
-                ) {
+
+                PhotosPicker(selection: $vm.selectedItem, matching: .images, photoLibrary: .shared()) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color.greenButton)
@@ -60,7 +89,7 @@ struct GoalModalStep1View: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(.black.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [5]))
                             )
-                        
+
                         if let ui = vm.selectedImage {
                             Image(uiImage: ui)
                                 .resizable()
@@ -73,30 +102,25 @@ struct GoalModalStep1View: View {
                                 )
                         } else {
                             VStack(spacing: 8) {
-                                Image(systemName: "photo.on.rectangle")
-                                    .foregroundColor(.white)
+                                Image(systemName: "photo.on.rectangle").foregroundColor(.white)
                                 Text("Select photos to upload")
                                     .font(.custom("audiowide", size: 16))
                                     .foregroundColor(.white)
                             }
                         }
                     }
-                    .contentShape(Rectangle())
                 }
-                .onChange(of: vm.selectedItem, initial: false) { oldItem, newItem in
+                .onChange(of: vm.selectedItem, initial: false) { _, newItem in
                     Task {
                         if let data = try? await newItem?.loadTransferable(type: Data.self),
                            let ui = UIImage(data: data) {
-                            await MainActor.run {
-                                vm.selectedImage = ui
-                            }
+                            vm.selectedImage = ui
                         }
                     }
                 }
-                
-                HStack () {
+
+                HStack {
                     Spacer()
-                    
                     Button(action: { onNext() }) {
                         Image(systemName: "arrow.right")
                             .foregroundStyle(Color.black)
@@ -105,14 +129,14 @@ struct GoalModalStep1View: View {
                             .background(.yellowButton, in: Capsule())
                     }
                     .disabled(!vm.isStep1Valid)
-                    
                     Spacer()
                 }
                 .padding(.top, 40)
             }
-            .frame(width: 600)
+            .frame(width: 500)
+            .offset(y: -100)
         }
-        .frame(width: 632, height: 700)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay(alignment: .topTrailing) {
             Button { onClose() } label: {
                 Image(systemName: "xmark")
@@ -129,7 +153,6 @@ struct GoalModalStep1View: View {
 }
 
 #Preview {
-    GoalModalStep1View(onNext: {}, onClose: {})
-        .padding()
-//        .background(Color.gray.opacity(0.15))
+    GoalModalStep1View(vm: GoalViewModel(), bottomItemsVM: BottomItemSelectionViewModel(), onNext: {}, onClose: {})
+        .previewDisplayName("GoalModalStep1 - Fullscreen")
 }
