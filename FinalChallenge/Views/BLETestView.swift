@@ -10,7 +10,7 @@ import CoreBluetooth
 import Combine
 
 struct BLETestView: View {
-    @StateObject private var vm = BLEViewModel()
+    @EnvironmentObject var bleVM: BLEViewModel
     @State private var showFindDevice = false
     @State private var showTrial = false
     @State private var showGoal = false
@@ -30,7 +30,7 @@ struct BLETestView: View {
                     .frame(maxWidth: 550)
                 
                 VStack(spacing: 8) {
-                    if case .scanning = vm.state {
+                    if case .scanning = bleVM.state {
                         Text("SCANNING...")
                             .font(.custom("Audiowide", size: 26))
                             .kerning(1)
@@ -58,7 +58,7 @@ struct BLETestView: View {
                 .padding(.bottom, 50)
                 
                 Button {
-                    vm.startScan()
+                    bleVM.startScan()
                 } label: {
                     Text("+Link your Bot")
                         .font(.custom("Audiowide", size: 26))
@@ -81,19 +81,19 @@ struct BLETestView: View {
                     .transition(.opacity)
                 
                 FindingBotModal(
-                    connectedName: (vm.connectedName.isEmpty || vm.connectedName == "-") ? nil : vm.connectedName,
+                    connectedName: (bleVM.connectedName.isEmpty || bleVM.connectedName == "-") ? nil : bleVM.connectedName,
                     onClose: { withAnimation(.spring()) { showFindDevice = false } },
-                    onSetup: { vm.tapSetup() }
+                    onSetup: { bleVM.tapSetup() }
                 )
                 .transition(.scale.combined(with: .opacity))
             }
         }
         .animation(.easeOut(duration: 0.22), value: showFindDevice)
         .onAppear {
-            vm.onShowFindDevice = { show in
+            bleVM.onShowFindDevice = { show in
                 withAnimation(.spring()) { showFindDevice = show }
             }
-            if vm.hasPairedOnce {
+            if bleVM.hasPairedOnce {
                 if hasCompletedTrial {
                     showGoal = true
                 } else {
@@ -101,8 +101,8 @@ struct BLETestView: View {
                 }
             }
         }
-        .onDisappear { vm.onShowFindDevice = nil }
-        .onChange(of: vm.state) { _, newValue in
+        .onDisappear { bleVM.onShowFindDevice = nil }
+        .onChange(of: bleVM.state) { _, newValue in
             switch newValue {
             case .connecting:
                 withAnimation(.spring()) { showFindDevice = true }
@@ -120,15 +120,15 @@ struct BLETestView: View {
             }
         }
         .fullScreenCover(isPresented: $showTrial) {
-            TrialDeviceIntroView(vm: vm)  
+            TrialDeviceIntroView().environmentObject(bleVM)
         }
         .fullScreenCover(isPresented: $showGoal) {
-            GoalView().environmentObject(vm)
+            GoalView().environmentObject(bleVM)
         }
     }
     
     private var titleForModal: String {
-        switch vm.state {
+        switch bleVM.state {
         case .connecting: return "Connecting..."
         case .connected:  return "Linked!"
         case .failed:     return "Connection Failed"

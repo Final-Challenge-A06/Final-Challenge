@@ -89,6 +89,14 @@ struct GoalModalStep1View: View {
                     .padding(.horizontal, 14).padding(.vertical, 12)
                     .background(.white, in: RoundedRectangle(cornerRadius: 12))
                 
+                if !(vm.priceText.isEmpty), (Int(vm.priceText) ?? 0) < 50_000 {
+                    Text("Minimum goal is Rp50,000")
+                        .font(.custom("Audiowide", size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                        .padding(.top, 2)
+                        .transition(.opacity)
+                }
+                
                 HStack () {
                     Spacer()
                     
@@ -96,16 +104,16 @@ struct GoalModalStep1View: View {
                         Image(systemName: "arrow.right")
                             .foregroundStyle(Color.black)
                             .padding(16)
-                            .background(.yellow.opacity(0.6), in: Circle())
-                    }
-                    .disabled(!vm.isStep1Valid)
-                    
-                    Spacer()
+                            .background(vm.isStep1Valid ? Color.yellow.opacity(0.8) : Color.gray.opacity(0.4), in: Circle())
                 }
+                .disabled(!vm.isStep1Valid)
                 
+                Spacer()
             }
-            .frame(width: 480)
+            
         }
+        .frame(width: 480)
+    }
         .frame(width: 632, height: 700)
         .overlay(alignment: .topTrailing) {
             Button { onClose() } label: {
@@ -119,7 +127,7 @@ struct GoalModalStep1View: View {
             .buttonStyle(.plain)
             .padding(10)
         }
-    }
+}
 }
 
 #Preview {

@@ -78,16 +78,16 @@ struct GoalModalStep2View: View {
                 
                 Spacer()
 
-                HStack(spacing: 16) {
+                HStack() {
                     Spacer()
                     
                     Button(action: { onDone() }) {
                         Image(systemName: "arrow.right")
                             .foregroundStyle(Color.black)
                             .padding(16)
-                            .background(.yellow.opacity(0.6), in: Circle())
-                            .disabled(!vm.isStep2Valid)
+                            .background(vm.isStep2Valid ? Color.yellow.opacity(0.8) : Color.gray.opacity(0.4), in: Circle())
                     }
+                    .disabled(!vm.isStep2Valid)
                     
                     Spacer()
                 }

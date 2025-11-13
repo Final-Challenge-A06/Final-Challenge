@@ -12,13 +12,13 @@ final class BottomItemSelectionViewModel: ObservableObject {
     @Published private(set) var items: [RewardState] = []
     
     var onSelect: ((RewardState) -> Void)? // Dipanggil saat item dipilih dari UI.
-
+    
     // Inisialisasi VM dengan daftar item awal dan callback seleksi.
     init(items: [RewardState] = [], onSelect: ((RewardState) -> Void)? = nil) {
         self.items = items
         self.onSelect = onSelect
     }
-
+    
     // Ganti seluruh daftar item yang ditampilkan.
     func setItems(_ newItems: [RewardState]) {
         items = newItems
@@ -27,12 +27,24 @@ final class BottomItemSelectionViewModel: ObservableObject {
     // Tangani tap: jika claimable ubah ke claimed lalu panggil callback; lainnya hanya panggil callback.
     func handleTap(on item: RewardState) {
         guard let idx = items.firstIndex(of: item) else { return }
-
+        
         switch items[idx].state {
         case .claimable:
             items[idx].state = .claimed
+            NotificationCenter.default.post(
+                name: .didSelectAccessory,
+                object: nil,
+                userInfo: ["glasses": items[idx].imageName]
+            )
             onSelect?(items[idx])
+            
         case .claimed, .locked:
+            // Tetap post kalau kamu mau aksesori yg udah claimed bisa dikirim ulang
+            NotificationCenter.default.post(
+                name: .didSelectAccessory,
+                object: nil,
+                userInfo: ["photoName": items[idx].imageName]
+            )
             onSelect?(items[idx])
         }
     }
@@ -42,7 +54,7 @@ final class BottomItemSelectionViewModel: ObservableObject {
         case claimable
         case locked
     }
-
+    
     // Petakan item ke bentuk presentasi UI (claimed/claimable/locked).
     func presentation(for item: RewardState) -> RewardPresentation {
         switch item.state {

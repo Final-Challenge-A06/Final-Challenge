@@ -20,6 +20,11 @@ struct GoalView: View {
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
     
+    // Starter reward path (first money only)
+    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
+    @State private var showStarterClaim = false
+    @State private var showStarterReward = false
+    
     var body: some View {
         ZStack {
             Image("bg_main")
@@ -85,9 +90,9 @@ struct GoalView: View {
                     
                     ZStack (alignment: .trailing) {
                         if let sm = bleVM.streakManager {
-                                StreakView(streakManager: sm)
-                                    .padding(.top, 10)
-                            }
+                            StreakView(streakManager: sm)
+                                .padding(.top, 10)
+                        }
                         Spacer()
                         HStack {
                             SavingCardView(
@@ -138,6 +143,31 @@ struct GoalView: View {
             }
             .padding(40)
             
+            if showStarterClaim {
+                VStack {
+                    Spacer()
+                    Button {
+                        showStarterClaim = false
+                        showStarterReward = true
+                    } label: {
+                        ZStack {
+                            Image("claimButton")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 180)
+                            Text("Claim")
+                                .font(.custom("Audiowide", size: 22))
+                                .foregroundStyle(.white)
+                                .shadow(radius: 3)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.bottom, 220)
+                }
+                .transition(.scale.combined(with: .opacity))
+                .animation(.spring(), value: showStarterClaim)
+            }
+            
             // Modal Set Goal
             if goalVm.showGoalModal {
                 CenteredModal(isPresented: $goalVm.showGoalModal) {
@@ -181,6 +211,14 @@ struct GoalView: View {
                 .zIndex(3)
             }
             
+            if showStarterReward {
+                CenteredModal(isPresented: $showStarterReward) {
+                    RewardClaimView(vm: bleVM)
+                        .onDisappear { hasCompletedTrial = true } 
+                }
+                .zIndex(3)
+            }
+            
             // Modal Input Saving
             if showSavingModal {
                 CenteredModal(isPresented: $showSavingModal) {
@@ -188,12 +226,17 @@ struct GoalView: View {
                         title: "Add Saving",
                         amountText: $savingAmountText,
                         onCancel: { showSavingModal = false },
-                        onSave: { _ in
-                            // Tidak lagi mengubah progress dari modal.
+                        onSave: { value in
                             showSavingModal = false
-                            // Jika ingin, bisa tetap refresh UI, tapi tidak perlu mengubah vm.
+                            guard value > 0 else { return }
+                            goalVm.applySaving(amount: value, context: context)
+
                             goalVm.loadRewardsForView(context: context)
                             bottomItemsVM.setItems(goalVm.rewardViewItems)
+                            circleVM.updateSteps(
+                                totalSteps: goalVm.totalSteps,
+                                passedSteps: goalVm.passedSteps
+                            )
                         }
                     )
                 }
@@ -202,6 +245,7 @@ struct GoalView: View {
         }
         .onAppear {
             // Create StreakManager once when context is available
+            bleVM.setContext(context)
             if streakManagerHolder.manager == nil {
                 streakManagerHolder.manager = StreakManager(context: context)
             }
@@ -210,7 +254,6 @@ struct GoalView: View {
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             // sync circle VM initial state
             circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
-            bleVM.setContext(context)
             bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
         }
         .onChange(of: goals) { _, newGoals in
@@ -231,6 +274,10 @@ struct GoalView: View {
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
+
+            if goalVm.totalSteps > 0, goalVm.passedSteps >= 1, !hasCompletedTrial {
+                showStarterClaim = true
+            }
         }
     }
     

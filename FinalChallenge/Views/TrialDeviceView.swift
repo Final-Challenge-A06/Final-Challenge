@@ -4,11 +4,12 @@
 //
 //  Created by Angel Aprilia Putri Lo on 04/11/25.
 //
+//KYKNYA GAK DIPAKAI
 
 import SwiftUI
 
 struct TrialDeviceIntroView: View {
-    @ObservedObject var vm: BLEViewModel
+    @EnvironmentObject var bleVM: BLEViewModel
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     
     private let zigzagNormal: CGFloat = 40
@@ -57,26 +58,25 @@ struct TrialDeviceIntroView: View {
         .onChange(of: hasCompletedTrial) { _, done in
             if done { showStep2 = true }
         }
-        .onChange(of: vm.lastBalance) { _, newValue in
+        .onChange(of: bleVM.lastBalance) { _, newValue in
             if newValue > 0 {
                 showStep2 = true
                 hasCompletedTrial = true
             }
         }
         .onAppear {
-            if hasCompletedTrial || vm.lastBalance > 0 {
+            if hasCompletedTrial || bleVM.lastBalance > 0 {
                 showStep2 = true
-                if vm.lastBalance > 0 { hasCompletedTrial = true }
+                if bleVM.lastBalance > 0 { hasCompletedTrial = true }
             }
         }
         .fullScreenCover(isPresented: $showStep2) {
             TrialDeviceStep2View()
         }
-        .environmentObject(vm)
     }
 }
 
 #Preview {
-    TrialDeviceIntroView(vm: BLEViewModel())
+    TrialDeviceIntroView()
         .environmentObject(BLEViewModel())
 }

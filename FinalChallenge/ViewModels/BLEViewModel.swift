@@ -26,7 +26,7 @@ final class BLEViewModel: ObservableObject {
     @Published var outText: String = ""
     @Published var streakCount: Int = 0
     @Published var lastBalance: Int64 = 0
-
+    
     @Published var amount: Int64 = 0
     @Published var firstMoneyReceived: Bool = false
     @Published var streakManager: StreakManager?
@@ -37,10 +37,11 @@ final class BLEViewModel: ObservableObject {
     private var isActionBusy = false
     private var pendingPeripheral: CBPeripheral?
     private let targetKeyword = "esp32"
-//    var streakManager: StreakManager?
-    
+    //    var streakManager: StreakManager?
+    private var balanceModel: BalanceModel?
     private var context: ModelContext?
     private let goalVM: GoalViewModel
+    private var didBootstrap = false
     
     init(goalVM: GoalViewModel? = nil) {
         self.goalVM = goalVM ?? GoalViewModel()
@@ -50,8 +51,25 @@ final class BLEViewModel: ObservableObject {
     
     // Set context dari View
     func setContext(_ context: ModelContext) {
-//        if streakManager == nil { streakManager = StreakManager() }
+        guard !didBootstrap else { return }
+        didBootstrap = true
+        
         self.context = context
+        
+        if var all = try? context.fetch(FetchDescriptor<BalanceModel>()), !all.isEmpty {
+            let first = all.removeFirst()
+            // (opsional) merge duplikat kalau ada
+            for extra in all { first.balance = max(first.balance, extra.balance); context.delete(extra) }
+            balanceModel = first
+            lastBalance = first.balance
+        } else {
+            let m = BalanceModel(balance: 0)
+            context.insert(m)
+            try? context.save()
+            balanceModel = m
+            lastBalance = 0
+        }
+        
         self.streakManager = StreakManager(context: context)
         streakCount = streakManager?.currentStreak ?? 0
         dailyCheck()
@@ -185,53 +203,77 @@ final class BLEViewModel: ObservableObject {
         return UUID(uuidString: s)
     }
     
+    private func persistBalance() {
+        guard let ctx = context, let balanceModel else { return }
+        balanceModel.balance = lastBalance
+        do {
+            try ctx.save()
+            print("✅ Saved balance:", lastBalance)
+        } catch {
+            print("❌ SwiftData save error:", error.localizedDescription)
+        }
+    }
+    
+    func restorePersistedBalance() {
+        guard let ctx = context else { return }
+        if let stored = try? ctx.fetch(FetchDescriptor<BalanceModel>()).first {
+            if lastBalance != stored.balance {
+                lastBalance = stored.balance
+                goalVM.updateLastBalance(lastBalance, context: ctx)
+            }
+        }
+    }
+    
     // MARK: - Handle data from device
     func handleIncoming(data: Data) {
         if data.count == MemoryLayout<UInt32>.size {
-            let newBalanceRaw = data.withUnsafeBytes { $0.load(as: UInt32.self) }
-            let newBalance = UInt32(littleEndian: newBalanceRaw)
-            print("💰 Saldo baru dari device:", newBalance)
-            
-            if Int64(newBalance) > lastBalance {
-                print("Saldo naik dari \(lastBalance) ke \(newBalance) - trigger streak")
-                let days = goalVM.savingDaysArray
-                streakManager?.recordSaving(for: days)
-                streakCount = streakManager?.currentStreak ?? streakCount
-                print("📈 Saldo naik dari \(lastBalance) ke \(newBalance) - trigger streak")
-//                let days = self.goalVM.savingDaysArray
-//                self.streakManager?.recordSaving(for: days)
-                DispatchQueue.main.async {
-                    self.streakCount = self.streakManager?.currentStreak ?? 0
-                }
-            }
-            
-            if lastBalance == 0 && Int64(newBalance) > 0 {
-                DispatchQueue.main.async { self.firstMoneyReceived = true }
-            }
-            
-            print("New balance:", newBalance)
-            print("Last balance:", lastBalance)
-            
-            amount = Int64(newBalance) - lastBalance
-            print("Current amount saving:", amount)
-            
-            lastBalance = Int64(newBalance)
-            
-            // Update lastBalance ke SwiftData
-            if let ctx = context {
-                goalVM.updateLastBalance(lastBalance, context: ctx)
-            }
-            
+            let raw = data.withUnsafeBytes { $0.load(as: UInt32.self) }
+            let incoming = Int64(UInt32(littleEndian: raw))
+            handleIncomingBalance(incoming)
             return
         }
-        else {
-            if let s = String(data: data, encoding: .utf8) {
-                incomingText = s
-                print("📩 Received text: \(s)")
+
+        if let s = String(data: data, encoding: .utf8) {
+            incomingText = s
+            print("📩 Received text: \(s)")
+
+            let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let numeric = Int64(trimmed) {
+                handleIncomingBalance(numeric)
             } else {
-                incomingText = data.map { String(format: "%02X", $0) }.joined(separator: " ")
+                print("⛔️ Text is non-numeric, ignore for balance")
             }
+            return
         }
+
+        incomingText = data.map { String(format: "%02X", $0) }.joined(separator: " ")
+    }
+
+    private func handleIncomingBalance(_ incoming: Int64) {
+        if incoming == 0 && lastBalance > 0 {
+            print("⛔️ Ignore boot-zero from device")
+            return
+        }
+        if incoming < lastBalance {
+            print("⛔️ Ignore lower reading \(incoming) < \(lastBalance)")
+            return
+        }
+
+        if incoming > lastBalance {
+            let days = goalVM.savingDaysArray
+            streakManager?.recordSaving(for: days)
+            streakCount = streakManager?.currentStreak ?? 0
+        }
+
+        amount = incoming - lastBalance
+        lastBalance = incoming           
+        persistBalance()
+        if let ctx = context {
+            goalVM.updateLastBalance(lastBalance, context: ctx)
+        }
+
+        print("💰 Updated balance from device:", incoming,
+              " (delta:", amount, ")")
     }
     
     // MARK: - Daily check streak
@@ -248,6 +290,7 @@ final class BLEViewModel: ObservableObject {
         outText = "reset"
         mgr.writeString("reset")
         lastBalance = 0
+        persistBalance()
         print("🔄 Send reset to device, local balance cleared")
     }
 }
