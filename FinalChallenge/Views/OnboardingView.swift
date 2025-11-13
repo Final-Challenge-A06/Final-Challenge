@@ -1,0 +1,117 @@
+//
+//  OnboardingView.swift
+//  FinalChallenge
+//
+//  Created by Ahmad Zuhal Zhafran on 11/11/25.
+//
+
+import SwiftUI
+
+struct OnboardingView: View {
+    @ObservedObject var onboardingVM: OnboardingViewModel
+    @ObservedObject var bottomItemsVM: BottomItemSelectionViewModel
+
+    var body: some View {
+        ZStack {
+            Image("background_main")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+            
+            VStack () {
+                ZStack {
+                    Image("frame_top")
+                        .allowsHitTesting(false)
+                    
+                    Image("ss_before")
+                        .resizable()
+                        .frame(width: 246, height: 246)
+                        .rotationEffect(Angle(degrees: -15))
+                        .offset(y: 300)
+                        .allowsHitTesting(false)
+                    
+                    Image("modal_bottom_shadow")
+                        .offset(x:-10, y: 200)
+                        .allowsHitTesting(false)
+                    
+                    Image("modal_onboarding")
+                        .offset(y: -100)
+                        .allowsHitTesting(false)
+                    
+                    HStack {
+                        Button {
+                            onboardingVM.previous()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .resizable()
+                                .frame(width: 15, height: 25)
+                                .foregroundStyle(Color(.white))
+                        }
+                        .padding(24)
+                        .contentShape(Rectangle())
+                        .opacity(onboardingVM.currentIndex > 0 ? 1 : 0.4)
+                        .disabled(onboardingVM.currentIndex == 0)
+                        .offset(x: -70, y: -100)
+                        
+                        VStack (spacing: 50){
+                            Text(onboardingVM.currentPage?.title ?? "")
+                                .font(.custom("audiowide", size: 24))
+                                .foregroundStyle(Color(.white))
+                            
+                            if let imageName = onboardingVM.currentPage?.imageName {
+                                Image(imageName)
+                            }
+
+                            Text(onboardingVM.currentPage?.description ?? "")
+                                .font(.custom("audiowide", size: 14))
+                                .multilineTextAlignment(.center)
+                                .foregroundStyle(Color(.white))
+                                .frame(width: 300)
+                            
+                            HStack {
+                                ForEach(onboardingVM.pages.indices, id: \.self) { index in
+                                    Circle()
+                                        .fill(index == onboardingVM.currentIndex ? Color.white : Color.white.opacity(0.4))
+                                        .frame(width: 8, height: 8)
+                                }
+                            }
+                        }
+                        .offset(y: -100)
+                        
+                        Button {
+                            onboardingVM.next()
+                        } label: {
+                            Image(systemName: "chevron.right")
+                                .resizable()
+                                .frame(width: 15, height: 25)
+                                .foregroundStyle(Color(.white))
+                        }
+                        .padding(24)
+                        .contentShape(Rectangle())
+                        .opacity(onboardingVM.currentIndex < onboardingVM.pages.count - 1 ? 1 : 0.4)
+                        .disabled(onboardingVM.currentIndex >= onboardingVM.pages.count - 1)
+                        .offset(x: 70, y: -100)
+                    }
+                    .zIndex(1)
+                }
+                
+                BottomItemSelectionView(viewModel: bottomItemsVM)
+                    .offset(x: 40, y: -80)
+            }
+            .offset(y: 160)
+        }
+    }
+}
+
+private struct OnboardingPreviewContainer: View {
+    @StateObject var vm = OnboardingViewModel()
+    @StateObject var bottomItemsVM = BottomItemSelectionViewModel()
+    
+    var body: some View {
+        OnboardingView(onboardingVM: vm, bottomItemsVM: bottomItemsVM)
+    }
+}
+
+#Preview {
+    OnboardingPreviewContainer()
+}

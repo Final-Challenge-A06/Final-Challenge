@@ -27,7 +27,7 @@ struct GoalView: View {
     
     var body: some View {
         ZStack {
-            Image("bg_main")
+            Image("background_main")
                 .resizable()
                 .ignoresSafeArea()
             

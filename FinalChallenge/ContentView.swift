@@ -13,6 +13,9 @@ struct ContentView: View {
     @Environment(\.modelContext) private var context
     @AppStorage("hasCompletedTrial") var hasCompletedTrial = false
     
+    @StateObject private var viewModel = OnboardingViewModel()
+    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
+
     var body: some View {
         Group {
             if !bleVM.hasPairedOnce {
@@ -32,6 +35,7 @@ struct ContentView: View {
                 bleVM.tryReconnectOnLaunch()
             }
         }
+        OnboardingView(onboardingVM: viewModel, bottomItemsVM: bottomItemsVM)
     }
 }
 
