@@ -16,6 +16,7 @@ struct FinalChallengeApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(bleVM)
+                .preferredColorScheme(.light)
         }
         .modelContainer(for: [
             GoalModel.self,

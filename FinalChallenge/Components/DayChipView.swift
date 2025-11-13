@@ -11,7 +11,6 @@ struct DayChipView: View {
     static let size: CGFloat = 74
     let title: String
     let isSelected: Bool
-    let goalOrange: Color
     let tap: () -> Void
 
     var body: some View {
@@ -35,7 +34,6 @@ struct DayChipView: View {
     DayChipView(
         title: "Mon",
         isSelected: false,
-        goalOrange: Color.orange,
         tap: {}
     )
     .padding()
@@ -44,7 +42,6 @@ struct DayChipView: View {
     DayChipView(
         title: "Mon",
         isSelected: true,
-        goalOrange: Color.orange,
         tap: {}
     )
     .padding()
