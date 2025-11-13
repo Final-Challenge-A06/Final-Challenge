@@ -14,7 +14,11 @@ struct BLETestView: View {
     @State private var showFindDevice = false
     @State private var showTrial = false
     @State private var showGoal = false
+    @State private var showOnboarding = false
     @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
+
+    // Tambahkan state untuk StartOnboardingView
+    @State private var showStartOnboarding = false
     
     var body: some View {
         ZStack {
@@ -83,7 +87,15 @@ struct BLETestView: View {
                 FindingBotModal(
                     connectedName: (vm.connectedName.isEmpty || vm.connectedName == "-") ? nil : vm.connectedName,
                     onClose: { withAnimation(.spring()) { showFindDevice = false } },
-                    onSetup: { vm.tapSetup() }
+                    onSetup: {
+                        // Ubah: langsung tampilkan StartOnboardingView
+                        withAnimation(.spring()) {
+                            showStartOnboarding = true
+                            showFindDevice = false
+                        }
+                        // Jika masih ingin menjalankan pairing, bisa panggil vm.tapSetup() juga di sini.
+                        // vm.tapSetup()
+                    }
                 )
                 .transition(.scale.combined(with: .opacity))
             }
@@ -113,6 +125,7 @@ struct BLETestView: View {
                 } else {
                     showTrial = true
                 }
+                 showOnboarding = true
             case .failed:
                 withAnimation(.spring()) { showFindDevice = false }
             default:
@@ -124,6 +137,15 @@ struct BLETestView: View {
         }
         .fullScreenCover(isPresented: $showGoal) {
             GoalView().environmentObject(vm)
+        }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            let onboardingVM = OnboardingViewModel()
+            let bottomItemsVM = BottomItemSelectionViewModel()
+            OnboardingView(onboardingVM: onboardingVM, bottomItemsVM: bottomItemsVM)
+        }
+        // Tambahkan presentasi StartOnboardingView
+        .fullScreenCover(isPresented: $showStartOnboarding) {
+            StartOnboardingView(bottomItemsVM: BottomItemSelectionViewModel())
         }
     }
     

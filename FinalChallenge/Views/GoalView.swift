@@ -19,6 +19,7 @@ struct GoalView: View {
     
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
+    @State private var showStep3Modal = false
     
     var body: some View {
         ZStack {
@@ -30,24 +31,11 @@ struct GoalView: View {
                 VStack {
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack() {
-                            if goals.isEmpty {
-                                Button {
-                                    goalVm.onCircleTap()
-                                } label: {
-                                    SetGoalView()
-                                }
-                            }
-                            
                             CircleStepView(
                                 viewModel: circleVM
                             ) { step in
                                 if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
                                     goalVm.tryOpenClaim(for: step.id, context: context)
-                                    return
-                                }
-                                
-                                if step.isGoal {
-                                    goalVm.onCircleTap()
                                     return
                                 }
                             }
@@ -138,31 +126,8 @@ struct GoalView: View {
             }
             .padding(40)
             
-            // Modal Set Goal
-            if goalVm.showGoalModal {
-                CenteredModal(isPresented: $goalVm.showGoalModal) {
-                    if goalVm.activeStep == 1 {
-                        GoalModalStep1View(
-                            vm: goalVm,
-                            onNext: { goalVm.goToNextStep() },
-                            onClose: { goalVm.closeModal() }
-                        )
-                    } else {
-                        GoalModalStep2View(
-                            vm: goalVm,
-                            onDone: {
-                                goalVm.saveGoal(context: context)
-                                // Segera refresh reward dan sinkronkan ke panel bawah
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-                                goalVm.closeModal()
-                            },
-                            onBack: { goalVm.activeStep = 1 }
-                        )
-                    }
-                }
-                .zIndex(2)
-            }
+            // Hapus Modal Set Goal (Step 1 & 2) agar user tidak bisa set goal
+            // if goalVm.showGoalModal { ... } -> dihilangkan
             
             // Modal Claim Reward
             if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
@@ -179,25 +144,6 @@ struct GoalView: View {
                     )
                 }
                 .zIndex(3)
-            }
-            
-            // Modal Input Saving
-            if showSavingModal {
-                CenteredModal(isPresented: $showSavingModal) {
-                    SavingInputModalView(
-                        title: "Add Saving",
-                        amountText: $savingAmountText,
-                        onCancel: { showSavingModal = false },
-                        onSave: { _ in
-                            // Tidak lagi mengubah progress dari modal.
-                            showSavingModal = false
-                            // Jika ingin, bisa tetap refresh UI, tapi tidak perlu mengubah vm.
-                            goalVm.loadRewardsForView(context: context)
-                            bottomItemsVM.setItems(goalVm.rewardViewItems)
-                        }
-                    )
-                }
-                .zIndex(4)
             }
         }
         .onAppear {

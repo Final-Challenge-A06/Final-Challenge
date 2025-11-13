@@ -12,7 +12,7 @@ struct ContentView: View {
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
 
     var body: some View {
-        OnboardingView(onboardingVM: viewModel, bottomItemsVM: bottomItemsVM)
+        BLETestView()
     }
 }
 
