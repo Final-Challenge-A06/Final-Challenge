@@ -19,6 +19,7 @@ struct GoalView: View {
     
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
+    @State private var showStep3Modal = false
     
     // Starter reward path (first money only)
     @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
@@ -35,24 +36,11 @@ struct GoalView: View {
                 VStack {
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack() {
-                            if goals.isEmpty {
-                                Button {
-                                    goalVm.onCircleTap()
-                                } label: {
-                                    SetGoalView()
-                                }
-                            }
-                            
                             CircleStepView(
                                 viewModel: circleVM
                             ) { step in
                                 if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
                                     goalVm.tryOpenClaim(for: step.id, context: context)
-                                    return
-                                }
-                                
-                                if step.isGoal {
-                                    goalVm.onCircleTap()
                                     return
                                 }
                             }
