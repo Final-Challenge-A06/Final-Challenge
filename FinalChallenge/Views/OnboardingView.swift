@@ -11,10 +11,9 @@ struct OnboardingView: View {
     @ObservedObject var onboardingVM: OnboardingViewModel
     @ObservedObject var bottomItemsVM: BottomItemSelectionViewModel
     @StateObject private var goalVM = GoalViewModel()
-    @State private var path: [String] = []
 
     var body: some View {
-        NavigationStack(path: $path) {
+        NavigationStack {
             ZStack {
                 Image("background_main")
                     .resizable()
@@ -73,11 +72,13 @@ struct OnboardingView: View {
                                 }
                                 
                                 if onboardingVM.currentIndex == max(onboardingVM.pages.count - 1, 0) {
-                                    Button {
-                                        goalVM.activeStep = 1
-                                        if path.isEmpty || path.last != "step1" {
-                                            path.append("step1")
-                                        }
+                                    NavigationLink {
+                                        GoalModalStep1View(
+                                            vm: goalVM,
+                                            bottomItemsVM: bottomItemsVM,
+                                            onNext: {} // tidak dipakai lagi
+                                        )
+                                        .navigationBarBackButtonHidden(true)
                                     } label: {
                                         Text("Let's Begin")
                                             .font(.custom("audiowide", size: 16))
@@ -134,38 +135,6 @@ struct OnboardingView: View {
                 }
                 .offset(y: 160)
             }
-            .navigationDestination(for: String.self) { route in
-                switch route {
-                case "step1":
-                    GoalModalStep1View(
-                        vm: goalVM,
-                        bottomItemsVM: bottomItemsVM,
-                        onNext: {
-                            goalVM.goToNextStep()
-                            if path.last != "step2" {
-                                path.append("step2")
-                            }
-                        },
-                        onClose: {
-                            path.removeAll()
-                        }
-                    )
-                    .navigationBarBackButtonHidden(true)
-                case "step2":
-                    GoalModalStep2View(
-                        vm: goalVM,
-                        onDone: {
-                            path.removeAll()
-                        },
-                        onBack: {
-                            if !path.isEmpty { _ = path.popLast() }
-                        }
-                    )
-                    .navigationBarBackButtonHidden(true)
-                default:
-                    EmptyView()
-                }
-            }
         }
     }
 }
@@ -182,4 +151,3 @@ private struct OnboardingPreviewContainer: View {
 #Preview {
     OnboardingPreviewContainer()
 }
-

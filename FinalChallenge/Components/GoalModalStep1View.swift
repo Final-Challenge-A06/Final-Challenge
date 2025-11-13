@@ -6,7 +6,8 @@ struct GoalModalStep1View: View {
     @ObservedObject var vm: GoalViewModel
     @ObservedObject var bottomItemsVM: BottomItemSelectionViewModel
     var onNext: () -> Void
-    var onClose: () -> Void
+
+    @State private var navigateToGoal = false
 
     var body: some View {
         ZStack {
@@ -29,10 +30,12 @@ struct GoalModalStep1View: View {
             Image("modal_bottom_shadow")
                 .offset(x: -10, y: 270)
             
-            BottomItemSelectionView(viewModel: BottomItemSelectionViewModel())
+            BottomItemSelectionView(viewModel: bottomItemsVM)
                 .offset(x: 50, y: 580)
             
             Image("robot")
+                .resizable()
+                .frame(width: 200, height: 250)
                 .offset(x: -350, y: 250)
                 .rotationEffect(.degrees(-10))
             
@@ -40,7 +43,7 @@ struct GoalModalStep1View: View {
                  What do you want to save for?
                  Add a name, price, and picture if you want!
                  """)
-                .font(.custom("audiowide", size: 12))
+                .font(.custom("audiowide", size: 16))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.white)
                 .padding(.vertical, 8)
@@ -115,13 +118,26 @@ struct GoalModalStep1View: View {
                         if let data = try? await newItem?.loadTransferable(type: Data.self),
                            let ui = UIImage(data: data) {
                             vm.selectedImage = ui
+                            vm.validateStep1()
                         }
                     }
                 }
 
                 HStack {
                     Spacer()
-                    Button(action: { onNext() }) {
+                    NavigationLink {
+                        GoalModalStep2View(
+                            vm: vm,
+                            onDone: {
+                                // Step 2 selesai -> arahkan ke GoalView
+                                navigateToGoal = true
+                            },
+                            onBack: {
+                                // kembali ke step 1 (pop otomatis oleh NavigationStack)
+                            }
+                        )
+                        .navigationBarBackButtonHidden(true)
+                    } label: {
                         Image(systemName: "arrow.right")
                             .foregroundStyle(Color.black)
                             .padding(.vertical, 16)
@@ -137,22 +153,13 @@ struct GoalModalStep1View: View {
             .offset(y: -100)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: .topTrailing) {
-            Button { onClose() } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.black.opacity(0.7))
-                    .padding(8)
-                    .background(.white, in: Circle())
-                    .shadow(radius: 2)
-            }
-            .buttonStyle(.plain)
-            .padding(10)
+        .navigationDestination(isPresented: $navigateToGoal) {
+            GoalView()
+                .navigationBarBackButtonHidden(true)
         }
     }
 }
 
 #Preview {
-    GoalModalStep1View(vm: GoalViewModel(), bottomItemsVM: BottomItemSelectionViewModel(), onNext: {}, onClose: {})
-        .previewDisplayName("GoalModalStep1 - Fullscreen")
+    GoalModalStep1View(vm: GoalViewModel(), bottomItemsVM: BottomItemSelectionViewModel(), onNext: {})
 }

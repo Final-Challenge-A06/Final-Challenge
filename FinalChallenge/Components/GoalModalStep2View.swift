@@ -6,21 +6,76 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct GoalModalStep2View: View {
     @ObservedObject var vm: GoalViewModel
     var onDone: () -> Void
     var onBack: () -> Void
     
+    @State private var showConfirm = false
+    @Environment(\.modelContext) private var context
+    
     private let days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
     
     var body: some View {
-        ZStack(alignment: .center) {
-            Image("modal_goal")
+        ZStack {
+            Image("background_main")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+            
+            Image("frame_top")
+                .offset(y: -30)
+            
+            Image("modal_setgoal")
+                .offset(y: -100)
+            
+            Image("ss_before")
+                .resizable()
+                .frame(width: 246, height: 246)
+                .offset(y: 370)
+            
+            Image("modal_bottom_shadow")
+                .offset(x: -10, y: 270)
+            
+            BottomItemSelectionView(viewModel: BottomItemSelectionViewModel())
+                .offset(x: 50, y: 580)
+            
+            Image("robot")
+                .resizable()
+                .frame(width: 200, height: 250)
+                .offset(x: 400, y: 300)
+                .rotationEffect(.degrees(5))
+            
+            Text("""
+                 When will you save? 
+                 Pick your days and how much each time!
+                 """)
+                .font(.custom("audiowide", size: 16))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .frame(maxWidth: 250, alignment: .center)
+                .fixedSize(horizontal: false, vertical: true)
+                .background(
+                    Rectangle()
+                        .fill(Color.darkBlue)
+                )
+                .offset(x: 200, y: 220)
             
             VStack(alignment: .leading, spacing: 30) {
-                // Removed the custom back button as requested
-                // Button(action: { onBack() }) { ... }
+                Button {
+                    onBack()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .resizable()
+                        .frame(width: 10, height: 20)
+                        .foregroundStyle(Color.black)
+                        .padding(15)
+                        .background(Color.yellowButton, in: Circle())
+                }
                 
                 Text("Pick your saving days")
                     .font(.custom("audiowide", size: 24))
@@ -64,7 +119,11 @@ struct GoalModalStep2View: View {
                 HStack(spacing: 16) {
                     Spacer()
                     
-                    Button(action: { onDone() }) {
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
+                            showConfirm = true
+                        }
+                    }) {
                         Image(systemName: "checkmark")
                             .resizable()
                             .frame(width: 24, height: 24)
@@ -72,16 +131,41 @@ struct GoalModalStep2View: View {
                             .padding(.vertical, 16)
                             .padding(.horizontal, 60)
                             .background(.yellowButton, in: Capsule())
-                            .disabled(!vm.isStep2Valid)
                     }
+                    .disabled(!vm.isStep2Valid)
                     
                     Spacer()
                 }
             }
             .frame(width: 550,  height: 700)
+            .offset(y: -100)
+            
+            if showConfirm {
+                Color.black.opacity(0.25)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showConfirm = false
+                        }
+                    }
+                    .transition(.opacity)
+                
+                ConfirmGoalModalView(
+                    isPresented: $showConfirm,
+                    onConfirm: {
+                        vm.saveGoal(context: context)
+                        onDone()
+                    },
+                    onBack: {
+                        
+                    }
+                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(1)
+            }
         }
-        .frame(width: 632, height: 700)
-        .navigationBarBackButtonHidden(true) // hide system back button
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationBarBackButtonHidden(true)
     }
     
     private func toggle(_ day: String) {
@@ -95,5 +179,4 @@ struct GoalModalStep2View: View {
 
 #Preview {
     GoalModalStep2View(vm: GoalViewModel(), onDone: {}, onBack: {})
-        .padding()
 }

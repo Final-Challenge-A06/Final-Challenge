@@ -89,7 +89,7 @@ final class GoalViewModel: ObservableObject {
     @Published var isStep2Valid: Bool = false
     
     func validateStep1() {
-        isStep1Valid = !goalName.trimmingCharacters(in: .whitespaces).isEmpty && _priceText > 0 && selectedImage != nil
+        isStep1Valid = !goalName.trimmingCharacters(in: .whitespaces).isEmpty && _priceText > 0
     }
     
     func validateStep2() {

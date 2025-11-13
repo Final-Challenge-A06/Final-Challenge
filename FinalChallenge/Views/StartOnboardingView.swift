@@ -46,12 +46,6 @@ struct StartOnboardingView: View {
                         .offset(y: -80)
                 }
                 .offset(y: 160)
-                
-                NavigationLink(
-                    destination: OnboardingDestinationView(),
-                    isActive: $goToOnboarding
-                ) { EmptyView() }
-                .hidden()
             }
             .contentShape(Rectangle())
             .onTapGesture {
@@ -62,6 +56,9 @@ struct StartOnboardingView: View {
                 } else {
                     goToOnboarding = true
                 }
+            }
+            .navigationDestination(isPresented: $goToOnboarding) {
+                OnboardingDestinationView()
             }
             .navigationBarBackButtonHidden(true)
         }
