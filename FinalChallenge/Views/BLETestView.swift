@@ -132,17 +132,17 @@ struct BLETestView: View {
                 break
             }
         }
-        .fullScreenCover(isPresented: $showTrial) {
-            TrialDeviceIntroView(vm: vm)  
-        }
-        .fullScreenCover(isPresented: $showGoal) {
-            GoalView().environmentObject(vm)
-        }
-        .fullScreenCover(isPresented: $showOnboarding) {
-            let onboardingVM = OnboardingViewModel()
-            let bottomItemsVM = BottomItemSelectionViewModel()
-            OnboardingView(onboardingVM: onboardingVM, bottomItemsVM: bottomItemsVM)
-        }
+//        .fullScreenCover(isPresented: $showTrial) {
+//            TrialDeviceIntroView(vm: vm)  
+//        }
+//        .fullScreenCover(isPresented: $showGoal) {
+//            GoalView().environmentObject(vm)
+//        }
+//        .fullScreenCover(isPresented: $showOnboarding) {
+//            let onboardingVM = OnboardingViewModel()
+//            let bottomItemsVM = BottomItemSelectionViewModel()
+//            OnboardingView(onboardingVM: onboardingVM, bottomItemsVM: bottomItemsVM)
+//        }
         // Tambahkan presentasi StartOnboardingView
         .fullScreenCover(isPresented: $showStartOnboarding) {
             StartOnboardingView(bottomItemsVM: BottomItemSelectionViewModel())
