@@ -19,7 +19,6 @@ struct GoalView: View {
     
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
-    @State private var showStep3Modal = false
     
     // Starter reward path (first money only)
     @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
@@ -80,18 +79,6 @@ struct GoalView: View {
                         if let sm = bleVM.streakManager {
                             StreakView(streakManager: sm)
                                 .padding(.top, 10)
-                        }
-                        Spacer()
-                        HStack {
-                            SavingCardView(
-                                title: "My Saving",
-                                totalSaving: String(bleVM.lastBalance)
-                            )
-                            .onTapGesture {
-                                savingAmountText = ""
-                                showSavingModal = true
-                            }
-                            Spacer()
                         }
                     }
                 }
@@ -158,56 +145,35 @@ struct GoalView: View {
             
             // Modal Set Goal
             if goalVm.showGoalModal {
-                CenteredModal(isPresented: $goalVm.showGoalModal) {
-                    if goalVm.activeStep == 1 {
-                        GoalModalStep1View(
-                            vm: goalVm,
-                            onNext: { goalVm.goToNextStep() },
-                            onClose: { goalVm.closeModal() }
-                        )
-                    } else {
-                        GoalModalStep2View(
-                            vm: goalVm,
-                            onDone: {
-                                goalVm.saveGoal(context: context)
-                                // Segera refresh reward dan sinkronkan ke panel bawah
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-                                goalVm.closeModal()
-                            },
-                            onBack: { goalVm.activeStep = 1 }
-                        )
-                    }
-                }
-                .zIndex(2)
+                ShowGoalModalView(goalVm: goalVm, bottomItemsVM: bottomItemsVM)
             }
             
             // Modal Claim Reward
-            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
-                CenteredModal(isPresented: $goalVm.showClaimModal) {
-                    BottomClaimModalView(
-                        title: meta.title,
-                        imageName: meta.imageName,
-                        onCancel: { goalVm.cancelClaim() },
-                        onClaim: {
-                            goalVm.confirmClaim(context: context)
-                            goalVm.loadRewardsForView(context: context)
-                            bottomItemsVM.setItems(goalVm.rewardViewItems)
-                        }
-                    )
-                }
-                .zIndex(3)
-            }
+//            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
+//                CenteredModal(isPresented: $goalVm.showClaimModal) {
+//                    BottomClaimModalView(
+//                        title: meta.title,
+//                        imageName: meta.imageName,
+//                        onCancel: { goalVm.cancelClaim() },
+//                        onClaim: {
+//                            goalVm.confirmClaim(context: context)
+//                            goalVm.loadRewardsForView(context: context)
+//                            bottomItemsVM.setItems(goalVm.rewardViewItems)
+//                        }
+//                    )
+//                }
+//                .zIndex(3)
+//            }
+//            
+//            if showStarterReward {
+//                CenteredModal(isPresented: $showStarterReward) {
+//                    RewardClaimView(vm: bleVM)
+//                        .onDisappear { hasCompletedTrial = true }
+//                }
+//                .zIndex(3)
+//            }
             
-            if showStarterReward {
-                CenteredModal(isPresented: $showStarterReward) {
-                    RewardClaimView(vm: bleVM)
-                        .onDisappear { hasCompletedTrial = true } 
-                }
-                .zIndex(3)
-            }
-            
-            // Modal Input Saving
+//            Modal Input Saving
             if showSavingModal {
                 CenteredModal(isPresented: $showSavingModal) {
                     SavingInputModalView(
@@ -218,7 +184,7 @@ struct GoalView: View {
                             showSavingModal = false
                             guard value > 0 else { return }
                             goalVm.applySaving(amount: value, context: context)
-
+                            
                             goalVm.loadRewardsForView(context: context)
                             bottomItemsVM.setItems(goalVm.rewardViewItems)
                             circleVM.updateSteps(
@@ -262,7 +228,7 @@ struct GoalView: View {
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
-
+            
             if goalVm.totalSteps > 0, goalVm.passedSteps >= 1, !hasCompletedTrial {
                 showStarterClaim = true
             }

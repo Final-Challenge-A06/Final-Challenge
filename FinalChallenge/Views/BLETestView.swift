@@ -11,16 +11,16 @@ import Combine
 
 struct BLETestView: View {
     @EnvironmentObject var bleVM: BLEViewModel
+    @EnvironmentObject var flowVM: AppFlowViewModel
+    
     @State private var showFindDevice = false
-    @State private var showTrial = false
-    @State private var showGoal = false
-    @State private var showOnboarding = false
-    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
-
-    // Tambahkan state untuk StartOnboardingView
-    @State private var showStartOnboarding = false
+    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     
     var body: some View {
+        mainBLEContent
+    }
+    
+    private var mainBLEContent: some View {
         ZStack {
             Image("background_bluetooth")
                 .resizable()
@@ -86,67 +86,42 @@ struct BLETestView: View {
                 
                 FindingBotModal(
                     connectedName: (bleVM.connectedName.isEmpty || bleVM.connectedName == "-") ? nil : bleVM.connectedName,
-                    onClose: { withAnimation(.spring()) { showFindDevice = false } },
-                    onSetup: { bleVM.tapSetup() }
-                    onSetup: {
-                        // Ubah: langsung tampilkan StartOnboardingView
+                    onClose: {
                         withAnimation(.spring()) {
-                            showStartOnboarding = true
                             showFindDevice = false
                         }
-                        // Jika masih ingin menjalankan pairing, bisa panggil vm.tapSetup() juga di sini.
-                        // vm.tapSetup()
+                    },
+                    onSetup: {
+                        bleVM.tapSetup()
+                        withAnimation(.spring()) {
+                            showFindDevice = false
+                            flowVM.markPairedOnce()
+                            flowVM.goToStartOnboarding()
+                        }
                     }
                 )
                 .transition(.scale.combined(with: .opacity))
             }
         }
-        .animation(.easeOut(duration: 0.22), value: showFindDevice)
         .onAppear {
             bleVM.onShowFindDevice = { show in
                 withAnimation(.spring()) { showFindDevice = show }
             }
-            if bleVM.hasPairedOnce {
-                if hasCompletedTrial {
-                    showGoal = true
-                } else {
-                    showTrial = true
-                }
-            }
         }
-        .onDisappear { bleVM.onShowFindDevice = nil }
+        .onDisappear {
+            bleVM.onShowFindDevice = nil
+        }
         .onChange(of: bleVM.state) { _, newValue in
             switch newValue {
             case .connecting:
                 withAnimation(.spring()) { showFindDevice = true }
             case .connected:
                 withAnimation(.spring()) { showFindDevice = false }
-                if hasCompletedTrial {
-                    showGoal = true
-                } else {
-                    showTrial = true
-                }
-                 showOnboarding = true
             case .failed:
                 withAnimation(.spring()) { showFindDevice = false }
             default:
                 break
             }
-        }
-        .fullScreenCover(isPresented: $showTrial) {
-            TrialDeviceIntroView().environmentObject(bleVM)
-        }
-        .fullScreenCover(isPresented: $showGoal) {
-            GoalView().environmentObject(bleVM)
-        }
-        .fullScreenCover(isPresented: $showOnboarding) {
-            let onboardingVM = OnboardingViewModel()
-            let bottomItemsVM = BottomItemSelectionViewModel()
-            OnboardingView(onboardingVM: onboardingVM, bottomItemsVM: bottomItemsVM)
-        }
-        // Tambahkan presentasi StartOnboardingView
-        .fullScreenCover(isPresented: $showStartOnboarding) {
-            StartOnboardingView(bottomItemsVM: BottomItemSelectionViewModel())
         }
     }
     
@@ -163,4 +138,6 @@ struct BLETestView: View {
 
 #Preview {
     BLETestView()
+        .environmentObject(BLEViewModel())
+        .environmentObject(AppFlowViewModel())
 }

@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct GoalModalStep2View: View {
     @ObservedObject var vm: GoalViewModel
@@ -52,18 +51,18 @@ struct GoalModalStep2View: View {
                  When will you save? 
                  Pick your days and how much each time!
                  """)
-                .font(.custom("audiowide", size: 16))
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.white)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
-                .frame(maxWidth: 250, alignment: .center)
-                .fixedSize(horizontal: false, vertical: true)
-                .background(
-                    Rectangle()
-                        .fill(Color.darkBlue)
-                )
-                .offset(x: 200, y: 220)
+            .font(.custom("audiowide", size: 16))
+            .multilineTextAlignment(.center)
+            .foregroundStyle(.white)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .frame(maxWidth: 250, alignment: .center)
+            .fixedSize(horizontal: false, vertical: true)
+            .background(
+                Rectangle()
+                    .fill(Color.darkBlue)
+            )
+            .offset(x: 200, y: 220)
             
             VStack(alignment: .leading, spacing: 30) {
                 Button {
@@ -125,14 +124,16 @@ struct GoalModalStep2View: View {
                         }
                     }) {
                         Image(systemName: "checkmark")
-                            .resizable()
-                            .frame(width: 24, height: 24)
+                            .font(.system(size: 20, weight: .bold))
                             .foregroundStyle(Color.black)
-                            .padding(16)
-                            .background(vm.isStep2Valid ? Color.yellow.opacity(0.8) : Color.gray.opacity(0.4), in: Circle())
                             .padding(.vertical, 16)
-                            .padding(.horizontal, 60)
-                            .background(.yellowButton, in: Capsule())
+                            .padding(.horizontal, 50)
+                            .background(
+                                vm.isStep2Valid
+                                ? Color.yellow.opacity(0.8)
+                                : Color.gray.opacity(0.4),
+                                in: Capsule()
+                            )
                     }
                     .disabled(!vm.isStep2Valid)
                     
@@ -159,7 +160,9 @@ struct GoalModalStep2View: View {
                         onDone()
                     },
                     onBack: {
-                        
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showConfirm = false
+                        }
                     }
                 )
                 .transition(.scale.combined(with: .opacity))
