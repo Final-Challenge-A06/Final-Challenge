@@ -8,6 +8,10 @@ struct GoalView: View {
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     @StateObject private var circleVM = CircleStepViewModel(goalSteps: [], passedSteps: 0)
     
+    // Chat dependencies
+    @StateObject private var chatModel = ChatModel()
+    @StateObject private var chatVMHolder = ChatVMHolder()
+    
     @StateObject private var streakManagerHolder = OptionalStreakManagerHolder()
     @Environment(\.modelContext) private var context
     @EnvironmentObject var bleVM: BLEViewModel
@@ -35,14 +39,6 @@ struct GoalView: View {
                 VStack {
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack() {
-                            if goals.isEmpty || goalVm.currentGoalIsClaimed {
-                                Button {
-                                    goalVm.onCircleTap()
-                                } label: {
-                                    SetGoalView()
-                                }
-                            }
-                            
                             CircleStepView(
                                 viewModel: circleVM
                             ) { step in
@@ -71,7 +67,6 @@ struct GoalView: View {
                             Button {
                                 bleVM.sendResetToDevice()
                                 goalVm.currentGoalIsClaimed = true
-//                                goalVm.resetProgress(context: context)
                             } label: {
                                 Text("Take Your Money")
                                     .font(.headline)
@@ -89,6 +84,7 @@ struct GoalView: View {
                 .background(
                     Image("frame_top")
                 )
+                .offset(y: 80)
                 
                 BottomItemSelectionView(viewModel: bottomItemsVM)
                     .padding(.top, 50)
@@ -97,6 +93,16 @@ struct GoalView: View {
                             if item.state == .claimable,
                                let meta = vmRewardMeta(for: item) {
                                 goalVm.openClaim(for: meta, context: context)
+                                
+                                // Tandai event klaim untuk chat
+                                if let activeGoal = goals.last {
+                                    if meta.step == 1 {
+                                        chatVMHolder.vm?.markJustClaimedFirstReward()
+                                    } else if meta.step != activeGoal.totalSteps, meta.step % 7 == 0 {
+                                        chatVMHolder.vm?.markJustClaimedCheckpoint()
+                                    }
+                                    chatVMHolder.vm?.updateMessage(goals: goals)
+                                }
                             }
                         }
                         goalVm.loadRewardsForView(context: context)
@@ -127,27 +133,16 @@ struct GoalView: View {
             }
             .offset(y: -530)
             
-            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
-                CenteredModal(isPresented: $goalVm.showClaimModal) {
-                    BottomClaimModalView(
-                        title: meta.title,
-                        imageName: meta.imageName,
-                        onClaim: {
-                            goalVm.confirmClaim(context: context)
-                            goalVm.loadRewardsForView(context: context)
-                            bottomItemsVM.setItems(goalVm.rewardViewItems)
-                            circleVM.updateSteps(
-                                totalSteps: goalVm.totalSteps,
-                                passedSteps: goalVm.passedSteps
-                            )
-                        }
-                    )
-                }
-                .zIndex(4)
-            }
+            Image("robot")
+                .offset(x: -500, y: 350)
+                .rotationEffect(Angle(degrees: -10))
+            
+            // Ganti Text statis menjadi ChatBubbleView dengan model chatModel
+            ChatBubbleView(model: chatModel)
+                .offset(x: -300, y: 350)
         }
         .onAppear {
-            // Create StreakManager once when context is available 
+            // Buat StreakManager sekali
             bleVM.setContext(context)
             if streakManagerHolder.manager == nil {
                 streakManagerHolder.manager = StreakManager(context: context)
@@ -160,6 +155,12 @@ struct GoalView: View {
             circleVM.updateSteps(goalSteps: goalStepsList, passedSteps: goalVm.passedSteps)
             bleVM.setContext(context)
             bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
+            
+            // Inisialisasi ChatViewModel setelah bleVM tersedia dari Environment
+            if chatVMHolder.vm == nil {
+                chatVMHolder.vm = ChatViewModel(chat: chatModel, goalVM: goalVm, bleVM: bleVM)
+            }
+            chatVMHolder.vm?.updateMessage(goals: goals)
         }
         .onChange(of: goals) { _, newGoals in
             goalVm.updateGoals(newGoals, context: context)
@@ -167,13 +168,12 @@ struct GoalView: View {
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             let newGoalStepsList = newGoals.map { $0.totalSteps }
             circleVM.updateSteps(goalSteps: newGoalStepsList, passedSteps: goalVm.passedSteps)
+            chatVMHolder.vm?.updateMessage(goals: newGoals)
         }
-//        .onChange(of: goalVm.totalSteps) { _, _ in
-//            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
-//        }
         .onChange(of: goalVm.passedSteps) { _, newPassedSteps in
             let currentGoalStepsList = goals.map { $0.totalSteps }
             circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: newPassedSteps)
+            chatVMHolder.vm?.updateMessage(goals: goals)
         }
         .onChange(of: bleVM.lastBalance) { _, newBalance in
             goalVm.updateProgressFromBLEBalance(newBalance, allGoals: goals, context: context)
@@ -181,6 +181,10 @@ struct GoalView: View {
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             let currentGoalStepsList = goals.map { $0.totalSteps }
             circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps)
+            chatVMHolder.vm?.updateMessage(goals: goals)
+        }
+        .onChange(of: goalVm.currentGoalIsClaimed) { _, _ in
+            chatVMHolder.vm?.updateMessage(goals: goals)
         }
     }
     
@@ -194,6 +198,12 @@ final class OptionalStreakManagerHolder: ObservableObject {
     @Published var manager: StreakManager?
 }
 
+// Holder untuk ChatViewModel agar bisa dibuat setelah bleVM tersedia dari Environment
+final class ChatVMHolder: ObservableObject {
+    @Published var vm: ChatViewModel?
+}
+
 #Preview {
     GoalView().environmentObject(BLEViewModel())
 }
+

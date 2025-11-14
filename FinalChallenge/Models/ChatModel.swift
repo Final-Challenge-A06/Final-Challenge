@@ -12,7 +12,7 @@ import Combine
 final class ChatModel: ObservableObject {
     @Published var messages: [String] = [
         "Hello, I'm Billo",
-        "Before we start let’s read the tutorial together"
+        "Before we start let’s read the tutorial together",
     ]
     @Published var currentIndex: Int = 0
 
@@ -20,4 +20,11 @@ final class ChatModel: ObservableObject {
         guard messages.indices.contains(currentIndex) else { return "" }
         return messages[currentIndex]
     }
+    
+    // Helper untuk menampilkan satu pesan dinamis
+    func showSingle(_ text: String) {
+        messages = [text]
+        currentIndex = 0
+    }
 }
+
