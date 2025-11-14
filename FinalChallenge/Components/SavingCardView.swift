@@ -7,9 +7,6 @@ struct SavingCardView: View {
 
     var body: some View {
         ZStack {
-//            RoundedRectangle(cornerRadius: 34)
-//                .fill(.cardTeal)
-
             Image("background_saving")
             
             VStack(alignment: .leading, spacing: 4) {

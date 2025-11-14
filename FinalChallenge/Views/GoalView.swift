@@ -132,7 +132,6 @@ struct GoalView: View {
                     BottomClaimModalView(
                         title: meta.title,
                         imageName: meta.imageName,
-                        onCancel: { goalVm.cancelClaim() },
                         onClaim: {
                             goalVm.confirmClaim(context: context)
                             goalVm.loadRewardsForView(context: context)
@@ -148,7 +147,7 @@ struct GoalView: View {
             }
         }
         .onAppear {
-            // Create StreakManager once when context is available
+            // Create StreakManager once when context is available 
             bleVM.setContext(context)
             if streakManagerHolder.manager == nil {
                 streakManagerHolder.manager = StreakManager(context: context)

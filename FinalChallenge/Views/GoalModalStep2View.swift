@@ -130,7 +130,7 @@ struct GoalModalStep2View: View {
                             .padding(.horizontal, 50)
                             .background(
                                 vm.isStep2Valid
-                                ? Color.yellow.opacity(0.8)
+                                ? Color.yellowButton
                                 : Color.gray.opacity(0.4),
                                 in: Capsule()
                             )
