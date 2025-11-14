@@ -19,7 +19,11 @@ struct GoalView: View {
     
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
-    @State private var showStep3Modal = false
+    
+    // Starter reward path (first money only)
+    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
+    @State private var showStarterClaim = false
+    @State private var showStarterReward = false
     
     var body: some View {
         ZStack {
@@ -73,20 +77,8 @@ struct GoalView: View {
                     
                     ZStack (alignment: .trailing) {
                         if let sm = bleVM.streakManager {
-                                StreakView(streakManager: sm)
-                                    .padding(.top, 10)
-                            }
-                        Spacer()
-                        HStack {
-                            SavingCardView(
-                                title: "My Saving",
-                                totalSaving: String(bleVM.lastBalance)
-                            )
-                            .onTapGesture {
-                                savingAmountText = ""
-                                showSavingModal = true
-                            }
-                            Spacer()
+                            StreakView(streakManager: sm)
+                                .padding(.top, 10)
                         }
                     }
                 }
@@ -126,28 +118,88 @@ struct GoalView: View {
             }
             .padding(40)
             
-            // Hapus Modal Set Goal (Step 1 & 2) agar user tidak bisa set goal
-            // if goalVm.showGoalModal { ... } -> dihilangkan
+            if showStarterClaim {
+                VStack {
+                    Spacer()
+                    Button {
+                        showStarterClaim = false
+                        showStarterReward = true
+                    } label: {
+                        ZStack {
+                            Image("claimButton")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 180)
+                            Text("Claim")
+                                .font(.custom("Audiowide", size: 22))
+                                .foregroundStyle(.white)
+                                .shadow(radius: 3)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.bottom, 220)
+                }
+                .transition(.scale.combined(with: .opacity))
+                .animation(.spring(), value: showStarterClaim)
+            }
+            
+            // Modal Set Goal
+            if goalVm.showGoalModal {
+                ShowGoalModalView(goalVm: goalVm, bottomItemsVM: bottomItemsVM)
+            }
             
             // Modal Claim Reward
-            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
-                CenteredModal(isPresented: $goalVm.showClaimModal) {
-                    BottomClaimModalView(
-                        title: meta.title,
-                        imageName: meta.imageName,
-                        onCancel: { goalVm.cancelClaim() },
-                        onClaim: {
-                            goalVm.confirmClaim(context: context)
+//            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
+//                CenteredModal(isPresented: $goalVm.showClaimModal) {
+//                    BottomClaimModalView(
+//                        title: meta.title,
+//                        imageName: meta.imageName,
+//                        onCancel: { goalVm.cancelClaim() },
+//                        onClaim: {
+//                            goalVm.confirmClaim(context: context)
+//                            goalVm.loadRewardsForView(context: context)
+//                            bottomItemsVM.setItems(goalVm.rewardViewItems)
+//                        }
+//                    )
+//                }
+//                .zIndex(3)
+//            }
+//            
+//            if showStarterReward {
+//                CenteredModal(isPresented: $showStarterReward) {
+//                    RewardClaimView(vm: bleVM)
+//                        .onDisappear { hasCompletedTrial = true }
+//                }
+//                .zIndex(3)
+//            }
+            
+//            Modal Input Saving
+            if showSavingModal {
+                CenteredModal(isPresented: $showSavingModal) {
+                    SavingInputModalView(
+                        title: "Add Saving",
+                        amountText: $savingAmountText,
+                        onCancel: { showSavingModal = false },
+                        onSave: { value in
+                            showSavingModal = false
+                            guard value > 0 else { return }
+                            goalVm.applySaving(amount: value, context: context)
+                            
                             goalVm.loadRewardsForView(context: context)
                             bottomItemsVM.setItems(goalVm.rewardViewItems)
+                            circleVM.updateSteps(
+                                totalSteps: goalVm.totalSteps,
+                                passedSteps: goalVm.passedSteps
+                            )
                         }
                     )
                 }
-                .zIndex(3)
+                .zIndex(4)
             }
         }
         .onAppear {
             // Create StreakManager once when context is available
+            bleVM.setContext(context)
             if streakManagerHolder.manager == nil {
                 streakManagerHolder.manager = StreakManager(context: context)
             }
@@ -156,7 +208,6 @@ struct GoalView: View {
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             // sync circle VM initial state
             circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
-            bleVM.setContext(context)
             bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
         }
         .onChange(of: goals) { _, newGoals in
@@ -177,6 +228,10 @@ struct GoalView: View {
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
+            
+            if goalVm.totalSteps > 0, goalVm.passedSteps >= 1, !hasCompletedTrial {
+                showStarterClaim = true
+            }
         }
     }
     
