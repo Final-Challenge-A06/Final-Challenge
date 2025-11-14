@@ -6,7 +6,7 @@ struct GoalView: View {
     
     @StateObject private var goalVm = GoalViewModel()
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
-    @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
+    @StateObject private var circleVM = CircleStepViewModel(goalSteps: [], passedSteps: 0)
     
     @StateObject private var streakManagerHolder = OptionalStreakManagerHolder()
     @Environment(\.modelContext) private var context
@@ -30,7 +30,7 @@ struct GoalView: View {
                 VStack {
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack() {
-                            if goals.isEmpty {
+                            if goals.isEmpty || goalVm.currentGoalIsClaimed {
                                 Button {
                                     goalVm.onCircleTap()
                                 } label: {
@@ -60,7 +60,8 @@ struct GoalView: View {
                     }
                     
                     // Button complete goal
-                    if goalVm.passedSteps >= goalVm.totalSteps, goalVm.totalSteps > 0 {
+                    // Menampilkan HANYA jika goal selesai DAN BELUM DI-KLAIM
+                    if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
                         VStack(spacing: 20) {
                             Text("Goal Complete!")
                                 .font(.title.bold())
@@ -68,7 +69,8 @@ struct GoalView: View {
                             
                             Button {
                                 bleVM.sendResetToDevice()
-                                goalVm.resetProgress(context: context)
+                                goalVm.currentGoalIsClaimed = true
+//                                goalVm.resetProgress(context: context)
                             } label: {
                                 Text("Take Your Money")
                                     .font(.headline)
@@ -209,7 +211,8 @@ struct GoalView: View {
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             // sync circle VM initial state
-            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
+            let goalStepsList = goals.map { $0.totalSteps }
+            circleVM.updateSteps(goalSteps: goalStepsList, passedSteps: goalVm.passedSteps)
             bleVM.setContext(context)
             bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
         }
@@ -217,20 +220,23 @@ struct GoalView: View {
             goalVm.updateGoals(newGoals, context: context)
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
-            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
+            let newGoalStepsList = newGoals.map { $0.totalSteps }
+            circleVM.updateSteps(goalSteps: newGoalStepsList, passedSteps: goalVm.passedSteps)
         }
-        .onChange(of: goalVm.totalSteps) { _, _ in
-            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
-        }
-        .onChange(of: goalVm.passedSteps) { _, _ in
-            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
+//        .onChange(of: goalVm.totalSteps) { _, _ in
+//            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
+//        }
+        .onChange(of: goalVm.passedSteps) { _, newPassedSteps in
+            let currentGoalStepsList = goals.map { $0.totalSteps }
+            circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: newPassedSteps)
         }
         // NEW: sinkronkan progress dari BLE (gunakan lastBalance kumulatif)
         .onChange(of: bleVM.lastBalance) { _, newBalance in
-            goalVm.updateProgressFromBLEBalance(newBalance, context: context)
+            goalVm.updateProgressFromBLEBalance(newBalance, allGoals: goals, context: context)
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
-            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
+            let currentGoalStepsList = goals.map { $0.totalSteps }
+            circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps)
         }
     }
     
