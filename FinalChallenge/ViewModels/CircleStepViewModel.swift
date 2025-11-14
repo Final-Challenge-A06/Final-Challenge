@@ -87,7 +87,7 @@ final class CircleStepViewModel: ObservableObject {
 
             let isUnlocked = (step <= safePassed)
             let imageName = isUnlocked ? "ss_after" : "ss_before"
-            let rotation: Double = isLarge ? -10 : (isLeft ?  tiltAngle : -tiltAngle - 10)
+            let rotation: Double = isLarge ? 0 : (isLeft ?  tiltAngle : -tiltAngle)
 
             result.append(
                 StepDisplayModel(

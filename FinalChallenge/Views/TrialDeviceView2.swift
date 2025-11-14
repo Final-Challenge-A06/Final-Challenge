@@ -1,10 +1,3 @@
-//
-//  TrialDeviceView2.swift
-//  FinalChallenge
-//
-//  Created by Angel Aprilia Putri Lo on 04/11/25.
-//
-
 import SwiftUI
 
 struct TrialDeviceStep2View: View {
@@ -48,7 +41,8 @@ struct TrialDeviceStep2View: View {
                 
                 SavingCardView(
                     title: "My Saving",
-                    totalSaving: formattedBalance(vm.lastBalance)
+                    current: Int(vm.lastBalance),
+                    target: 180_000
                 )
                 .offset(x:-320, y: 230)
                 
@@ -63,13 +57,6 @@ struct TrialDeviceStep2View: View {
             RewardClaimView(vm: vm)
                 .environmentObject(vm)
         }
-    }
-    
-    private func formattedBalance(_ value: Int64) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal
-        f.groupingSeparator = "."
-        return f.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 }
 

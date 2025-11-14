@@ -20,6 +20,11 @@ struct GoalView: View {
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
     
+    // Starter reward path (first money only)
+    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
+    @State private var showStarterClaim = false
+    @State private var showStarterReward = false
+    
     var body: some View {
         ZStack {
             Image("background_main")
@@ -45,11 +50,6 @@ struct GoalView: View {
                                     goalVm.tryOpenClaim(for: step.id, context: context)
                                     return
                                 }
-                                
-                                if step.isGoal {
-                                    goalVm.onCircleTap()
-                                    return
-                                }
                             }
                             .padding(.vertical, 60)
                             .padding(.bottom, 180)
@@ -58,6 +58,7 @@ struct GoalView: View {
                         }
                         .padding(.horizontal, 12)
                     }
+                    .frame(height: 960)
                     
                     // Button complete goal
                     // Menampilkan HANYA jika goal selesai DAN BELUM DI-KLAIM
@@ -84,89 +85,48 @@ struct GoalView: View {
                         }
                         .padding(.bottom, 220)
                     }
-                    
-                    ZStack (alignment: .trailing) {
-                        if let sm = bleVM.streakManager {
-                                StreakView(streakManager: sm)
-                                    .padding(.top, 10)
-                            }
-                        Spacer()
-                        HStack {
-                            SavingCardView(
-                                title: "My Saving",
-                                totalSaving: String(bleVM.lastBalance)
-                            )
-                            .onTapGesture {
-                                savingAmountText = ""
-                                showSavingModal = true
-                            }
-                            Spacer()
-                        }
-                    }
                 }
-                .frame(height: 1100)
                 .background(
-                    RoundedRectangle(cornerRadius: 34)
-                        .fill(.ultraThinMaterial)
-                        .opacity(0.4)
+                    Image("frame_top")
                 )
                 
-                // 3) Panel Reward bawah
-                VStack {
-                    ZStack (alignment: .topLeading){
-                        BottomItemSelectionView(viewModel: bottomItemsVM)
-                            .onAppear {
-                                // Hook selection callback
-                                bottomItemsVM.onSelect = { item in
-                                    if item.state == .claimable,
-                                       let meta = vmRewardMeta(for: item) {
-                                        goalVm.openClaim(for: meta, context: context)
-                                    }
-                                }
-                                // Initial load and sync items
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
+                BottomItemSelectionView(viewModel: bottomItemsVM)
+                    .padding(.top, 50)
+                    .onAppear {
+                        bottomItemsVM.onSelect = { item in
+                            if item.state == .claimable,
+                               let meta = vmRewardMeta(for: item) {
+                                goalVm.openClaim(for: meta, context: context)
                             }
-                            .onChange(of: goalVm.passedSteps) { _, _ in
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-                            }
-                            .onChange(of: goalVm.rewardViewItems) { _, newItems in
-                                bottomItemsVM.setItems(newItems)
-                            }
+                        }
+                        goalVm.loadRewardsForView(context: context)
+                        bottomItemsVM.setItems(goalVm.rewardViewItems)
                     }
-                }
-                .padding(.vertical, 20)
-            }
-            .padding(40)
-            
-            // Modal Set Goal
-            if goalVm.showGoalModal {
-                CenteredModal(isPresented: $goalVm.showGoalModal) {
-                    if goalVm.activeStep == 1 {
-                        GoalModalStep1View(
-                            vm: goalVm,
-                            onNext: { goalVm.goToNextStep() },
-                            onClose: { goalVm.closeModal() }
-                        )
-                    } else {
-                        GoalModalStep2View(
-                            vm: goalVm,
-                            onDone: {
-                                goalVm.saveGoal(context: context)
-                                // Segera refresh reward dan sinkronkan ke panel bawah
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-                                goalVm.closeModal()
-                            },
-                            onBack: { goalVm.activeStep = 1 }
-                        )
+                    .onChange(of: goalVm.passedSteps) { _, _ in
+                        goalVm.loadRewardsForView(context: context)
+                        bottomItemsVM.setItems(goalVm.rewardViewItems)
                     }
-                }
-                .zIndex(2)
+                    .onChange(of: goalVm.rewardViewItems) { _, newItems in
+                        bottomItemsVM.setItems(newItems)
+                    }
             }
+            .offset(y: 50)
+            .padding(.horizontal, 40)
             
-            // Modal Claim Reward
+            HStack {
+                SavingCardView(
+                    title: goals.last?.name ?? "Hirono Blindbox",
+                    current: goalVm.totalSaving,
+                    target: goals.last?.targetPrice ?? 0
+                )
+                .padding(.trailing, 20)
+                
+                if let sm = bleVM.streakManager {
+                    StreakView(streakManager: sm)
+                }
+            }
+            .offset(y: -530)
+            
             if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
                 CenteredModal(isPresented: $goalVm.showClaimModal) {
                     BottomClaimModalView(
@@ -177,25 +137,10 @@ struct GoalView: View {
                             goalVm.confirmClaim(context: context)
                             goalVm.loadRewardsForView(context: context)
                             bottomItemsVM.setItems(goalVm.rewardViewItems)
-                        }
-                    )
-                }
-                .zIndex(3)
-            }
-            
-            // Modal Input Saving
-            if showSavingModal {
-                CenteredModal(isPresented: $showSavingModal) {
-                    SavingInputModalView(
-                        title: "Add Saving",
-                        amountText: $savingAmountText,
-                        onCancel: { showSavingModal = false },
-                        onSave: { _ in
-                            // Tidak lagi mengubah progress dari modal.
-                            showSavingModal = false
-                            // Jika ingin, bisa tetap refresh UI, tapi tidak perlu mengubah vm.
-                            goalVm.loadRewardsForView(context: context)
-                            bottomItemsVM.setItems(goalVm.rewardViewItems)
+                            circleVM.updateSteps(
+                                totalSteps: goalVm.totalSteps,
+                                passedSteps: goalVm.passedSteps
+                            )
                         }
                     )
                 }
@@ -204,6 +149,7 @@ struct GoalView: View {
         }
         .onAppear {
             // Create StreakManager once when context is available
+            bleVM.setContext(context)
             if streakManagerHolder.manager == nil {
                 streakManagerHolder.manager = StreakManager(context: context)
             }
@@ -230,7 +176,6 @@ struct GoalView: View {
             let currentGoalStepsList = goals.map { $0.totalSteps }
             circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: newPassedSteps)
         }
-        // NEW: sinkronkan progress dari BLE (gunakan lastBalance kumulatif)
         .onChange(of: bleVM.lastBalance) { _, newBalance in
             goalVm.updateProgressFromBLEBalance(newBalance, allGoals: goals, context: context)
             goalVm.loadRewardsForView(context: context)
@@ -240,14 +185,12 @@ struct GoalView: View {
         }
     }
     
-    // Helper: cari RewardMeta dari item panel
     private func vmRewardMeta(for item: RewardState) -> RewardModel? {
         let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
     }
 }
 
-// Helper holder to allow optional @StateObject-like storage
 final class OptionalStreakManagerHolder: ObservableObject {
     @Published var manager: StreakManager?
 }

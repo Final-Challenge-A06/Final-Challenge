@@ -10,7 +10,8 @@ import SwiftUI
 struct OnboardingView: View {
     @ObservedObject var onboardingVM: OnboardingViewModel
     @ObservedObject var bottomItemsVM: BottomItemSelectionViewModel
-
+    @EnvironmentObject var flowVM: AppFlowViewModel
+    
     var body: some View {
         ZStack {
             Image("background_main")
@@ -18,7 +19,7 @@ struct OnboardingView: View {
                 .scaledToFill()
                 .ignoresSafeArea()
             
-            VStack () {
+            VStack() {
                 ZStack {
                     Image("frame_top")
                         .allowsHitTesting(false)
@@ -26,12 +27,11 @@ struct OnboardingView: View {
                     Image("ss_before")
                         .resizable()
                         .frame(width: 246, height: 246)
-                        .rotationEffect(Angle(degrees: -15))
                         .offset(y: 300)
                         .allowsHitTesting(false)
                     
                     Image("modal_bottom_shadow")
-                        .offset(x:-10, y: 200)
+                        .offset(x: -10, y: 200)
                         .allowsHitTesting(false)
                     
                     Image("modal_onboarding")
@@ -53,7 +53,7 @@ struct OnboardingView: View {
                         .disabled(onboardingVM.currentIndex == 0)
                         .offset(x: -70, y: -100)
                         
-                        VStack (spacing: 50){
+                        VStack(spacing: 50) {
                             Text(onboardingVM.currentPage?.title ?? "")
                                 .font(.custom("audiowide", size: 24))
                                 .foregroundStyle(Color(.white))
@@ -61,12 +61,28 @@ struct OnboardingView: View {
                             if let imageName = onboardingVM.currentPage?.imageName {
                                 Image(imageName)
                             }
-
-                            Text(onboardingVM.currentPage?.description ?? "")
-                                .font(.custom("audiowide", size: 14))
-                                .multilineTextAlignment(.center)
-                                .foregroundStyle(Color(.white))
-                                .frame(width: 300)
+                            
+                            if onboardingVM.currentIndex < onboardingVM.pages.count - 1 {
+                                Text(onboardingVM.currentPage?.description ?? "")
+                                    .font(.custom("audiowide", size: 14))
+                                    .multilineTextAlignment(.center)
+                                    .foregroundStyle(Color(.white))
+                                    .frame(width: 300)
+                            }
+                            
+                            if onboardingVM.currentIndex == max(onboardingVM.pages.count - 1, 0) {
+                                Button {
+                                    flowVM.startGoalSetup()
+                                } label: {
+                                    Text("Let's Begin")
+                                        .font(.custom("audiowide", size: 16))
+                                        .foregroundStyle(.white)
+                                        .padding(.vertical, 10)
+                                        .padding(.horizontal, 100)
+                                        .background(Color.yellowButton)
+                                        .cornerRadius(20)
+                                }
+                            }
                             
                             HStack {
                                 ForEach(onboardingVM.pages.indices, id: \.self) { index in
@@ -93,10 +109,22 @@ struct OnboardingView: View {
                         .offset(x: 70, y: -100)
                     }
                     .zIndex(1)
+                    
+                    if let page = onboardingVM.currentPage,
+                       onboardingVM.currentIndex < onboardingVM.pages.count - 1 {
+                        Image("robot")
+                            .offset(x: page.offsetX, y: page.offsetY)
+                            .rotationEffect(.degrees(page.rotationDegrees))
+                    } else if onboardingVM.currentPage == nil {
+                        Image("robot")
+                            .offset(x: -400, y: -240)
+                            .rotationEffect(.degrees(20))
+                    }
                 }
                 
                 BottomItemSelectionView(viewModel: bottomItemsVM)
-                    .offset(x: 40, y: -80)
+                    .padding(.horizontal, 40)
+                    .offset(y: -80)
             }
             .offset(y: 160)
         }
@@ -109,6 +137,7 @@ private struct OnboardingPreviewContainer: View {
     
     var body: some View {
         OnboardingView(onboardingVM: vm, bottomItemsVM: bottomItemsVM)
+            .environmentObject(AppFlowViewModel())
     }
 }
 
