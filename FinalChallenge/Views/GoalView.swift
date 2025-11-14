@@ -19,7 +19,11 @@ struct GoalView: View {
     
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
-    @State private var showStep3Modal = false
+    
+    // Starter reward path (first money only)
+    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
+    @State private var showStarterClaim = false
+    @State private var showStarterReward = false
     
     var body: some View {
         ZStack {
@@ -122,13 +126,19 @@ struct GoalView: View {
                             goalVm.confirmClaim(context: context)
                             goalVm.loadRewardsForView(context: context)
                             bottomItemsVM.setItems(goalVm.rewardViewItems)
+                            circleVM.updateSteps(
+                                totalSteps: goalVm.totalSteps,
+                                passedSteps: goalVm.passedSteps
+                            )
                         }
                     )
                 }
-                .zIndex(3)
+                .zIndex(4)
             }
         }
         .onAppear {
+            // Create StreakManager once when context is available
+            bleVM.setContext(context)
             if streakManagerHolder.manager == nil {
                 streakManagerHolder.manager = StreakManager(context: context)
             }
@@ -136,7 +146,6 @@ struct GoalView: View {
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
-            bleVM.setContext(context)
             bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
         }
         .onChange(of: goals) { _, newGoals in
@@ -156,6 +165,10 @@ struct GoalView: View {
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
+            
+            if goalVm.totalSteps > 0, goalVm.passedSteps >= 1, !hasCompletedTrial {
+                showStarterClaim = true
+            }
         }
     }
     

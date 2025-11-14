@@ -10,17 +10,17 @@ import CoreBluetooth
 import Combine
 
 struct BLETestView: View {
-    @StateObject private var vm = BLEViewModel()
+    @EnvironmentObject var bleVM: BLEViewModel
+    @EnvironmentObject var flowVM: AppFlowViewModel
+    
     @State private var showFindDevice = false
-    @State private var showTrial = false
-    @State private var showGoal = false
-    @State private var showOnboarding = false
-    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
-
-    // Tambahkan state untuk StartOnboardingView
-    @State private var showStartOnboarding = false
+    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     
     var body: some View {
+        mainBLEContent
+    }
+    
+    private var mainBLEContent: some View {
         ZStack {
             Image("background_bluetooth")
                 .resizable()
@@ -34,7 +34,7 @@ struct BLETestView: View {
                     .frame(maxWidth: 550)
                 
                 VStack(spacing: 8) {
-                    if case .scanning = vm.state {
+                    if case .scanning = bleVM.state {
                         Text("SCANNING...")
                             .font(.custom("Audiowide", size: 26))
                             .kerning(1)
@@ -62,7 +62,7 @@ struct BLETestView: View {
                 .padding(.bottom, 50)
                 
                 Button {
-                    vm.startScan()
+                    bleVM.startScan()
                 } label: {
                     Text("+Link your Bot")
                         .font(.custom("Audiowide", size: 26))
@@ -85,72 +85,48 @@ struct BLETestView: View {
                     .transition(.opacity)
                 
                 FindingBotModal(
-                    connectedName: (vm.connectedName.isEmpty || vm.connectedName == "-") ? nil : vm.connectedName,
-                    onClose: { withAnimation(.spring()) { showFindDevice = false } },
-                    onSetup: {
-                        // Ubah: langsung tampilkan StartOnboardingView
+                    connectedName: (bleVM.connectedName.isEmpty || bleVM.connectedName == "-") ? nil : bleVM.connectedName,
+                    onClose: {
                         withAnimation(.spring()) {
-                            showStartOnboarding = true
                             showFindDevice = false
                         }
-                        // Jika masih ingin menjalankan pairing, bisa panggil vm.tapSetup() juga di sini.
-                        // vm.tapSetup()
+                    },
+                    onSetup: {
+                        bleVM.tapSetup()
+                        withAnimation(.spring()) {
+                            showFindDevice = false
+                            flowVM.markPairedOnce()
+                            flowVM.goToStartOnboarding()
+                        }
                     }
                 )
                 .transition(.scale.combined(with: .opacity))
             }
         }
-        .animation(.easeOut(duration: 0.22), value: showFindDevice)
         .onAppear {
-            vm.onShowFindDevice = { show in
+            bleVM.onShowFindDevice = { show in
                 withAnimation(.spring()) { showFindDevice = show }
             }
-            if vm.hasPairedOnce {
-                if hasCompletedTrial {
-                    showGoal = true
-                } else {
-                    showTrial = true
-                }
-            }
         }
-        .onDisappear { vm.onShowFindDevice = nil }
-        .onChange(of: vm.state) { _, newValue in
+        .onDisappear {
+            bleVM.onShowFindDevice = nil
+        }
+        .onChange(of: bleVM.state) { _, newValue in
             switch newValue {
             case .connecting:
                 withAnimation(.spring()) { showFindDevice = true }
             case .connected:
                 withAnimation(.spring()) { showFindDevice = false }
-                if hasCompletedTrial {
-                    showGoal = true
-                } else {
-                    showTrial = true
-                }
-                 showOnboarding = true
             case .failed:
                 withAnimation(.spring()) { showFindDevice = false }
             default:
                 break
             }
         }
-//        .fullScreenCover(isPresented: $showTrial) {
-//            TrialDeviceIntroView(vm: vm)  
-//        }
-//        .fullScreenCover(isPresented: $showGoal) {
-//            GoalView().environmentObject(vm)
-//        }
-//        .fullScreenCover(isPresented: $showOnboarding) {
-//            let onboardingVM = OnboardingViewModel()
-//            let bottomItemsVM = BottomItemSelectionViewModel()
-//            OnboardingView(onboardingVM: onboardingVM, bottomItemsVM: bottomItemsVM)
-//        }
-        // Tambahkan presentasi StartOnboardingView
-        .fullScreenCover(isPresented: $showStartOnboarding) {
-            StartOnboardingView(bottomItemsVM: BottomItemSelectionViewModel())
-        }
     }
     
     private var titleForModal: String {
-        switch vm.state {
+        switch bleVM.state {
         case .connecting: return "Connecting..."
         case .connected:  return "Linked!"
         case .failed:     return "Connection Failed"
@@ -162,4 +138,6 @@ struct BLETestView: View {
 
 #Preview {
     BLETestView()
+        .environmentObject(BLEViewModel())
+        .environmentObject(AppFlowViewModel())
 }
