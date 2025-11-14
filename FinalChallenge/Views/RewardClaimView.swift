@@ -62,7 +62,8 @@ struct RewardClaimView: View {
             HStack {
                 SavingCardView(
                     title: "My Saving",
-                    totalSaving: formattedBalance(Double(vm.lastBalance))
+                    current: Int(vm.lastBalance),
+                    target: 180_000 // atau ambil dari GoalModel jika tersedia di layar ini
                 )
             }
                 .offset(x: -320, y: 340)
@@ -70,12 +71,6 @@ struct RewardClaimView: View {
         .fullScreenCover(isPresented: $showGoal) {
             GoalView()
         }
-    }
-    
-    private func formattedBalance(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        return formatter.string(from: NSNumber(value: value)) ?? "$0.00"
     }
 }
 

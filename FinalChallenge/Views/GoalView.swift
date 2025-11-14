@@ -50,8 +50,8 @@ struct GoalView: View {
                         }
                         .padding(.horizontal, 12)
                     }
+                    .frame(height: 960)
                     
-                    // Button complete goal
                     if goalVm.passedSteps >= goalVm.totalSteps, goalVm.totalSteps > 0 {
                         VStack(spacing: 20) {
                             Text("Goal Complete!")
@@ -74,117 +74,56 @@ struct GoalView: View {
                         }
                         .padding(.bottom, 220)
                     }
-                    
-                    ZStack (alignment: .trailing) {
-                        if let sm = bleVM.streakManager {
-                            StreakView(streakManager: sm)
-                                .padding(.top, 10)
-                        }
-                    }
                 }
-                .frame(height: 1100)
                 .background(
-                    RoundedRectangle(cornerRadius: 34)
-                        .fill(.ultraThinMaterial)
-                        .opacity(0.4)
+                    Image("frame_top")
                 )
                 
-                // 3) Panel Reward bawah
-                VStack {
-                    ZStack (alignment: .topLeading){
-                        BottomItemSelectionView(viewModel: bottomItemsVM)
-                            .onAppear {
-                                // Hook selection callback
-                                bottomItemsVM.onSelect = { item in
-                                    if item.state == .claimable,
-                                       let meta = vmRewardMeta(for: item) {
-                                        goalVm.openClaim(for: meta, context: context)
-                                    }
-                                }
-                                // Initial load and sync items
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
+                BottomItemSelectionView(viewModel: bottomItemsVM)
+                    .padding(.top, 50)
+                    .onAppear {
+                        bottomItemsVM.onSelect = { item in
+                            if item.state == .claimable,
+                               let meta = vmRewardMeta(for: item) {
+                                goalVm.openClaim(for: meta, context: context)
                             }
-                            .onChange(of: goalVm.passedSteps) { _, _ in
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-                            }
-                            .onChange(of: goalVm.rewardViewItems) { _, newItems in
-                                bottomItemsVM.setItems(newItems)
-                            }
-                    }
-                }
-                .padding(.vertical, 20)
-            }
-            .padding(40)
-            
-            if showStarterClaim {
-                VStack {
-                    Spacer()
-                    Button {
-                        showStarterClaim = false
-                        showStarterReward = true
-                    } label: {
-                        ZStack {
-                            Image("claimButton")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 180)
-                            Text("Claim")
-                                .font(.custom("Audiowide", size: 22))
-                                .foregroundStyle(.white)
-                                .shadow(radius: 3)
                         }
+                        goalVm.loadRewardsForView(context: context)
+                        bottomItemsVM.setItems(goalVm.rewardViewItems)
                     }
-                    .buttonStyle(.plain)
-                    .padding(.bottom, 220)
+                    .onChange(of: goalVm.passedSteps) { _, _ in
+                        goalVm.loadRewardsForView(context: context)
+                        bottomItemsVM.setItems(goalVm.rewardViewItems)
+                    }
+                    .onChange(of: goalVm.rewardViewItems) { _, newItems in
+                        bottomItemsVM.setItems(newItems)
+                    }
+            }
+            .offset(y: 50)
+            .padding(.horizontal, 40)
+            
+            HStack {
+                SavingCardView(
+                    title: goals.last?.name ?? "Hirono Blindbox",
+                    current: goalVm.totalSaving,
+                    target: goals.last?.targetPrice ?? 0
+                )
+                .padding(.trailing, 20)
+                
+                if let sm = bleVM.streakManager {
+                    StreakView(streakManager: sm)
                 }
-                .transition(.scale.combined(with: .opacity))
-                .animation(.spring(), value: showStarterClaim)
             }
+            .offset(y: -530)
             
-            // Modal Set Goal
-            if goalVm.showGoalModal {
-                ShowGoalModalView(goalVm: goalVm, bottomItemsVM: bottomItemsVM)
-            }
-            
-            // Modal Claim Reward
-//            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
-//                CenteredModal(isPresented: $goalVm.showClaimModal) {
-//                    BottomClaimModalView(
-//                        title: meta.title,
-//                        imageName: meta.imageName,
-//                        onCancel: { goalVm.cancelClaim() },
-//                        onClaim: {
-//                            goalVm.confirmClaim(context: context)
-//                            goalVm.loadRewardsForView(context: context)
-//                            bottomItemsVM.setItems(goalVm.rewardViewItems)
-//                        }
-//                    )
-//                }
-//                .zIndex(3)
-//            }
-//            
-//            if showStarterReward {
-//                CenteredModal(isPresented: $showStarterReward) {
-//                    RewardClaimView(vm: bleVM)
-//                        .onDisappear { hasCompletedTrial = true }
-//                }
-//                .zIndex(3)
-//            }
-            
-//            Modal Input Saving
-            if showSavingModal {
-                CenteredModal(isPresented: $showSavingModal) {
-                    SavingInputModalView(
-                        title: "Add Saving",
-                        amountText: $savingAmountText,
-                        onCancel: { showSavingModal = false },
-                        onSave: { value in
-                            showSavingModal = false
-                            guard value > 0 else { return }
-                            goalVm.applySaving(amount: value, context: context)
-                            
+            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
+                CenteredModal(isPresented: $goalVm.showClaimModal) {
+                    BottomClaimModalView(
+                        title: meta.title,
+                        imageName: meta.imageName,
+                        onCancel: { goalVm.cancelClaim() },
+                        onClaim: {
+                            goalVm.confirmClaim(context: context)
                             goalVm.loadRewardsForView(context: context)
                             bottomItemsVM.setItems(goalVm.rewardViewItems)
                             circleVM.updateSteps(
@@ -206,7 +145,6 @@ struct GoalView: View {
             goalVm.updateGoals(goals, context: context)
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
-            // sync circle VM initial state
             circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
             bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
         }
@@ -222,7 +160,6 @@ struct GoalView: View {
         .onChange(of: goalVm.passedSteps) { _, _ in
             circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
         }
-        // NEW: sinkronkan progress dari BLE (gunakan lastBalance kumulatif)
         .onChange(of: bleVM.lastBalance) { _, newBalance in
             goalVm.updateProgressFromBLEBalance(newBalance, context: context)
             goalVm.loadRewardsForView(context: context)
@@ -235,14 +172,12 @@ struct GoalView: View {
         }
     }
     
-    // Helper: cari RewardMeta dari item panel
     private func vmRewardMeta(for item: RewardState) -> RewardModel? {
         let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
     }
 }
 
-// Helper holder to allow optional @StateObject-like storage
 final class OptionalStreakManagerHolder: ObservableObject {
     @Published var manager: StreakManager?
 }
