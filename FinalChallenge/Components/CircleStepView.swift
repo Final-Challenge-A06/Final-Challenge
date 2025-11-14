@@ -42,7 +42,7 @@ struct CircleStepView: View {
         Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40).ignoresSafeArea()
         ScrollView {
             CircleStepView(
-                viewModel: CircleStepViewModel(totalSteps: 9, passedSteps: 2)
+                viewModel: CircleStepViewModel(goalSteps: [5], passedSteps: 2)
             ) { step in
                 print("Tapped step:", step.id)
             }
