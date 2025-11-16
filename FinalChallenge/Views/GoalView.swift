@@ -29,6 +29,24 @@ struct GoalView: View {
     @State private var showStarterClaim = false
     @State private var showStarterReward = false
     
+    // Animation states
+    @State private var savingCardOffset: CGFloat = -200
+    @State private var savingCardOpacity: Double = 0
+    @State private var streakViewOffset: CGFloat = 200
+    @State private var streakViewOpacity: Double = 0
+    @State private var circleStepOffset: CGFloat = 100
+    @State private var circleStepOpacity: Double = 0
+    @State private var bottomItemsOffset: CGFloat = 300
+    @State private var bottomItemsOpacity: Double = 0
+    @State private var robotOffset: CGFloat = -100
+    @State private var robotOpacity: Double = 0
+    @State private var robotFloatOffset: CGFloat = 0
+    @State private var robotRotation: Double = -10
+    @State private var chatBubbleScale: Double = 0
+    @State private var chatBubbleOpacity: Double = 0
+    @State private var frameTopOffset: CGFloat = -50
+    @State private var frameTopOpacity: Double = 0
+    
     var body: some View {
         ZStack {
             Image("background_main")
@@ -51,6 +69,8 @@ struct GoalView: View {
                             .padding(.bottom, 180)
                             .frame(maxWidth: .infinity)
                             .contentShape(Rectangle())
+                            .offset(y: circleStepOffset)
+                            .opacity(circleStepOpacity)
                         }
                         .padding(.horizontal, 12)
                     }
@@ -83,11 +103,15 @@ struct GoalView: View {
                 }
                 .background(
                     Image("frame_top")
+                        .offset(y: frameTopOffset)
+                        .opacity(frameTopOpacity)
                 )
                 .offset(y: 80)
                 
                 BottomItemSelectionView(viewModel: bottomItemsVM)
                     .padding(.top, 50)
+                    .offset(y: bottomItemsOffset)
+                    .opacity(bottomItemsOpacity)
                     .onAppear {
                         bottomItemsVM.onSelect = { item in
                             if item.state == .claimable,
@@ -126,20 +150,27 @@ struct GoalView: View {
                     target: goals.last?.targetPrice ?? 0
                 )
                 .padding(.trailing, 20)
+                .offset(x: savingCardOffset)
+                .opacity(savingCardOpacity)
                 
                 if let sm = bleVM.streakManager {
                     StreakView(streakManager: sm)
+                        .offset(x: streakViewOffset)
+                        .opacity(streakViewOpacity)
                 }
             }
             .offset(y: -530)
             
             Image("robot")
-                .offset(x: -500, y: 350)
-                .rotationEffect(Angle(degrees: -10))
+                .offset(x: -500 + robotOffset, y: 350 + robotFloatOffset)
+                .rotationEffect(Angle(degrees: robotRotation))
+                .opacity(robotOpacity)
             
             // Ganti Text statis menjadi ChatBubbleView dengan model chatModel
             ChatBubbleView(model: chatModel)
                 .offset(x: -300, y: 350)
+                .scaleEffect(chatBubbleScale)
+                .opacity(chatBubbleOpacity)
         }
         .onAppear {
             // Buat StreakManager sekali
@@ -161,6 +192,9 @@ struct GoalView: View {
                 chatVMHolder.vm = ChatViewModel(chat: chatModel, goalVM: goalVm, bleVM: bleVM)
             }
             chatVMHolder.vm?.updateMessage(goals: goals)
+            
+            // Start entrance animations
+            startEntranceAnimations()
         }
         .onChange(of: goals) { _, newGoals in
             goalVm.updateGoals(newGoals, context: context)
@@ -191,6 +225,60 @@ struct GoalView: View {
     private func vmRewardMeta(for item: RewardState) -> RewardModel? {
         let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
+    }
+    
+    private func startEntranceAnimations() {
+        // Frame top slide down from top
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.1)) {
+            frameTopOffset = 0
+            frameTopOpacity = 1
+        }
+        
+        // Saving card slide in from left
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.8).delay(0.3)) {
+            savingCardOffset = 0
+            savingCardOpacity = 1
+        }
+        
+        // Streak view slide in from right
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.8).delay(0.5)) {
+            streakViewOffset = 0
+            streakViewOpacity = 1
+        }
+        
+        // Circle step view slide up from bottom
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.4)) {
+            circleStepOffset = 0
+            circleStepOpacity = 1
+        }
+        
+        // Bottom items slide up from bottom
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.6)) {
+            bottomItemsOffset = 0
+            bottomItemsOpacity = 1
+        }
+        
+        // Robot slide in from left
+        withAnimation(.spring(response: 0.9, dampingFraction: 0.7).delay(0.7)) {
+            robotOffset = 0
+            robotOpacity = 1
+        }
+        
+        // Robot floating animation (continuous)
+        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true).delay(1.0)) {
+            robotFloatOffset = -15
+        }
+        
+        // Robot subtle rotation (continuous)
+        withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true).delay(1.0)) {
+            robotRotation = -5
+        }
+        
+        // Chat bubble pop in with scale
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.6).delay(1.0)) {
+            chatBubbleScale = 1.0
+            chatBubbleOpacity = 1
+        }
     }
 }
 
