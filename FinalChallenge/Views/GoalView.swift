@@ -25,6 +25,10 @@ struct GoalView: View {
     @State private var savingAmountText = ""
     @State private var showBLESettingsModal = false
     
+    // Claim modal state
+    @State private var showCircleClaimModal = false
+    @State private var pendingCircleClaimStep: StepDisplayModel? = nil
+    
     // Starter reward path (first money only)
     @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
     @State private var showStarterClaim = false
@@ -85,6 +89,14 @@ struct GoalView: View {
                                     }
                                 },
                                 onTap: { step in
+                                    // Jika step adalah checkpoint/goal yang unlocked tapi belum di-claim, buka modal
+                                    if (step.isCheckpoint || step.isGoal), step.isUnlocked, !step.isClaimed {
+                                        pendingCircleClaimStep = step
+                                        showCircleClaimModal = true
+                                        return
+                                    }
+                                    
+                                    // Legacy behavior untuk step yang sudah di-claim
                                     if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
                                         goalVm.tryOpenClaim(for: step.id, context: context)
                                         return
@@ -109,7 +121,7 @@ struct GoalView: View {
 //                            Text("Goal Complete!")
 //                                .font(.title.bold())
 //                                .foregroundColor(.white)
-//                            
+//
 //                            Button {
 //                                bleVM.sendResetToDevice()
 //                                goalVm.currentGoalIsClaimed = true
@@ -229,6 +241,30 @@ struct GoalView: View {
                 .zIndex(5)
             }
             
+            // Circle step claim modal
+            if showCircleClaimModal, let step = pendingCircleClaimStep {
+                CenteredModal(isPresented: $showCircleClaimModal) {
+                    if let meta = getRewardMeta(for: step.id) {
+                        ClaimModalView(
+                            title: meta.title,
+                            imageName: meta.imageName,
+                            onClaim: {
+                                goalVm.openClaim(for: meta, context: context)
+                                goalVm.confirmClaim(context: context)
+                                goalVm.loadRewardsForView(context: context)
+                                bottomItemsVM.setItems(goalVm.rewardViewItems)
+                                let currentGoalStepsList = goals.map { $0.totalSteps }
+                                let claimedSteps = goalVm.getClaimedSteps(context: context)
+                                circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+                                showCircleClaimModal = false
+                                pendingCircleClaimStep = nil
+                            }
+                        )
+                    }
+                }
+                .zIndex(6)
+            }
+            
 //            if goalVm.showGoalModal {
 //                CenteredModal(isPresented: $goalVm.showGoalModal) {
 //                    if goalVm.activeStep == 1 {
@@ -282,7 +318,8 @@ struct GoalView: View {
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             // sync circle VM initial state
             let goalStepsList = goals.map { $0.totalSteps }
-            circleVM.updateSteps(goalSteps: goalStepsList, passedSteps: goalVm.passedSteps)
+            let claimedSteps = goalVm.getClaimedSteps(context: context)
+            circleVM.updateSteps(goalSteps: goalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
             bleVM.setContext(context)
             bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
             
@@ -300,12 +337,14 @@ struct GoalView: View {
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             let newGoalStepsList = newGoals.map { $0.totalSteps }
-            circleVM.updateSteps(goalSteps: newGoalStepsList, passedSteps: goalVm.passedSteps)
+            let claimedSteps = goalVm.getClaimedSteps(context: context)
+            circleVM.updateSteps(goalSteps: newGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
             chatVMHolder.vm?.updateMessage(goals: newGoals)
         }
         .onChange(of: goalVm.passedSteps) { _, newPassedSteps in
             let currentGoalStepsList = goals.map { $0.totalSteps }
-            circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: newPassedSteps)
+            let claimedSteps = goalVm.getClaimedSteps(context: context)
+            circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: newPassedSteps, claimedSteps: claimedSteps)
             chatVMHolder.vm?.updateMessage(goals: goals)
         }
         .onChange(of: bleVM.lastBalance) { _, newBalance in
@@ -313,7 +352,8 @@ struct GoalView: View {
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             let currentGoalStepsList = goals.map { $0.totalSteps }
-            circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps)
+            let claimedSteps = goalVm.getClaimedSteps(context: context)
+            circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
             chatVMHolder.vm?.updateMessage(goals: goals)
         }
         .onChange(of: goalVm.currentGoalIsClaimed) { _, _ in
@@ -324,6 +364,11 @@ struct GoalView: View {
     private func vmRewardMeta(for item: RewardState) -> RewardModel? {
         let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
+    }
+    
+    private func getRewardMeta(for stepId: Int) -> RewardModel? {
+        let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
+        return catalog.first(where: { $0.step == stepId })
     }
     
     private func startEntranceAnimations() {
@@ -393,4 +438,3 @@ final class ChatVMHolder: ObservableObject {
 #Preview {
     GoalView().environmentObject(BLEViewModel())
 }
-
