@@ -37,6 +37,7 @@ final class BLEViewModel: ObservableObject {
     private var isActionBusy = false
     private var pendingPeripheral: CBPeripheral?
     private let targetKeyword = "esp32"
+    private var isReconnectFlow = false
     //    var streakManager: StreakManager?
     private var balanceModel: BalanceModel?
     private var context: ModelContext?
@@ -107,10 +108,21 @@ final class BLEViewModel: ObservableObject {
             guard self.isRoboo(name) else { return }
             guard self.pendingPeripheral == nil else { return }
             
-            self.pendingPeripheral = p
-            self.connectedName = name
             self.mgr.stopScan()
-            self.onShowFindDevice?(true)
+            
+            if self.isReconnectFlow {
+                // Setting modal flow
+                self.isReconnectFlow = false // reset flag
+                self.state = .connecting // update state
+                self.mgr.connect(p) // connect
+            } else {
+                // Onboarding flow
+                self.pendingPeripheral = p
+                self.connectedName = name
+                self.onShowFindDevice?(true)
+            }
+            
+//            self.mgr.stopScan()
         }
         
         mgr.onConnect = { [weak self] p in
@@ -154,7 +166,9 @@ final class BLEViewModel: ObservableObject {
         mgr.connect(p)
     }
     
-    func startScan() {
+    func startScan(isReconnect: Bool = false) {
+        self.isReconnectFlow = isReconnect
+        
         state = .scanning
         isActionBusy = false
         pendingPeripheral = nil
