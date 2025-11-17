@@ -126,26 +126,6 @@ struct GoalView: View {
                 }
             }
             .offset(y: -530)
-            
-            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
-                CenteredModal(isPresented: $goalVm.showClaimModal) {
-                    BottomClaimModalView(
-                        title: meta.title,
-                        imageName: meta.imageName,
-                        onCancel: { goalVm.cancelClaim() },
-                        onClaim: {
-                            goalVm.confirmClaim(context: context)
-                            goalVm.loadRewardsForView(context: context)
-                            bottomItemsVM.setItems(goalVm.rewardViewItems)
-                            circleVM.updateSteps(
-                                totalSteps: goalVm.totalSteps,
-                                passedSteps: goalVm.passedSteps
-                            )
-                        }
-                    )
-                }
-                .zIndex(4)
-            }
         }
         .onAppear {
             // Create StreakManager once when context is available

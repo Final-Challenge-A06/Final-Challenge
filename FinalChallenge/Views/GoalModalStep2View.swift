@@ -73,7 +73,7 @@ struct GoalModalStep2View: View {
                         .frame(width: 10, height: 20)
                         .foregroundStyle(Color.black)
                         .padding(15)
-                        .background(Color.yellowButton, in: Circle())
+                        .background(Color.yellow.opacity(0.8), in: Circle())
                 }
                 
                 Text("Pick your saving days")
@@ -107,13 +107,32 @@ struct GoalModalStep2View: View {
                 
                 TextField("", text: $vm.amountText)
                     .keyboardType(.numberPad)
-                    .onChange(of: vm.amountText) {
-                        let v = vm.amountText
-                        let digits = v.filter(\.isNumber)
-                        if digits != v { vm.amountText = digits }
+                    .onChange(of: vm.amountText) { oldValue, newValue in
+                        let filtered = newValue.filter { $0.isNumber }
+                        if filtered != newValue {
+                            vm.amountText = filtered
+                        }
+                        vm.validateStep2()
                     }
-                    .padding(.horizontal, 14).padding(.vertical, 12)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
                     .background(.greenButton, in: RoundedRectangle(cornerRadius: 12))
+                
+                if vm.amountValue > 0 && vm.amountValue < 1_000 {
+                    Text("Minimum amount per save is Rp1.000.")
+                        .font(.custom("Audiowide", size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                        .padding(.top, 2)
+                        .transition(.opacity)
+                }
+                
+                if vm.amountValue > vm.priceValue && vm.priceValue > 0 {
+                    Text("Amount per save can't be bigger than your target saving.")
+                        .font(.custom("Audiowide", size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                        .padding(.top, 2)
+                        .transition(.opacity)
+                }
                 
                 HStack(spacing: 16) {
                     Spacer()

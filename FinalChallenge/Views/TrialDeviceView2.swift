@@ -1,68 +1,68 @@
-import SwiftUI
-
-struct TrialDeviceStep2View: View {
-    @EnvironmentObject var vm: BLEViewModel
-    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
-    
-    @State private var showReward = false
-    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
-    
-    var body: some View {
-        ZStack() {
-            Image("bgTrialDevice")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-            
-            VStack {
-                Image("ss_before")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 246)
-                    .rotationEffect(Angle(degrees: -10))
-                    .offset(y: 270)
-                
-                ZStack {
-                    Image("claimButton")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 200)
-                    
-                    Text("Claim")
-                        .font(.custom("Audiowide", size: 22))
-                        .foregroundColor(.white)
-                        .shadow(radius: 3)
-                }
-                .buttonStyle(.plain)
-                .onTapGesture {
-                    showReward = true
-                    hasCompletedTrial = true
-                }
-                
-                SavingCardView(
-                    title: "My Saving",
-                    current: Int(vm.lastBalance),
-                    target: 180_000
-                )
-                .offset(x:-320, y: 230)
-                
-                BottomItemSelectionView(viewModel: bottomItemsVM)
-                    .padding(.horizontal, 30)
-                    .offset(y: 300)
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.horizontal, 20)
-        }
-        .fullScreenCover(isPresented: $showReward) {
-            RewardClaimView(vm: vm)
-                .environmentObject(vm)
-        }
-    }
-}
-
-#Preview {
-    let vm = BLEViewModel()
-    vm.lastBalance = 0
-    return TrialDeviceStep2View()
-        .environmentObject(vm)
-}
+//import SwiftUI
+//
+//struct TrialDeviceStep2View: View {
+//    @EnvironmentObject var vm: BLEViewModel
+//    @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
+//    
+//    @State private var showReward = false
+//    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
+//    
+//    var body: some View {
+//        ZStack() {
+//            Image("bgTrialDevice")
+//                .resizable()
+//                .scaledToFill()
+//                .ignoresSafeArea()
+//            
+//            VStack {
+//                Image("ss_before")
+//                    .resizable()
+//                    .scaledToFit()
+//                    .frame(width: 246)
+//                    .rotationEffect(Angle(degrees: -10))
+//                    .offset(y: 270)
+//                
+//                ZStack {
+//                    Image("claimButton")
+//                        .resizable()
+//                        .scaledToFit()
+//                        .frame(width: 200)
+//                    
+//                    Text("Claim")
+//                        .font(.custom("Audiowide", size: 22))
+//                        .foregroundColor(.white)
+//                        .shadow(radius: 3)
+//                }
+//                .buttonStyle(.plain)
+//                .onTapGesture {
+//                    showReward = true
+//                    hasCompletedTrial = true
+//                }
+//                
+//                SavingCardView(
+//                    title: "My Saving",
+//                    current: Int(vm.lastBalance),
+//                    target: 180_000
+//                )
+//                .offset(x:-320, y: 230)
+//                
+//                BottomItemSelectionView(viewModel: bottomItemsVM)
+//                    .padding(.horizontal, 30)
+//                    .offset(y: 300)
+//            }
+//            .frame(maxWidth: .infinity, alignment: .center)
+//            .padding(.horizontal, 20)
+//        }
+//        .fullScreenCover(isPresented: $showReward) {
+//            RewardClaimView(vm: vm)
+//                .environmentObject(vm)
+//        }
+//    }
+//}
+//
+//#Preview {
+//    let vm = BLEViewModel()
+//    vm.lastBalance = 0
+//    return TrialDeviceStep2View()
+//        .environmentObject(vm)
+//}

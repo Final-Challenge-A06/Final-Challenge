@@ -73,15 +73,17 @@ struct GoalModalStep1View: View {
                     .keyboardType(.numberPad)
                     .onChange(of: vm.priceText) { oldValue, newValue in
                         let filtered = newValue.filter { $0.isNumber }
-                        if filtered != newValue { vm.priceText = filtered }
+                        if filtered != newValue {
+                            vm.priceText = filtered
+                        }
+                        vm.validateStep1()
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)
                     .background(.greenButton, in: RoundedRectangle(cornerRadius: 12))
                 
-                if !vm.priceText.isEmpty,
-                   (Int(vm.priceText) ?? 0) < 50_000 {
-                    Text("Minimum goal is Rp50,000")
+                if vm.priceValue > 0 && vm.priceValue < 50_000 {
+                    Text("Minimum goal is Rp50.000")
                         .font(.custom("Audiowide", size: 14))
                         .foregroundColor(.white.opacity(0.7))
                         .padding(.top, 2)
