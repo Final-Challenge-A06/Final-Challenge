@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct BottomClaimModalView: View {
+struct ClaimModalView: View {
     let title: String
     let imageName: String
     var onClaim: () -> Void
@@ -50,6 +50,6 @@ struct BottomClaimModalView: View {
 }
 
 #Preview {
-    BottomClaimModalView(title: "Glasses", imageName: "glasses", onClaim: {})
+    ClaimModalView(title: "Glasses", imageName: "glasses", onClaim: {})
 }
 
