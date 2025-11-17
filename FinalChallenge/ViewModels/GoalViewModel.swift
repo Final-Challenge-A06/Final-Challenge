@@ -14,13 +14,14 @@ import SwiftData
 final class GoalViewModel: ObservableObject {
     // MARK: - Step 1 Fields
     @Published private var _goalName: String = ""
-    @Published private var _priceText: Int = 0
+    @Published var priceText: String = ""
+    
     @Published var selectedItem: PhotosPickerItem? = nil
     @Published var selectedImage: UIImage? = nil
     
     // MARK: - Step 2 Fields
     @Published var selectedDays: Set<String> = []
-    @Published private var _amountText: Int = 0
+    @Published var amountText: String = ""
     
     // MARK: - Modal & Flow State
     @Published var showGoalModal: Bool = false
@@ -48,6 +49,9 @@ final class GoalViewModel: ObservableObject {
     var formattedTotalSaving: String {
         numberFormatter.string(from: NSNumber(value: totalSaving)) ?? "\(totalSaving)"
     }
+    private func formatWithGrouping(_ value: Int) -> String {
+        numberFormatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
     private let numberFormatter: NumberFormatter = {
         let nf = NumberFormatter()
         nf.numberStyle = .decimal
@@ -65,20 +69,12 @@ final class GoalViewModel: ObservableObject {
         }
     }
     
-    var priceText: String {
-        get { _priceText == 0 ? "" : "\(_priceText)" }
-        set {
-            _priceText = Int(newValue) ?? 0
-            validateStep1()
-        }
+    var priceValue: Int {
+        Int(priceText) ?? 0
     }
     
-    var amountText: String {
-        get { _amountText == 0 ? "" : "\(_amountText)" }
-        set {
-            _amountText = Int(newValue) ?? 0
-            validateStep2()
-        }
+    var amountValue: Int {
+        Int(amountText) ?? 0
     }
     
     var savingDaysArray: [String] {
@@ -90,18 +86,23 @@ final class GoalViewModel: ObservableObject {
     @Published var isStep2Valid: Bool = false
     
     func validateStep1() {
-        isStep1Valid = !goalName.trimmingCharacters(in: .whitespaces).isEmpty && _priceText >= 50_000
+        let trimmedName = goalName.trimmingCharacters(in: .whitespacesAndNewlines)
+        isStep1Valid = !trimmedName.isEmpty && priceValue >= 50_000
     }
     
     func validateStep2() {
-        isStep2Valid = !selectedDays.isEmpty && _amountText > 0
+        isStep2Valid =
+        !selectedDays.isEmpty &&
+        priceValue > 0 &&
+        amountValue >= 1_000 &&
+        amountValue <= priceValue
     }
     
     // MARK: - Save Goal
     func saveGoal(context: ModelContext) {
         guard !goalName.isEmpty,
-              Int(priceText) != nil,
-              Int(amountText) != nil,
+              priceValue > 0,
+              amountValue > 0,
               !selectedDays.isEmpty else {
             print("❌ Tidak bisa simpan, data belum lengkap")
             return
@@ -111,10 +112,10 @@ final class GoalViewModel: ObservableObject {
         
         let goal = GoalModel(
             name: goalName,
-            targetPrice: _priceText,
+            targetPrice: priceValue,
             imageData: imageData,
             savingDays: Array(selectedDays),
-            amountPerSave: _amountText
+            amountPerSave: amountValue
         )
         context.insert(goal)
         
@@ -123,8 +124,8 @@ final class GoalViewModel: ObservableObject {
             print("✅ Berhasil simpan goal:", goal.name)
             
             // Buat progress entity baru untuk goal ini
-//            latestGoal = goal
-//            totalSteps = goal.totalSteps
+            //            latestGoal = goal
+            //            totalSteps = goal.totalSteps
             
             let progressEntity = SavingProgressEntity(
                 goalID: goal.id,
@@ -136,12 +137,12 @@ final class GoalViewModel: ObservableObject {
             
             self.currentGoalIsClaimed = false
             
-//            currentProgress = progressEntity
-//            passedSteps = 0
-//            totalSaving = 0
+            //            currentProgress = progressEntity
+            //            passedSteps = 0
+            //            totalSaving = 0
             
             // Refresh katalog reward
-//            rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
+            //            rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
         } catch {
             print("❌ Gagal simpan:", error.localizedDescription)
         }
@@ -193,20 +194,20 @@ final class GoalViewModel: ObservableObject {
         let previousGoalId = latestGoal?.id
         latestGoal = goals.last
         
-//        if let goal = latestGoal {
-//            totalSteps = goal.totalSteps
-//            
-//            if previousGoalId != goal.name {
-//                loadProgress(for: goal, context: context)
-//            }
-//        } else {
-//            totalSteps = 0
-//            passedSteps = 0
-//            totalSaving = 0
-//            currentProgress = nil
-//        }
-//        
-//        rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
+        //        if let goal = latestGoal {
+        //            totalSteps = goal.totalSteps
+        //
+        //            if previousGoalId != goal.name {
+        //                loadProgress(for: goal, context: context)
+        //            }
+        //        } else {
+        //            totalSteps = 0
+        //            passedSteps = 0
+        //            totalSaving = 0
+        //            currentProgress = nil
+        //        }
+        //
+        //        rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
         
         // MARK: 1. Handle jika tidak ada goal sama sekali
         if goals.isEmpty {
@@ -378,7 +379,7 @@ final class GoalViewModel: ObservableObject {
     
     func resetProgress(context: ModelContext) {
         totalSaving = 0
-//        passedSteps = 0
+        //        passedSteps = 0
         saveProgress(currentGoalSaving: 0, currentGoalPassedSteps: 0, context: context)
     }
     
@@ -395,28 +396,28 @@ final class GoalViewModel: ObservableObject {
     
     // MARK: - NEW: Progress dari BLE balance
     func updateProgressFromBLEBalance(_ balance: Int64, allGoals: [GoalModel], context: ModelContext) {
-//        guard let goal = latestGoal, goal.amountPerSave > 0 else {
-//            passedSteps = 0
-//            totalSaving = Int(balance)
-//            saveProgress(context: context)
-//            return
-//        }
-//        // sinkronkan totalSaving dengan saldo device (opsional tapi biasanya diinginkan)
-//        totalSaving = Int(balance)
-//        let computed = Int(balance) / goal.amountPerSave
-//        let clamped = min(computed, totalSteps)
-//        if clamped != passedSteps {
-//            passedSteps = clamped
-//        }
-//        saveProgress(context: context)
+        //        guard let goal = latestGoal, goal.amountPerSave > 0 else {
+        //            passedSteps = 0
+        //            totalSaving = Int(balance)
+        //            saveProgress(context: context)
+        //            return
+        //        }
+        //        // sinkronkan totalSaving dengan saldo device (opsional tapi biasanya diinginkan)
+        //        totalSaving = Int(balance)
+        //        let computed = Int(balance) / goal.amountPerSave
+        //        let clamped = min(computed, totalSteps)
+        //        if clamped != passedSteps {
+        //            passedSteps = clamped
+        //        }
+        //        saveProgress(context: context)
         
         // 1. Validasi: Pastikan ada goal aktif
         guard let currentGoal = allGoals.last, currentGoal.amountPerSave > 0 else {
             // Tidak ada goal aktif / amountPerSave = 0
             self.totalSaving = Int(balance)
-//            if currentProgress != nil {
-//                saveProgress(currentGoalSaving: Int(balance), currentGoalPassedSteps: 0, context: context)
-//            }
+            //            if currentProgress != nil {
+            //                saveProgress(currentGoalSaving: Int(balance), currentGoalPassedSteps: 0, context: context)
+            //            }
             // `updateGoals` sudah mengatur `passedSteps` kumulatif (dari goal lama)
             // Jadi kita tidak perlu mengaturnya di sini.
             return

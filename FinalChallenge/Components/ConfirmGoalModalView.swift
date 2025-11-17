@@ -44,7 +44,7 @@ struct ConfirmGoalModalView: View {
                         .font(.custom("audiowide", size: 18))
                         .foregroundStyle(.black)
                         .frame(width: 130, height: 48)
-                        .background(Color.yellowButton)
+                        .background(Color.yellow.opacity(0.8))
                         .cornerRadius(24)
                 }
             }
