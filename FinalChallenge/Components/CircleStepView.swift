@@ -62,15 +62,15 @@ extension CircleStepView where LeadingContent == EmptyView {
 }
 
 #Preview {
-//    ZStack {
-//        Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40).ignoresSafeArea()
-//        ScrollView {
-//            CircleStepView(
-//                viewModel: CircleStepViewModel(goalSteps: [5], passedSteps: 2)
-//            ) { step in
-//                print("Tapped step:", step.id)
-//            }
-//            .padding(.vertical, 40)
-//        }
-//    }
+    ZStack {
+        Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40).ignoresSafeArea()
+        ScrollView {
+            CircleStepView(
+                viewModel: CircleStepViewModel(goalSteps: [5], passedSteps: 2)
+            ) { step in
+                print("Tapped step:", step.id)
+            }
+            .padding(.vertical, 40)
+        }
+    }
 }

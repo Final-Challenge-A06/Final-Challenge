@@ -7,6 +7,23 @@ struct GoalModalStep1View: View {
     @ObservedObject var bottomItemsVM: BottomItemSelectionViewModel
     var onNext: () -> Void
     
+    // Animation states
+    @State private var robotOffset: CGFloat = 0
+    @State private var robotRotation: Double = -10
+    @State private var dialogOpacity: Double = 0
+    @State private var dialogScale: Double = 0.8
+    @State private var dialogOffset: CGFloat = 0
+    @State private var dialogRotation: Double = 0
+    @State private var formOffset: CGFloat = 50
+    @State private var formOpacity: Double = 0
+    @State private var buttonScale: Double = 1.0
+    @State private var frameOffset: CGFloat = -50
+    @State private var modalOffset: CGFloat = -150
+    @State private var bottomShadowOpacity: Double = 0
+    @State private var displayedText: String = ""
+    
+    private let fullDialogText = "What do you want to save for?\nAdd a name, price, and picture if you want!"
+    
     var body: some View {
         ZStack {
             Image("background_main")
@@ -15,10 +32,10 @@ struct GoalModalStep1View: View {
                 .ignoresSafeArea()
             
             Image("frame_top")
-                .offset(y: -30)
+                .offset(y: frameOffset)
             
             Image("modal_setgoal")
-                .offset(y: -100)
+                .offset(y: modalOffset)
             
             Image("ss_before")
                 .resizable()
@@ -27,6 +44,7 @@ struct GoalModalStep1View: View {
             
             Image("modal_bottom_shadow")
                 .offset(x: -10, y: 270)
+                .opacity(bottomShadowOpacity)
             
             BottomItemSelectionView(viewModel: bottomItemsVM)
                 .offset(x: 50, y: 580)
@@ -34,13 +52,11 @@ struct GoalModalStep1View: View {
             Image("robot")
                 .resizable()
                 .frame(width: 200, height: 250)
-                .offset(x: -350, y: 250)
-                .rotationEffect(.degrees(-10))
+                .offset(x: -350, y: 250 + robotOffset)
+                .rotationEffect(.degrees(robotRotation))
+                .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 10)
             
-            Text("""
-                 What do you want to save for?
-                 Add a name, price, and picture if you want!
-                 """)
+            Text(displayedText)
             .font(.custom("audiowide", size: 16))
             .multilineTextAlignment(.center)
             .foregroundStyle(.white)
@@ -52,7 +68,10 @@ struct GoalModalStep1View: View {
                 Rectangle()
                     .fill(Color.darkBlue)
             )
-            .offset(x: -170, y: 220)
+            .offset(x: -170, y: 220 + dialogOffset)
+            .rotationEffect(.degrees(dialogRotation))
+            .opacity(dialogOpacity)
+            .scaleEffect(dialogScale)
             
             VStack(alignment: .leading, spacing: 20) {
                 Text("Name your dream thing *")
@@ -85,7 +104,7 @@ struct GoalModalStep1View: View {
                         .font(.custom("Audiowide", size: 14))
                         .foregroundColor(.white.opacity(0.7))
                         .padding(.top, 2)
-                        .transition(.opacity)
+                        .transition(.opacity.combined(with: .scale))
                 }
                 
                 Text("How does it look?")
@@ -112,6 +131,7 @@ struct GoalModalStep1View: View {
                                     RoundedRectangle(cornerRadius: 12)
                                         .stroke(.black.opacity(0.06))
                                 )
+                                .transition(.scale.combined(with: .opacity))
                         } else {
                             VStack(spacing: 8) {
                                 Image(systemName: "photo.on.rectangle")
@@ -127,7 +147,9 @@ struct GoalModalStep1View: View {
                     Task {
                         if let data = try? await newItem?.loadTransferable(type: Data.self),
                            let ui = UIImage(data: data) {
-                            vm.selectedImage = ui
+                            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                                vm.selectedImage = ui
+                            }
                             vm.validateStep1()
                         }
                     }
@@ -148,6 +170,8 @@ struct GoalModalStep1View: View {
                                 : Color.gray.opacity(0.4),
                                 in: Capsule()
                             )
+                            .scaleEffect(vm.isStep1Valid ? buttonScale : 1.0)
+                            .shadow(color: vm.isStep1Valid ? .yellow.opacity(0.5) : .clear, radius: 10)
                     }
                     .disabled(!vm.isStep1Valid)
                     Spacer()
@@ -156,7 +180,81 @@ struct GoalModalStep1View: View {
                 
             }
             .frame(width: 500)
-            .offset(y: -100)
+            .offset(x: formOffset, y: -100)
+            .opacity(formOpacity)
+        }
+        .onAppear {
+            startAnimations()
+        }
+    }
+    
+    private func startAnimations() {
+        // Robot floating animation
+        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+            robotOffset = -15
+        }
+        
+        // Robot subtle rotation
+        withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
+            robotRotation = -5
+        }
+        
+        // Frame slide in first
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
+            frameOffset = -30
+        }
+        
+        // Shadow fade in FIRST (before modal)
+        withAnimation(.easeIn(duration: 0.6).delay(0.3)) {
+            bottomShadowOpacity = 1
+        }
+        
+        // Modal slide in AFTER shadow
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.7)) {
+            modalOffset = -100
+        }
+        
+        // Dialog bubble appear (after modal)
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(1.0)) {
+            dialogOpacity = 1
+            dialogScale = 1.0
+        }
+        
+        // Start typewriter effect after dialog appears
+        startTypewriterEffect(delay: 1.3)
+        
+        // Dialog floating animation (follows robot movement)
+        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+            dialogOffset = -15
+        }
+        
+        // Dialog subtle rotation (follows robot rotation)
+        withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
+            dialogRotation = 2
+        }
+        
+        // Form slide in from right (after modal appears)
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.8).delay(1.2)) {
+            formOffset = 0
+            formOpacity = 1
+        }
+        
+        // Button pulse animation when valid
+        withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true).delay(2.0)) {
+            buttonScale = 1.08
+        }
+    }
+    
+    private func startTypewriterEffect(delay: Double) {
+        Task {
+            try? await Task.sleep(for: .seconds(delay))
+            
+            for character in fullDialogText {
+                displayedText.append(character)
+                // Faster for spaces and punctuation, slower for letters
+                let sleepDuration = character == " " || character == "\n" ? 0.02 : 0.04
+                try? await Task.sleep(for: .seconds(sleepDuration))
+            }
         }
     }
 }
