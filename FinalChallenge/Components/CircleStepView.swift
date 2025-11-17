@@ -1,11 +1,26 @@
 import SwiftUI
 
-struct CircleStepView: View {
+struct CircleStepView<LeadingContent: View>: View {
     @ObservedObject var viewModel: CircleStepViewModel
-    var onTap: (StepDisplayModel) -> Void = { _ in }
+    var onTap: (StepDisplayModel) -> Void
+    
+    @ViewBuilder let leadingContent: () -> LeadingContent
+    
+    init(
+        viewModel: CircleStepViewModel,
+        @ViewBuilder leadingContent: @escaping () -> LeadingContent,
+        onTap: @escaping (StepDisplayModel) -> Void
+    ) {
+        self.viewModel = viewModel
+        self.leadingContent = leadingContent
+        self.onTap = onTap
+    }
 
     var body: some View {
         VStack(spacing: 0) {
+            
+            leadingContent()
+            
             ForEach(viewModel.steps) { step in
                 Button {
                     onTap(step)
@@ -37,16 +52,25 @@ struct CircleStepView: View {
     }
 }
 
-#Preview {
-    ZStack {
-        Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40).ignoresSafeArea()
-        ScrollView {
-            CircleStepView(
-                viewModel: CircleStepViewModel(goalSteps: [5], passedSteps: 2)
-            ) { step in
-                print("Tapped step:", step.id)
-            }
-            .padding(.vertical, 40)
-        }
+extension CircleStepView where LeadingContent == EmptyView {
+    init(
+        viewModel: CircleStepViewModel,
+        onTap: @escaping (StepDisplayModel) -> Void
+    ){
+        self.init(viewModel: viewModel, leadingContent: { EmptyView() }, onTap: onTap)
     }
+}
+
+#Preview {
+//    ZStack {
+//        Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40).ignoresSafeArea()
+//        ScrollView {
+//            CircleStepView(
+//                viewModel: CircleStepViewModel(goalSteps: [5], passedSteps: 2)
+//            ) { step in
+//                print("Tapped step:", step.id)
+//            }
+//            .padding(.vertical, 40)
+//        }
+//    }
 }
