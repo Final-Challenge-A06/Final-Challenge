@@ -15,7 +15,25 @@ struct GoalModalStep2View: View {
     @State private var showConfirm = false
     @Environment(\.modelContext) private var context
     
+    // Animation states
+    @State private var robotOffset: CGFloat = 0
+    @State private var robotRotation: Double = 5
+    @State private var dialogOpacity: Double = 0
+    @State private var dialogScale: Double = 0.8
+    @State private var dialogOffset: CGFloat = 0
+    @State private var dialogRotation: Double = 0
+    @State private var formOffset: CGFloat = -50
+    @State private var formOpacity: Double = 0
+    @State private var frameOffset: CGFloat = -50
+    @State private var modalOffset: CGFloat = -150
+    @State private var bottomShadowOpacity: Double = 0
+    @State private var buttonScale: Double = 1.0
+    @State private var dayChipsScale: [String: Double] = [:]
+    @State private var backButtonRotation: Double = 0
+    @State private var displayedText: String = ""
+    
     private let days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+    private let fullDialogText = "When will you save?\nPick your days and how much each time!"
     
     var body: some View {
         ZStack {
@@ -25,10 +43,10 @@ struct GoalModalStep2View: View {
                 .ignoresSafeArea()
             
             Image("frame_top")
-                .offset(y: -30)
+                .offset(y: frameOffset)
             
             Image("modal_setgoal")
-                .offset(y: -100)
+                .offset(y: modalOffset)
             
             Image("ss_before")
                 .resizable()
@@ -37,6 +55,7 @@ struct GoalModalStep2View: View {
             
             Image("modal_bottom_shadow")
                 .offset(x: -10, y: 270)
+                .opacity(bottomShadowOpacity)
             
             BottomItemSelectionView(viewModel: BottomItemSelectionViewModel())
                 .offset(x: 50, y: 580)
@@ -44,13 +63,11 @@ struct GoalModalStep2View: View {
             Image("robot")
                 .resizable()
                 .frame(width: 200, height: 250)
-                .offset(x: 400, y: 300)
-                .rotationEffect(.degrees(5))
+                .offset(x: 400, y: 300 + robotOffset)
+                .rotationEffect(.degrees(robotRotation))
+                .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 10)
             
-            Text("""
-                 When will you save? 
-                 Pick your days and how much each time!
-                 """)
+            Text(displayedText)
             .font(.custom("audiowide", size: 16))
             .multilineTextAlignment(.center)
             .foregroundStyle(.white)
@@ -62,7 +79,10 @@ struct GoalModalStep2View: View {
                 Rectangle()
                     .fill(Color.darkBlue)
             )
-            .offset(x: 200, y: 220)
+            .offset(x: 200, y: 220 + dialogOffset)
+            .rotationEffect(.degrees(dialogRotation))
+            .opacity(dialogOpacity)
+            .scaleEffect(dialogScale)
             
             VStack(alignment: .leading, spacing: 30) {
                 Button {
@@ -82,20 +102,22 @@ struct GoalModalStep2View: View {
                 
                 VStack(spacing: 18) {
                     HStack(spacing: 40) {
-                        ForEach(days.prefix(4), id: \.self) { day in
+                        ForEach(Array(days.prefix(4).enumerated()), id: \.element) { index, day in
                             DayChipView(
                                 title: day,
                                 isSelected: vm.selectedDays.contains(day)
                             ) { toggle(day) }
+                            .scaleEffect(dayChipsScale[day] ?? 0)
                         }
                     }
                     
                     HStack(spacing: 40) {
-                        ForEach(days.suffix(3), id: \.self) { day in
+                        ForEach(Array(days.suffix(3).enumerated()), id: \.element) { index, day in
                             DayChipView(
                                 title: day,
-                                isSelected: vm.selectedDays.contains(day),
+                                isSelected: vm.selectedDays.contains(day)
                             ) { toggle(day) }
+                            .scaleEffect(dayChipsScale[day] ?? 0)
                         }
                     }
                 }
@@ -149,10 +171,12 @@ struct GoalModalStep2View: View {
                             .padding(.horizontal, 50)
                             .background(
                                 vm.isStep2Valid
-                                ? Color.yellow.opacity(0.8)
+                                ? Color.yellowButton
                                 : Color.gray.opacity(0.4),
                                 in: Capsule()
                             )
+                            .scaleEffect(vm.isStep2Valid ? buttonScale : 1.0)
+                            .shadow(color: vm.isStep2Valid ? .yellow.opacity(0.5) : .clear, radius: 10)
                     }
                     .disabled(!vm.isStep2Valid)
                     
@@ -160,7 +184,8 @@ struct GoalModalStep2View: View {
                 }
             }
             .frame(width: 550,  height: 700)
-            .offset(y: -100)
+            .offset(x: formOffset, y: -100)
+            .opacity(formOpacity)
             
             if showConfirm {
                 Color.black.opacity(0.25)
@@ -190,6 +215,87 @@ struct GoalModalStep2View: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationBarBackButtonHidden(true)
+        .onAppear {
+            startAnimations()
+        }
+    }
+    
+    private func startAnimations() {
+        // Robot floating animation
+        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+            robotOffset = -15
+        }
+        
+        // Robot subtle rotation
+        withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
+            robotRotation = 10
+        }
+        
+        // Frame and modal slide in
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
+            frameOffset = -30
+            modalOffset = -100
+        }
+        
+        // Dialog bubble appear
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.5)) {
+            dialogOpacity = 1
+            dialogScale = 1.0
+        }
+        
+        // Start typewriter effect after dialog appears
+        startTypewriterEffect(delay: 0.8)
+        
+        // Dialog floating animation
+        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+            dialogOffset = -15
+        }
+        
+        // Dialog subtle rotation
+        withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
+            dialogRotation = -2
+        }
+        
+        // Form slide in from left
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.8).delay(0.6)) {
+            formOffset = 0
+            formOpacity = 1
+        }
+        
+        // Shadow fade in
+        withAnimation(.easeIn(duration: 0.5).delay(0.3)) {
+            bottomShadowOpacity = 1
+        }
+        
+        // Day chips cascade animation
+        for (index, day) in days.enumerated() {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.8 + Double(index) * 0.1)) {
+                dayChipsScale[day] = 1.0
+            }
+        }
+        
+        // Back button subtle wobble
+        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true).delay(1.0)) {
+            backButtonRotation = 5
+        }
+        
+        // Button pulse animation when valid
+        withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true).delay(1.5)) {
+            buttonScale = 1.08
+        }
+    }
+    
+    private func startTypewriterEffect(delay: Double) {
+        Task {
+            try? await Task.sleep(for: .seconds(delay))
+            
+            for character in fullDialogText {
+                displayedText.append(character)
+                // Faster for spaces and punctuation, slower for letters
+                let sleepDuration = character == " " || character == "\n" ? 0.02 : 0.04
+                try? await Task.sleep(for: .seconds(sleepDuration))
+            }
+        }
     }
     
     private func toggle(_ day: String) {

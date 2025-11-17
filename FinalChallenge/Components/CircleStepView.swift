@@ -1,11 +1,26 @@
 import SwiftUI
 
-struct CircleStepView: View {
+struct CircleStepView<LeadingContent: View>: View {
     @ObservedObject var viewModel: CircleStepViewModel
-    var onTap: (StepDisplayModel) -> Void = { _ in }
+    var onTap: (StepDisplayModel) -> Void
+    
+    @ViewBuilder let leadingContent: () -> LeadingContent
+    
+    init(
+        viewModel: CircleStepViewModel,
+        @ViewBuilder leadingContent: @escaping () -> LeadingContent,
+        onTap: @escaping (StepDisplayModel) -> Void
+    ) {
+        self.viewModel = viewModel
+        self.leadingContent = leadingContent
+        self.onTap = onTap
+    }
 
     var body: some View {
         VStack(spacing: 0) {
+            
+            leadingContent()
+            
             ForEach(viewModel.steps) { step in
                 Button {
                     onTap(step)
@@ -34,6 +49,15 @@ struct CircleStepView: View {
             }
         }
         .frame(width: viewModel.requiredWidth)
+    }
+}
+
+extension CircleStepView where LeadingContent == EmptyView {
+    init(
+        viewModel: CircleStepViewModel,
+        onTap: @escaping (StepDisplayModel) -> Void
+    ){
+        self.init(viewModel: viewModel, leadingContent: { EmptyView() }, onTap: onTap)
     }
 }
 
