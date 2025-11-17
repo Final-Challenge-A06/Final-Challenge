@@ -23,6 +23,7 @@ struct GoalView: View {
     
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
+    @State private var showBLESettingsModal = false
     
     // Starter reward path (first money only)
     @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
@@ -58,13 +59,38 @@ struct GoalView: View {
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack() {
                             CircleStepView(
-                                viewModel: circleVM
-                            ) { step in
-                                if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
-                                    goalVm.tryOpenClaim(for: step.id, context: context)
-                                    return
+                                viewModel: circleVM,
+                                leadingContent: {
+                                    if goals.isEmpty || goalVm.currentGoalIsClaimed {
+                                        Button {
+                                            goalVm.onCircleTap()
+                                        } label: {
+                                            Image("setGoalButton")
+                                        }
+                                        .padding(.bottom, -70)
+                                        .zIndex(2)
+                                    }
+                                    
+                                    // Button complete goal
+                                    // Menampilkan HANYA jika goal selesai DAN BELUM DI-KLAIM
+                                    if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
+                                        Button {
+                                            bleVM.sendResetToDevice()
+                                            goalVm.currentGoalIsClaimed = true
+                                        } label: {
+                                            Image("unlockButton")
+                                        }
+                                        .padding(.bottom, -150)
+                                        .zIndex(2)
+                                    }
+                                },
+                                onTap: { step in
+                                    if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
+                                        goalVm.tryOpenClaim(for: step.id, context: context)
+                                        return
+                                    }
                                 }
-                            }
+                            )
                             .padding(.vertical, 60)
                             .padding(.bottom, 180)
                             .frame(maxWidth: .infinity)
@@ -78,35 +104,36 @@ struct GoalView: View {
                     
                     // Button complete goal
                     // Menampilkan HANYA jika goal selesai DAN BELUM DI-KLAIM
-                    if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
-                        VStack(spacing: 20) {
-                            Text("Goal Complete!")
-                                .font(.title.bold())
-                                .foregroundColor(.white)
-                            
-                            Button {
-                                bleVM.sendResetToDevice()
-                                goalVm.currentGoalIsClaimed = true
-                            } label: {
-                                Text("Take Your Money")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .frame(maxWidth: .infinity)
-                                    .cornerRadius(18)
-                                    .shadow(radius: 4)
-                            }
-                            .padding(.horizontal, 40)
-                        }
-                        .padding(.bottom, 220)
-                    }
+//                    if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
+//                        VStack(spacing: 20) {
+//                            Text("Goal Complete!")
+//                                .font(.title.bold())
+//                                .foregroundColor(.white)
+//                            
+//                            Button {
+//                                bleVM.sendResetToDevice()
+//                                goalVm.currentGoalIsClaimed = true
+////                                goalVm.resetProgress(context: context)
+//                            } label: {
+//                                Text("Take Your Money")
+//                                    .font(.headline)
+//                                    .foregroundColor(.white)
+//                                    .padding()
+//                                    .frame(maxWidth: .infinity)
+//                                    .cornerRadius(18)
+//                                    .shadow(radius: 4)
+//                            }
+//                            .padding(.horizontal, 40)
+//                        }
+//                        .padding(.bottom, 220)
+//                    }
                 }
                 .background(
                     Image("frame_top")
                         .offset(y: frameTopOffset)
                         .opacity(frameTopOpacity)
                 )
-                .offset(y: 80)
+//                .offset(y: 80)
                 
                 BottomItemSelectionView(viewModel: bottomItemsVM)
                     .padding(.top, 50)
@@ -144,6 +171,8 @@ struct GoalView: View {
             .padding(.horizontal, 40)
             
             HStack {
+                Spacer()
+                
                 SavingCardView(
                     title: goals.last?.name ?? "Hirono Blindbox",
                     current: goalVm.totalSaving,
@@ -158,6 +187,19 @@ struct GoalView: View {
                         .offset(x: streakViewOffset)
                         .opacity(streakViewOpacity)
                 }
+                
+                Spacer()
+                
+                Button {
+                    showBLESettingsModal = true
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 36))
+                        .foregroundColor(.white)
+                        .padding(10)
+                        .background(Color.white.opacity(0.15), in: Circle())
+                }
+                .padding(.trailing, 20)
             }
             .offset(y: -530)
             
@@ -171,6 +213,63 @@ struct GoalView: View {
                 .offset(x: -300, y: 350)
                 .scaleEffect(chatBubbleScale)
                 .opacity(chatBubbleOpacity)
+            
+            // Modal set goal
+            if goalVm.showGoalModal {
+                ShowGoalModalView(goalVm: goalVm, bottomItemsVM: bottomItemsVM)
+            }
+            
+            if showBLESettingsModal {
+                CenteredModal(isPresented: $showBLESettingsModal) {
+                    BLEConnectionModalView(
+                        onCancel: { showBLESettingsModal = false }
+                    )
+                    .environmentObject(bleVM)
+                }
+                .zIndex(5)
+            }
+            
+//            if goalVm.showGoalModal {
+//                CenteredModal(isPresented: $goalVm.showGoalModal) {
+//                    if goalVm.activeStep == 1 {
+//                        GoalModalStep1View(
+//                            vm: goalVm,
+//                            bottomItemsVM: bottomItemsVM,
+//                            onNext: { goalVm.goToNextStep() }
+//                        )
+//                    } else {
+//                        GoalModalStep2View(
+//                            vm: goalVm,
+//                            onDone: {
+//                                goalVm.loadRewardsForView(context: context)
+//                                bottomItemsVM.setItems(goalVm.rewardViewItems)
+//                                goalVm.closeModal()
+//                            },
+//                            onBack: { goalVm.activeStep = 1 }
+//                        )
+//                    }
+//                }
+//                .zIndex(2)
+//            }
+            
+//            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
+//                CenteredModal(isPresented: $goalVm.showClaimModal) {
+//                    BottomClaimModalView(
+//                        title: meta.title,
+//                        imageName: meta.imageName,
+//                        onClaim: {
+//                            goalVm.confirmClaim(context: context)
+//                            goalVm.loadRewardsForView(context: context)
+//                            bottomItemsVM.setItems(goalVm.rewardViewItems)
+//                            circleVM.updateSteps(
+//                                totalSteps: goalVm.totalSteps,
+//                                passedSteps: goalVm.passedSteps
+//                            )
+//                        }
+//                    )
+//                }
+//                .zIndex(4)
+//            }
         }
         .onAppear {
             // Buat StreakManager sekali

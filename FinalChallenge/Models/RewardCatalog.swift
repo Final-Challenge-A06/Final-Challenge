@@ -13,6 +13,7 @@ enum RewardCatalog {
 
         var metas: [RewardModel] = []
 
+        // 1) Reward untuk step awal (start)
         metas.append(
             RewardModel(
                 id: "reward.step.1",
@@ -26,6 +27,7 @@ enum RewardCatalog {
             return metas
         }
 
+        // 2) Reward untuk setiap checkpoint kelipatan 7 (sebelum step terakhir)
         let checkpointImageNames = ["glasses1", "swagglasses", "glasses1"]
         var imageIndex = 0
 
@@ -42,6 +44,20 @@ enum RewardCatalog {
                 )
             )
         }
+
+        // 3) Reward untuk goal-end (step terakhir)
+        // Tambahkan hanya jika belum ada (misal totalSteps == 1 sudah tercakup di atas)
+        if totalSteps > 1 {
+            metas.append(
+                RewardModel(
+                    id: "reward.step.\(totalSteps)",
+                    step: totalSteps,
+                    title: "Goal Complete",
+                    imageName: "glasses" // ganti sesuai aset yang diinginkan
+                )
+            )
+        }
+
         return metas
     }
 }
