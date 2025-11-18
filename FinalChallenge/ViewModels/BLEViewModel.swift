@@ -100,13 +100,10 @@ final class BLEViewModel: ObservableObject {
     }
 
     private func sendAccessoryCommand(_ accessoryName: String) {
-        // Format command disepakati dengan teman IoT
-        // Misal: ACCESSORY:mataBuletBiru
-        let command = "ACCESSORY:\(accessoryName)"
+        let command = accessoryName
         
         print("📤 Send accessory command:", command)
         
-        // Pastikan cuma kirim kalau sudah connected
         guard case .connected = state else {
             print("⚠️ Device not connected, skip accessory command")
             return

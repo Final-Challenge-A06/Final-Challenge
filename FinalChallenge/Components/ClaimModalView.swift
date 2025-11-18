@@ -38,7 +38,7 @@ struct ClaimModalView: View {
                         .foregroundStyle(Color.black)
                         .padding(.vertical, 16)
                         .padding(.horizontal, 50)
-                        .background(Color.yellowButton, in: Capsule())
+                        .background(Color.yellow.opacity(0.7), in: Capsule())
                 }
                 .offset(y: 40)
             }

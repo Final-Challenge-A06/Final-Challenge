@@ -6,6 +6,7 @@ struct BottomItemSelectionView: View {
     var body: some View {
         ZStack(alignment: .leading) {
             Image("frame_bottom")
+                .opacity(0.3)
             
             if viewModel.items.isEmpty {
                 HStack {

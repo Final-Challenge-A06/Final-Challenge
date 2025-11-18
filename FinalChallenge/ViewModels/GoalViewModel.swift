@@ -266,6 +266,7 @@ final class GoalViewModel: ObservableObject {
         }
         do {
             try context.save()
+            loadRewardsForView(context: context)
         } catch {
             print("❌ Save reward failed:", error.localizedDescription)
         }
@@ -300,6 +301,19 @@ final class GoalViewModel: ObservableObject {
                 )
             }
         }
+    }
+    
+    func getClaimedSteps(context: ModelContext) -> Set<Int> {
+        let entities = fetchAllRewards(context: context)
+        var claimedSteps: Set<Int> = []
+        
+        for meta in rewardCatalog {
+            if let entity = entities.first(where: { $0.id == meta.id }), entity.claimed {
+                claimedSteps.insert(meta.step)
+            }
+        }
+        
+        return claimedSteps
     }
     
     // MARK: - SwiftData helpers

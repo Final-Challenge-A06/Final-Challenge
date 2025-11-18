@@ -22,29 +22,41 @@ struct CircleStepView<LeadingContent: View>: View {
             leadingContent()
             
             ForEach(viewModel.steps) { step in
-                Button {
-                    onTap(step)
-                } label: {
-                    ZStack {
-                        Image(step.imageName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: step.size, height: step.size)
-                            .rotationEffect(.degrees(step.rotation))
-                            .offset(x: step.xOffset)
+                ZStack {
+                    Button {
+                        onTap(step)
+                    } label: {
+                        ZStack {
+                            Image(step.imageName)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: step.size, height: step.size)
+                                .rotationEffect(.degrees(step.rotation))
+                                .offset(x: step.xOffset)
 
-                        if (step.isCheckpoint || step.isGoal) && !step.isUnlocked {
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundStyle(.white.opacity(0.9))
-                                .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
-                                .offset(y: -40)
+                            if (step.isCheckpoint || step.isGoal) && !step.isUnlocked {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 28, weight: .bold))
+                                    .foregroundStyle(.white.opacity(0.9))
+                                    .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+                                    .offset(y: -40)
+                            }
                         }
+                        .contentShape(Circle())
                     }
-                    .contentShape(Circle())
+                    .buttonStyle(.plain)
+                    .disabled((step.isCheckpoint || step.isGoal) && !step.isUnlocked)
+                    
+                    // Claim button untuk checkpoint/goal yang sudah unlocked tapi belum di-claim
+                    if (step.isCheckpoint || step.isGoal) && step.isUnlocked && !step.isClaimed {
+                        Button {
+                            onTap(step)
+                        } label: {
+                            Image("claimButton")
+                        }
+                        .offset(x: 0, y: -80)
+                    }
                 }
-                .buttonStyle(.plain)
-                .disabled((step.isCheckpoint || step.isGoal) && !step.isUnlocked)
                 .padding(.vertical, -40)
             }
         }
