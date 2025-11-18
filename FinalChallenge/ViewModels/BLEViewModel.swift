@@ -37,7 +37,7 @@ final class BLEViewModel: ObservableObject {
     private let mgr = BLEManager()
     private var isActionBusy = false
     private var pendingPeripheral: CBPeripheral?
-    private let targetKeyword = "billo"
+    private let targetKeyword = "Billo"
     private var isReconnectFlow = false
     //    var streakManager: StreakManager?
     private var balanceModel: BalanceModel?
