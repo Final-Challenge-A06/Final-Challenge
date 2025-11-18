@@ -40,6 +40,7 @@ struct OnboardingView: View {
                     
                     HStack {
                         Button {
+                            SoundManager.shared.play(.buttonClick)
                             onboardingVM.previous()
                         } label: {
                             Image(systemName: "chevron.left")
@@ -72,6 +73,7 @@ struct OnboardingView: View {
                             
                             if onboardingVM.currentIndex == max(onboardingVM.pages.count - 1, 0) {
                                 Button {
+                                    SoundManager.shared.play(.buttonClick)
                                     flowVM.startGoalSetup()
                                 } label: {
                                     Text("Let's Begin")
@@ -95,6 +97,7 @@ struct OnboardingView: View {
                         .offset(y: -100)
                         
                         Button {
+                            SoundManager.shared.play(.buttonClick)
                             onboardingVM.next()
                         } label: {
                             Image(systemName: "chevron.right")

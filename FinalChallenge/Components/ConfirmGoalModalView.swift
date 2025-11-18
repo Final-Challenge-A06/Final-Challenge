@@ -25,6 +25,7 @@ struct ConfirmGoalModalView: View {
 
             HStack(spacing: 20) {
                 Button(action: {
+                    SoundManager.shared.play(.buttonCloseClick)
                     onBack()
                     isPresented = false
                 }) {
@@ -37,6 +38,7 @@ struct ConfirmGoalModalView: View {
                 }
                 
                 Button(action: {
+                    SoundManager.shared.play(.buttonClick)
                     onConfirm()
                     isPresented = false
                 }) {

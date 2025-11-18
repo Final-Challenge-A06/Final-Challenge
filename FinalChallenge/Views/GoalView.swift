@@ -41,6 +41,7 @@ struct GoalView: View {
                                 leadingContent: {
                                     if goals.isEmpty || goalVm.currentGoalIsClaimed {
                                         Button {
+                                            SoundManager.shared.play(.buttonClick)
                                             goalVm.onCircleTap()
                                         } label: {
                                             Image("setGoalButton")
@@ -53,6 +54,7 @@ struct GoalView: View {
                                     // Menampilkan HANYA jika goal selesai DAN BELUM DI-KLAIM
                                     if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
                                         Button {
+                                            SoundManager.shared.play(.goalFinish)
                                             bleVM.sendResetToDevice()
                                             goalVm.currentGoalIsClaimed = true
                                         } label: {
@@ -146,6 +148,7 @@ struct GoalView: View {
                 Spacer()
                 
                 Button {
+                    SoundManager.shared.play(.buttonClick)
                     showBLESettingsModal = true
                 } label: {
                     Image(systemName: "gearshape.fill")
@@ -171,29 +174,6 @@ struct GoalView: View {
                 }
                 .zIndex(5)
             }
-            
-//            if goalVm.showGoalModal {
-//                CenteredModal(isPresented: $goalVm.showGoalModal) {
-//                    if goalVm.activeStep == 1 {
-//                        GoalModalStep1View(
-//                            vm: goalVm,
-//                            bottomItemsVM: bottomItemsVM,
-//                            onNext: { goalVm.goToNextStep() }
-//                        )
-//                    } else {
-//                        GoalModalStep2View(
-//                            vm: goalVm,
-//                            onDone: {
-//                                goalVm.loadRewardsForView(context: context)
-//                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-//                                goalVm.closeModal()
-//                            },
-//                            onBack: { goalVm.activeStep = 1 }
-//                        )
-//                    }
-//                }
-//                .zIndex(2)
-//            }
             
 //            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
 //                CenteredModal(isPresented: $goalVm.showClaimModal) {

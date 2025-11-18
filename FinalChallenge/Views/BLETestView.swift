@@ -62,6 +62,7 @@ struct BLETestView: View {
                 .padding(.bottom, 50)
                 
                 Button {
+                    SoundManager.shared.play(.buttonClick)
                     bleVM.startScan()
                 } label: {
                     Text("+Link your Bot")

@@ -40,6 +40,7 @@ struct RewardClaimView: View {
                             .padding(.top, 4)
                         
                         Button {
+                            SoundManager.shared.play(.buttonClick)
                             showGoal = true
                         } label: {
                             Image(systemName: "checkmark.circle.fill")

@@ -40,6 +40,11 @@
 			path = FinalChallenge;
 			sourceTree = "<group>";
 		};
+		BE8974862ECB1A3400D9C699 /* Sounds */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Sounds;
+			sourceTree = "<group>";
+		};
 		BEC594A32EB3BA88004E25DA /* FinalChallengeTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FinalChallengeTests;
@@ -68,6 +73,7 @@
 		A02C77E12EA8DB6400F25AB0 = {
 			isa = PBXGroup;
 			children = (
+				BE8974862ECB1A3400D9C699 /* Sounds */,
 				A02C77EC2EA8DB6400F25AB0 /* FinalChallenge */,
 				BEC594A32EB3BA88004E25DA /* FinalChallengeTests */,
 				A02C77EB2EA8DB6400F25AB0 /* Products */,
@@ -100,6 +106,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				A02C77EC2EA8DB6400F25AB0 /* FinalChallenge */,
+				BE8974862ECB1A3400D9C699 /* Sounds */,
 			);
 			name = FinalChallenge;
 			packageProductDependencies = (

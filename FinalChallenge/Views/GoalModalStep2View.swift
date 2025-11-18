@@ -66,6 +66,7 @@ struct GoalModalStep2View: View {
             
             VStack(alignment: .leading, spacing: 30) {
                 Button {
+                    SoundManager.shared.play(.buttonCloseClick)
                     onBack()
                 } label: {
                     Image(systemName: "chevron.left")
@@ -119,6 +120,7 @@ struct GoalModalStep2View: View {
                     Spacer()
                     
                     Button(action: {
+                        SoundManager.shared.play(.buttonClick)
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
                             showConfirm = true
                         }
