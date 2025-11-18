@@ -30,9 +30,10 @@ final class BLEViewModel: ObservableObject {
     @Published var amount: Int64 = 0
     @Published var firstMoneyReceived: Bool = false
     @Published var streakManager: StreakManager?
+    @Published var selectedAccessoryName: String?
     
     var onShowFindDevice: ((Bool) -> Void)?
-    
+    private var cancellables = Set<AnyCancellable>()
     private let mgr = BLEManager()
     private var isActionBusy = false
     private var pendingPeripheral: CBPeripheral?
@@ -48,6 +49,7 @@ final class BLEViewModel: ObservableObject {
         self.goalVM = goalVM ?? GoalViewModel()
         setupCallbacks()
         self.streakCount = self.streakManager?.currentStreak ?? 0
+        setupAccessoryListener()
     }
     
     // Set context dari View
@@ -74,6 +76,40 @@ final class BLEViewModel: ObservableObject {
         self.streakManager = StreakManager(context: context)
         streakCount = streakManager?.currentStreak ?? 0
         dailyCheck()
+    }
+    
+    // MARK: - Accessory selection listener (from bottom bar)
+    private func setupAccessoryListener() {
+        NotificationCenter.default.publisher(for: .didSelectAccessory)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] notification in
+                guard let self = self else { return }
+                
+                // Ambil nama file dari userInfo
+                guard let name = notification.userInfo?["photoName"] as? String else {
+                    return
+                }
+                
+                // Simpan kalau mau ditampilkan di UI
+                self.selectedAccessoryName = name
+                
+                // Kirim perintah ke IoT
+                self.sendAccessoryCommand(name)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func sendAccessoryCommand(_ accessoryName: String) {
+        let command = accessoryName
+        
+        print("📤 Send accessory command:", command)
+        
+        guard case .connected = state else {
+            print("⚠️ Device not connected, skip accessory command")
+            return
+        }
+        
+        mgr.writeString(command)
     }
     
     private func norm(_ s: String) -> String {

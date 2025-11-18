@@ -84,8 +84,6 @@ struct GoalView: View {
                                         .zIndex(2)
                                     }
                                     
-                                    // Button complete goal
-                                    // Menampilkan HANYA jika goal selesai DAN BELUM DI-KLAIM
                                     if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
                                         Button {
                                             bleVM.sendResetToDevice()
@@ -122,61 +120,18 @@ struct GoalView: View {
                         .padding(.horizontal, 12)
                     }
                     .frame(height: 960)
-                    
-                    // Button complete goal
-                    // Menampilkan HANYA jika goal selesai DAN BELUM DI-KLAIM
-//                    if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
-//                        VStack(spacing: 20) {
-//                            Text("Goal Complete!")
-//                                .font(.title.bold())
-//                                .foregroundColor(.white)
-//
-//                            Button {
-//                                bleVM.sendResetToDevice()
-//                                goalVm.currentGoalIsClaimed = true
-////                                goalVm.resetProgress(context: context)
-//                            } label: {
-//                                Text("Take Your Money")
-//                                    .font(.headline)
-//                                    .foregroundColor(.white)
-//                                    .padding()
-//                                    .frame(maxWidth: .infinity)
-//                                    .cornerRadius(18)
-//                                    .shadow(radius: 4)
-//                            }
-//                            .padding(.horizontal, 40)
-//                        }
-//                        .padding(.bottom, 220)
-//                    }
                 }
                 .background(
                     Image("frame_top")
                         .offset(y: frameTopOffset)
                         .opacity(frameTopOpacity)
                 )
-//                .offset(y: 80)
                 
                 BottomItemSelectionView(viewModel: bottomItemsVM)
                     .padding(.top, 50)
                     .offset(y: bottomItemsOffset)
                     .opacity(bottomItemsOpacity)
                     .onAppear {
-                        bottomItemsVM.onSelect = { item in
-                            if item.state == .claimable,
-                               let meta = vmRewardMeta(for: item) {
-                                goalVm.openClaim(for: meta, context: context)
-                                
-                                // Tandai event klaim untuk chat
-                                if let activeGoal = goals.last {
-                                    if meta.step == 1 {
-                                        chatVMHolder.vm?.markJustClaimedFirstReward()
-                                    } else if meta.step != activeGoal.totalSteps, meta.step % 7 == 0 {
-                                        chatVMHolder.vm?.markJustClaimedCheckpoint()
-                                    }
-                                    chatVMHolder.vm?.updateMessage(goals: goals)
-                                }
-                            }
-                        }
                         goalVm.loadRewardsForView(context: context)
                         bottomItemsVM.setItems(goalVm.rewardViewItems)
                     }
@@ -249,71 +204,29 @@ struct GoalView: View {
                 }
                 .zIndex(5)
             }
-            
+            circleClaimOverlay
             // Circle step claim modal
-            if showCircleClaimModal, let step = pendingCircleClaimStep {
-                CenteredModal(isPresented: $showCircleClaimModal) {
-                    if let meta = getRewardMeta(for: step.id) {
-                        ClaimModalView(
-                            title: meta.title,
-                            imageName: meta.imageName,
-                            onClaim: {
-                                goalVm.openClaim(for: meta, context: context)
-                                goalVm.confirmClaim(context: context)
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-                                let currentGoalStepsList = goals.map { $0.totalSteps }
-                                let claimedSteps = goalVm.getClaimedSteps(context: context)
-                                circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
-                                showCircleClaimModal = false
-                                pendingCircleClaimStep = nil
-                            }
-                        )
-                    }
-                }
-                .zIndex(6)
-            }
-            
-//            if goalVm.showGoalModal {
-//                CenteredModal(isPresented: $goalVm.showGoalModal) {
-//                    if goalVm.activeStep == 1 {
-//                        GoalModalStep1View(
-//                            vm: goalVm,
-//                            bottomItemsVM: bottomItemsVM,
-//                            onNext: { goalVm.goToNextStep() }
-//                        )
-//                    } else {
-//                        GoalModalStep2View(
-//                            vm: goalVm,
-//                            onDone: {
+//            if showCircleClaimModal, let step = pendingCircleClaimStep {
+//                CenteredModal(isPresented: $showCircleClaimModal) {
+//                    if let meta = getRewardMeta(for: step.id) {
+//                        ClaimModalView(
+//                            title: meta.title,
+//                            imageName: meta.imageName,
+//                            onClaim: {
+//                                goalVm.openClaim(for: meta, context: context)
+//                                goalVm.confirmClaim(context: context)
 //                                goalVm.loadRewardsForView(context: context)
 //                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-//                                goalVm.closeModal()
-//                            },
-//                            onBack: { goalVm.activeStep = 1 }
+//                                let currentGoalStepsList = goals.map { $0.totalSteps }
+//                                let claimedSteps = goalVm.getClaimedSteps(context: context)
+//                                circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+//                                showCircleClaimModal = false
+//                                pendingCircleClaimStep = nil
+//                            }
 //                        )
 //                    }
 //                }
-//                .zIndex(2)
-//            }
-            
-//            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
-//                CenteredModal(isPresented: $goalVm.showClaimModal) {
-//                    BottomClaimModalView(
-//                        title: meta.title,
-//                        imageName: meta.imageName,
-//                        onClaim: {
-//                            goalVm.confirmClaim(context: context)
-//                            goalVm.loadRewardsForView(context: context)
-//                            bottomItemsVM.setItems(goalVm.rewardViewItems)
-//                            circleVM.updateSteps(
-//                                totalSteps: goalVm.totalSteps,
-//                                passedSteps: goalVm.passedSteps
-//                            )
-//                        }
-//                    )
-//                }
-//                .zIndex(4)
+//                .zIndex(6)
 //            }
         }
         .onAppear {
@@ -379,6 +292,40 @@ struct GoalView: View {
         let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
         return catalog.first(where: { $0.step == stepId })
     }
+    
+    private var circleClaimOverlay: some View {
+            Group {
+                if showCircleClaimModal, let step = pendingCircleClaimStep {
+                    CenteredModal(isPresented: $showCircleClaimModal) {
+                        if let meta = getRewardMeta(for: step.id) {
+                            ClaimModalView(
+                                title: meta.title,
+                                imageBaseName: meta.imageName,
+                                onClaim: {
+                                    // sama persis dengan yang kamu punya tadi:
+                                    goalVm.openClaim(for: meta, context: context)
+                                    goalVm.confirmClaim(context: context)
+                                    goalVm.loadRewardsForView(context: context)
+                                    bottomItemsVM.setItems(goalVm.rewardViewItems)
+                                    
+                                    let currentGoalStepsList = goals.map { $0.totalSteps }
+                                    let claimedSteps = goalVm.getClaimedSteps(context: context)
+                                    circleVM.updateSteps(
+                                        goalSteps: currentGoalStepsList,
+                                        passedSteps: goalVm.passedSteps,
+                                        claimedSteps: claimedSteps
+                                    )
+                                    
+                                    showCircleClaimModal = false
+                                    pendingCircleClaimStep = nil
+                                }
+                            )
+                        }
+                    }
+                    .zIndex(6)
+                }
+            }
+        }
     
     private func startEntranceAnimations() {
         // Frame top slide down from top

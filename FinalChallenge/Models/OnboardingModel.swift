@@ -39,7 +39,7 @@ extension OnboardingModel {
         OnboardingModel(
             title: "Set Your First Goal!",
             imageName: "robot",
-            description: "Hey there!, let’s make your first goal!. Finish it and Billo will pop open!",
+            description: "Hey there!, let’s make your first goal! Finish it and Billo will pop open!",
             offsetX: -400, offsetY: -240, rotationDegrees: 20
         ),
         
