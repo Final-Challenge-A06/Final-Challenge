@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ClaimModalView: View {
     let title: String
-    let imageName: String
+    let imageBaseName: String
     var onClaim: () -> Void
     
     var body: some View {
@@ -22,10 +22,8 @@ struct ClaimModalView: View {
                     .font(.custom("audiowide", size: 24))
                     .foregroundStyle(Color.white)
                 
-                Image(uiImage: UIImage(named: imageName) ?? UIImage(systemName: "gift.fill")!)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 200, height: 200)
+                AnimatedAccessoryView(baseName: imageBaseName)
+                                    .frame(width: 200, height: 200)
                 
                 Text("Now Billo can look cooler with Accessory")
                     .font(.custom("audiowide", size: 24))
@@ -50,6 +48,10 @@ struct ClaimModalView: View {
 }
 
 #Preview {
-    ClaimModalView(title: "Glasses", imageName: "glasses", onClaim: {})
+    ClaimModalView(
+        title: "Blinking Blue Eyes",
+        imageBaseName: "mataNgedipBiru",
+        onClaim: {}
+    )
 }
 

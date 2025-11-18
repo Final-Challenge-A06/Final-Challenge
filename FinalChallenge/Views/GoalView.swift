@@ -101,61 +101,18 @@ struct GoalView: View {
                         .padding(.horizontal, 12)
                     }
                     .frame(height: 960)
-                    
-                    // Button complete goal
-                    // Menampilkan HANYA jika goal selesai DAN BELUM DI-KLAIM
-//                    if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
-//                        VStack(spacing: 20) {
-//                            Text("Goal Complete!")
-//                                .font(.title.bold())
-//                                .foregroundColor(.white)
-//                            
-//                            Button {
-//                                bleVM.sendResetToDevice()
-//                                goalVm.currentGoalIsClaimed = true
-////                                goalVm.resetProgress(context: context)
-//                            } label: {
-//                                Text("Take Your Money")
-//                                    .font(.headline)
-//                                    .foregroundColor(.white)
-//                                    .padding()
-//                                    .frame(maxWidth: .infinity)
-//                                    .cornerRadius(18)
-//                                    .shadow(radius: 4)
-//                            }
-//                            .padding(.horizontal, 40)
-//                        }
-//                        .padding(.bottom, 220)
-//                    }
                 }
                 .background(
                     Image("frame_top")
                         .offset(y: frameTopOffset)
                         .opacity(frameTopOpacity)
                 )
-//                .offset(y: 80)
                 
                 BottomItemSelectionView(viewModel: bottomItemsVM)
                     .padding(.top, 50)
                     .offset(y: bottomItemsOffset)
                     .opacity(bottomItemsOpacity)
                     .onAppear {
-                        bottomItemsVM.onSelect = { item in
-                            if item.state == .claimable,
-                               let meta = vmRewardMeta(for: item) {
-                                goalVm.openClaim(for: meta, context: context)
-                                
-                                // Tandai event klaim untuk chat
-                                if let activeGoal = goals.last {
-                                    if meta.step == 1 {
-                                        chatVMHolder.vm?.markJustClaimedFirstReward()
-                                    } else if meta.step != activeGoal.totalSteps, meta.step % 7 == 0 {
-                                        chatVMHolder.vm?.markJustClaimedCheckpoint()
-                                    }
-                                    chatVMHolder.vm?.updateMessage(goals: goals)
-                                }
-                            }
-                        }
                         goalVm.loadRewardsForView(context: context)
                         bottomItemsVM.setItems(goalVm.rewardViewItems)
                     }
