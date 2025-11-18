@@ -64,6 +64,15 @@ struct GoalView: View {
                         VStack() {
                             CircleStepView(
                                 viewModel: circleVM,
+                                goalImage: {
+                                    // Ambil gambar dari goal terakhir (goal aktif)
+                                    if let lastGoal = goals.last,
+                                       let imageData = lastGoal.imageData,
+                                       let uiImage = UIImage(data: imageData) {
+                                        return uiImage
+                                    }
+                                    return nil
+                                }(),
                                 leadingContent: {
                                     if goals.isEmpty || goalVm.currentGoalIsClaimed {
                                         Button {
