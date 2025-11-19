@@ -1,10 +1,3 @@
-//
-//  ChatViewModel.swift
-//  FinalChallenge
-//
-//  Created by Assistant on 14/11/25.
-//
-
 import Foundation
 import Combine
 
@@ -77,22 +70,23 @@ final class ChatViewModel: ObservableObject {
             return
         }
         
-        // 3) Kurang 1 step lagi
+        // 3) Goal sudah tercapai dan mendorong buat goal baru (setelah ambil uang)
+        // Diprioritaskan sebelum kondisi "belum pernah menabung"
+        if goalCompleted && goalVM.currentGoalIsClaimed {
+            chat.showSingle("Now that its finish, keep our saving habit continue, do more goals and complete it")
+            return
+        }
+        
+        // 4) Kurang 1 step lagi
         if oneStepLeft {
             chat.showSingle("A little more to reach your goal")
             return
         }
         
-        // 4) Selesai set goal dan belum pernah menabung
+        // 5) Selesai set goal dan belum pernah menabung
         if hasGoal && !hasEverSaved && amountPerSave > 0 {
             let formatted = rupiahFormatter.string(from: NSNumber(value: amountPerSave)) ?? "Rp \(amountPerSave)"
             chat.showSingle("Let’s try saving \(formatted) for the first time!")
-            return
-        }
-        
-        // 5) Goal sudah tercapai dan mendorong buat goal baru (setelah ambil uang)
-        if goalCompleted && goalVM.currentGoalIsClaimed {
-            chat.showSingle("Now that its finish, keep our saving habit continue, do more goals and complete it")
             return
         }
         
@@ -100,4 +94,3 @@ final class ChatViewModel: ObservableObject {
         chat.showSingle("Keep going!")
     }
 }
-
