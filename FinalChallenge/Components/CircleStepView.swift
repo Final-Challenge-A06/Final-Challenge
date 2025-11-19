@@ -3,7 +3,7 @@ import SwiftUI
 struct CircleStepView<LeadingContent: View>: View {
     @ObservedObject var viewModel: CircleStepViewModel
     var onTap: (StepDisplayModel) -> Void
-    var goalImage: UIImage? // Tambahkan parameter untuk gambar goal
+    var goalImage: UIImage?
     
     @ViewBuilder let leadingContent: () -> LeadingContent
     
@@ -50,13 +50,11 @@ struct CircleStepView<LeadingContent: View>: View {
                     .buttonStyle(.plain)
                     .disabled((step.isCheckpoint || step.isGoal) && !step.isUnlocked)
                     
-                    // Tampilkan ImageGoalView di atas goal yang belum tercapai
                     if step.isGoal && !step.isUnlocked {
                         ImageGoalView(goalImage: goalImage)
-                            .offset(x: 0, y: -180)
+                            .offset(x: 0, y: -160)
                     }
                     
-                    // Claim button untuk checkpoint/goal yang sudah unlocked tapi belum di-claim
                     if step.isCheckpoint && step.isUnlocked && !step.isClaimed {
                         Button {
                             SoundManager.shared.play(.reward)
@@ -67,9 +65,10 @@ struct CircleStepView<LeadingContent: View>: View {
                         .offset(x: 0, y: -80)
                     }
                 }
-                .padding(.vertical, -40)
+                .padding(.vertical, 0)
             }
         }
+        .padding(.top, 220)
         .frame(width: viewModel.requiredWidth)
     }
 }

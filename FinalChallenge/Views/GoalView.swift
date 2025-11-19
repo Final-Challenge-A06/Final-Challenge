@@ -182,6 +182,17 @@ struct GoalView: View {
             }
             .offset(y: -530)
             
+            Button {
+                showBLESettingsModal = true
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 36))
+                    .foregroundColor(.white)
+                    .padding(10)
+                    .background(.yellowButton, in: Circle())
+            }
+            .offset(x: 420, y: -620)
+            
             Image("robot")
                 .offset(x: -500 + robotOffset, y: 350 + robotFloatOffset)
                 .rotationEffect(Angle(degrees: robotRotation))
