@@ -3,15 +3,18 @@ import SwiftUI
 struct CircleStepView<LeadingContent: View>: View {
     @ObservedObject var viewModel: CircleStepViewModel
     var onTap: (StepDisplayModel) -> Void
+    var goalImage: UIImage? // Tambahkan parameter untuk gambar goal
     
     @ViewBuilder let leadingContent: () -> LeadingContent
     
     init(
         viewModel: CircleStepViewModel,
+        goalImage: UIImage? = nil,
         @ViewBuilder leadingContent: @escaping () -> LeadingContent,
         onTap: @escaping (StepDisplayModel) -> Void
     ) {
         self.viewModel = viewModel
+        self.goalImage = goalImage
         self.leadingContent = leadingContent
         self.onTap = onTap
     }
@@ -22,29 +25,48 @@ struct CircleStepView<LeadingContent: View>: View {
             leadingContent()
             
             ForEach(viewModel.steps) { step in
-                Button {
-                    onTap(step)
-                } label: {
-                    ZStack {
-                        Image(step.imageName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: step.size, height: step.size)
-                            .rotationEffect(.degrees(step.rotation))
-                            .offset(x: step.xOffset)
+                ZStack {
+                    Button {
+                        onTap(step)
+                    } label: {
+                        ZStack {
+                            Image(step.imageName)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: step.size, height: step.size)
+                                .rotationEffect(.degrees(step.rotation))
+                                .offset(x: step.xOffset)
 
-                        if (step.isCheckpoint || step.isGoal) && !step.isUnlocked {
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundStyle(.white.opacity(0.9))
-                                .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
-                                .offset(y: -40)
+                            if (step.isCheckpoint || step.isGoal) && !step.isUnlocked {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 28, weight: .bold))
+                                    .foregroundStyle(.white.opacity(0.9))
+                                    .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+                                    .offset(y: -40)
+                            }
                         }
+                        .contentShape(Circle())
                     }
-                    .contentShape(Circle())
+                    .buttonStyle(.plain)
+                    .disabled((step.isCheckpoint || step.isGoal) && !step.isUnlocked)
+                    
+                    // Tampilkan ImageGoalView di atas goal yang belum tercapai
+                    if step.isGoal && !step.isUnlocked {
+                        ImageGoalView(goalImage: goalImage)
+                            .offset(x: 0, y: -180)
+                    }
+                    
+                    // Claim button untuk checkpoint/goal yang sudah unlocked tapi belum di-claim
+                    if step.isCheckpoint && step.isUnlocked && !step.isClaimed {
+                        Button {
+                            SoundManager.shared.play(.reward)
+                            onTap(step)
+                        } label: {
+                            Image("claimButton")
+                        }
+                        .offset(x: 0, y: -80)
+                    }
                 }
-                .buttonStyle(.plain)
-                .disabled((step.isCheckpoint || step.isGoal) && !step.isUnlocked)
                 .padding(.vertical, -40)
             }
         }
@@ -55,22 +77,23 @@ struct CircleStepView<LeadingContent: View>: View {
 extension CircleStepView where LeadingContent == EmptyView {
     init(
         viewModel: CircleStepViewModel,
+        goalImage: UIImage? = nil,
         onTap: @escaping (StepDisplayModel) -> Void
     ){
-        self.init(viewModel: viewModel, leadingContent: { EmptyView() }, onTap: onTap)
+        self.init(viewModel: viewModel, goalImage: goalImage, leadingContent: { EmptyView() }, onTap: onTap)
     }
 }
 
 #Preview {
-//    ZStack {
-//        Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40).ignoresSafeArea()
-//        ScrollView {
-//            CircleStepView(
-//                viewModel: CircleStepViewModel(goalSteps: [5], passedSteps: 2)
-//            ) { step in
-//                print("Tapped step:", step.id)
-//            }
-//            .padding(.vertical, 40)
-//        }
-//    }
+    ZStack {
+        Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40).ignoresSafeArea()
+        ScrollView {
+            CircleStepView(
+                viewModel: CircleStepViewModel(goalSteps: [10], passedSteps: 8)
+            ) { step in
+                print("Tapped step:", step.id)
+            }
+            .padding(.vertical, 40)
+        }
+    }
 }

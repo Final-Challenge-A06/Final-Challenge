@@ -17,9 +17,9 @@ class SoundManager {
         case buttonCloseClick = "sfx_buttonClose"
         case bubbleClick = "sfx_bubble"
         case reward = "sfx_reward"
-        case moneyIn = "sfx_money"
+        case moneyIn = "sfx_money" // blm kepake
         case goalFinish = "sfx_goal"
-        case stoneProgress = "sfx_stone"
+        case stoneProgress = "sfx_stone" // blm kepake
         case robotTalk = "sfx_robot"
     }
     
@@ -36,5 +36,9 @@ class SoundManager {
         } catch {
             print("Error playing sound: \(error.localizedDescription)")
         }
+    }
+    
+    func stop() {
+        player?.stop()
     }
 }

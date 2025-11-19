@@ -17,5 +17,6 @@ struct StepDisplayModel: Identifiable {
     let isUnlocked: Bool
     let isCheckpoint: Bool
     let isGoal: Bool
+    var isClaimed: Bool = false
 }
 

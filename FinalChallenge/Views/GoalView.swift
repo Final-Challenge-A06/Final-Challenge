@@ -8,6 +8,10 @@ struct GoalView: View {
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
     @StateObject private var circleVM = CircleStepViewModel(goalSteps: [], passedSteps: 0)
     
+    // Chat dependencies
+    @StateObject private var chatModel = ChatModel()
+    @StateObject private var chatVMHolder = ChatVMHolder()
+    
     @StateObject private var streakManagerHolder = OptionalStreakManagerHolder()
     @Environment(\.modelContext) private var context
     @EnvironmentObject var bleVM: BLEViewModel
@@ -21,10 +25,32 @@ struct GoalView: View {
     @State private var savingAmountText = ""
     @State private var showBLESettingsModal = false
     
+    // Claim modal state
+    @State private var showCircleClaimModal = false
+    @State private var pendingCircleClaimStep: StepDisplayModel? = nil
+    
     // Starter reward path (first money only)
     @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
     @State private var showStarterClaim = false
     @State private var showStarterReward = false
+    
+    // Animation states
+    @State private var savingCardOffset: CGFloat = -200
+    @State private var savingCardOpacity: Double = 0
+    @State private var streakViewOffset: CGFloat = 200
+    @State private var streakViewOpacity: Double = 0
+    @State private var circleStepOffset: CGFloat = 100
+    @State private var circleStepOpacity: Double = 0
+    @State private var bottomItemsOffset: CGFloat = 300
+    @State private var bottomItemsOpacity: Double = 0
+    @State private var robotOffset: CGFloat = -100
+    @State private var robotOpacity: Double = 0
+    @State private var robotFloatOffset: CGFloat = 0
+    @State private var robotRotation: Double = -10
+    @State private var chatBubbleScale: Double = 0
+    @State private var chatBubbleOpacity: Double = 0
+    @State private var frameTopOffset: CGFloat = -50
+    @State private var frameTopOpacity: Double = 0
     
     var body: some View {
         ZStack {
@@ -38,6 +64,15 @@ struct GoalView: View {
                         VStack() {
                             CircleStepView(
                                 viewModel: circleVM,
+                                goalImage: {
+                                    // Ambil gambar dari goal terakhir (goal aktif)
+                                    if let lastGoal = goals.last,
+                                       let imageData = lastGoal.imageData,
+                                       let uiImage = UIImage(data: imageData) {
+                                        return uiImage
+                                    }
+                                    return nil
+                                }(),
                                 leadingContent: {
                                     if goals.isEmpty || goalVm.currentGoalIsClaimed {
                                         Button {
@@ -65,6 +100,14 @@ struct GoalView: View {
                                     }
                                 },
                                 onTap: { step in
+                                    // Jika step adalah checkpoint/goal yang unlocked tapi belum di-claim, buka modal
+                                    if (step.isCheckpoint || step.isGoal), step.isUnlocked, !step.isClaimed {
+                                        pendingCircleClaimStep = step
+                                        showCircleClaimModal = true
+                                        return
+                                    }
+                                    
+                                    // Legacy behavior untuk step yang sudah di-claim
                                     if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
                                         goalVm.tryOpenClaim(for: step.id, context: context)
                                         return
@@ -75,6 +118,8 @@ struct GoalView: View {
                             .padding(.bottom, 180)
                             .frame(maxWidth: .infinity)
                             .contentShape(Rectangle())
+                            .offset(y: circleStepOffset)
+                            .opacity(circleStepOpacity)
                         }
                         .padding(.horizontal, 12)
                     }
@@ -87,7 +132,7 @@ struct GoalView: View {
 //                            Text("Goal Complete!")
 //                                .font(.title.bold())
 //                                .foregroundColor(.white)
-//                            
+//
 //                            Button {
 //                                bleVM.sendResetToDevice()
 //                                goalVm.currentGoalIsClaimed = true
@@ -108,15 +153,30 @@ struct GoalView: View {
                 }
                 .background(
                     Image("frame_top")
+                        .offset(y: frameTopOffset)
+                        .opacity(frameTopOpacity)
                 )
+//                .offset(y: 80)
                 
                 BottomItemSelectionView(viewModel: bottomItemsVM)
                     .padding(.top, 50)
+                    .offset(y: bottomItemsOffset)
+                    .opacity(bottomItemsOpacity)
                     .onAppear {
                         bottomItemsVM.onSelect = { item in
                             if item.state == .claimable,
                                let meta = vmRewardMeta(for: item) {
                                 goalVm.openClaim(for: meta, context: context)
+                                
+                                // Tandai event klaim untuk chat
+                                if let activeGoal = goals.last {
+                                    if meta.step == 1 {
+                                        chatVMHolder.vm?.markJustClaimedFirstReward()
+                                    } else if meta.step != activeGoal.totalSteps, meta.step % 7 == 0 {
+                                        chatVMHolder.vm?.markJustClaimedCheckpoint()
+                                    }
+                                    chatVMHolder.vm?.updateMessage(goals: goals)
+                                }
                             }
                         }
                         goalVm.loadRewardsForView(context: context)
@@ -134,15 +194,21 @@ struct GoalView: View {
             .padding(.horizontal, 40)
             
             HStack {
+                Spacer()
+                
                 SavingCardView(
                     title: goals.last?.name ?? "Hirono Blindbox",
                     current: goalVm.totalSaving,
                     target: goals.last?.targetPrice ?? 0
                 )
                 .padding(.trailing, 20)
+                .offset(x: savingCardOffset)
+                .opacity(savingCardOpacity)
                 
                 if let sm = bleVM.streakManager {
                     StreakView(streakManager: sm)
+                        .offset(x: streakViewOffset)
+                        .opacity(streakViewOpacity)
                 }
                 
                 Spacer()
@@ -152,13 +218,25 @@ struct GoalView: View {
                     showBLESettingsModal = true
                 } label: {
                     Image(systemName: "gearshape.fill")
-                        .font(.system(size: 24))
+                        .font(.system(size: 36))
                         .foregroundColor(.white)
                         .padding(10)
                         .background(Color.white.opacity(0.15), in: Circle())
                 }
+                .padding(.trailing, 20)
             }
             .offset(y: -530)
+            
+            Image("robot")
+                .offset(x: -500 + robotOffset, y: 350 + robotFloatOffset)
+                .rotationEffect(Angle(degrees: robotRotation))
+                .opacity(robotOpacity)
+            
+            // Ganti Text statis menjadi ChatBubbleView dengan model chatModel
+            ChatBubbleView(model: chatModel)
+                .offset(x: -300, y: 350)
+                .scaleEffect(chatBubbleScale)
+                .opacity(chatBubbleOpacity)
             
             // Modal set goal
             if goalVm.showGoalModal {
@@ -174,28 +252,33 @@ struct GoalView: View {
                 }
                 .zIndex(5)
             }
-            
-//            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
-//                CenteredModal(isPresented: $goalVm.showClaimModal) {
-//                    BottomClaimModalView(
-//                        title: meta.title,
-//                        imageName: meta.imageName,
-//                        onClaim: {
-//                            goalVm.confirmClaim(context: context)
-//                            goalVm.loadRewardsForView(context: context)
-//                            bottomItemsVM.setItems(goalVm.rewardViewItems)
-//                            circleVM.updateSteps(
-//                                totalSteps: goalVm.totalSteps,
-//                                passedSteps: goalVm.passedSteps
-//                            )
-//                        }
-//                    )
-//                }
-//                .zIndex(4)
-//            }
+
+            // Circle step claim modal
+            if showCircleClaimModal, let step = pendingCircleClaimStep {
+                CenteredModal(isPresented: $showCircleClaimModal) {
+                    if let meta = getRewardMeta(for: step.id) {
+                        ClaimModalView(
+                            title: meta.title,
+                            imageName: meta.imageName,
+                            onClaim: {
+                                goalVm.openClaim(for: meta, context: context)
+                                goalVm.confirmClaim(context: context)
+                                goalVm.loadRewardsForView(context: context)
+                                bottomItemsVM.setItems(goalVm.rewardViewItems)
+                                let currentGoalStepsList = goals.map { $0.totalSteps }
+                                let claimedSteps = goalVm.getClaimedSteps(context: context)
+                                circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+                                showCircleClaimModal = false
+                                pendingCircleClaimStep = nil
+                            }
+                        )
+                    }
+                }
+                .zIndex(6)
+            }
         }
         .onAppear {
-            // Create StreakManager once when context is available 
+            // Buat StreakManager sekali
             bleVM.setContext(context)
             if streakManagerHolder.manager == nil {
                 streakManagerHolder.manager = StreakManager(context: context)
@@ -205,30 +288,46 @@ struct GoalView: View {
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             // sync circle VM initial state
             let goalStepsList = goals.map { $0.totalSteps }
-            circleVM.updateSteps(goalSteps: goalStepsList, passedSteps: goalVm.passedSteps)
+            let claimedSteps = goalVm.getClaimedSteps(context: context)
+            circleVM.updateSteps(goalSteps: goalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
             bleVM.setContext(context)
             bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
+            
+            // Inisialisasi ChatViewModel setelah bleVM tersedia dari Environment
+            if chatVMHolder.vm == nil {
+                chatVMHolder.vm = ChatViewModel(chat: chatModel, goalVM: goalVm, bleVM: bleVM)
+            }
+            chatVMHolder.vm?.updateMessage(goals: goals)
+            
+            // Start entrance animations
+            startEntranceAnimations()
         }
         .onChange(of: goals) { _, newGoals in
             goalVm.updateGoals(newGoals, context: context)
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             let newGoalStepsList = newGoals.map { $0.totalSteps }
-            circleVM.updateSteps(goalSteps: newGoalStepsList, passedSteps: goalVm.passedSteps)
+            let claimedSteps = goalVm.getClaimedSteps(context: context)
+            circleVM.updateSteps(goalSteps: newGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+            chatVMHolder.vm?.updateMessage(goals: newGoals)
         }
-//        .onChange(of: goalVm.totalSteps) { _, _ in
-//            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
-//        }
         .onChange(of: goalVm.passedSteps) { _, newPassedSteps in
             let currentGoalStepsList = goals.map { $0.totalSteps }
-            circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: newPassedSteps)
+            let claimedSteps = goalVm.getClaimedSteps(context: context)
+            circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: newPassedSteps, claimedSteps: claimedSteps)
+            chatVMHolder.vm?.updateMessage(goals: goals)
         }
         .onChange(of: bleVM.lastBalance) { _, newBalance in
             goalVm.updateProgressFromBLEBalance(newBalance, allGoals: goals, context: context)
             goalVm.loadRewardsForView(context: context)
             bottomItemsVM.setItems(goalVm.rewardViewItems)
             let currentGoalStepsList = goals.map { $0.totalSteps }
-            circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps)
+            let claimedSteps = goalVm.getClaimedSteps(context: context)
+            circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+            chatVMHolder.vm?.updateMessage(goals: goals)
+        }
+        .onChange(of: goalVm.currentGoalIsClaimed) { _, _ in
+            chatVMHolder.vm?.updateMessage(goals: goals)
         }
     }
     
@@ -236,10 +335,74 @@ struct GoalView: View {
         let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
     }
+    
+    private func getRewardMeta(for stepId: Int) -> RewardModel? {
+        let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
+        return catalog.first(where: { $0.step == stepId })
+    }
+    
+    private func startEntranceAnimations() {
+        // Frame top slide down from top
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.1)) {
+            frameTopOffset = 0
+            frameTopOpacity = 1
+        }
+        
+        // Saving card slide in from left
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.8).delay(0.3)) {
+            savingCardOffset = 0
+            savingCardOpacity = 1
+        }
+        
+        // Streak view slide in from right
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.8).delay(0.5)) {
+            streakViewOffset = 0
+            streakViewOpacity = 1
+        }
+        
+        // Circle step view slide up from bottom
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.4)) {
+            circleStepOffset = 0
+            circleStepOpacity = 1
+        }
+        
+        // Bottom items slide up from bottom
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.6)) {
+            bottomItemsOffset = 0
+            bottomItemsOpacity = 1
+        }
+        
+        // Robot slide in from left
+        withAnimation(.spring(response: 0.9, dampingFraction: 0.7).delay(0.7)) {
+            robotOffset = 0
+            robotOpacity = 1
+        }
+        
+        // Robot floating animation (continuous)
+        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true).delay(1.0)) {
+            robotFloatOffset = -15
+        }
+        
+        // Robot subtle rotation (continuous)
+        withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true).delay(1.0)) {
+            robotRotation = -5
+        }
+        
+        // Chat bubble pop in with scale
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.6).delay(1.0)) {
+            chatBubbleScale = 1.0
+            chatBubbleOpacity = 1
+        }
+    }
 }
 
 final class OptionalStreakManagerHolder: ObservableObject {
     @Published var manager: StreakManager?
+}
+
+// Holder untuk ChatViewModel agar bisa dibuat setelah bleVM tersedia dari Environment
+final class ChatVMHolder: ObservableObject {
+    @Published var vm: ChatViewModel?
 }
 
 #Preview {

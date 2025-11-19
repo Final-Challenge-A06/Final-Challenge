@@ -14,7 +14,10 @@ struct DayChipView: View {
     let tap: () -> Void
 
     var body: some View {
-        Button(action: tap) {
+        Button(action: {
+            SoundManager.shared.play(.buttonClick)
+            tap()
+        }) {
             ZStack {
                 RoundedRectangle(cornerRadius: 34)
                     .fill(isSelected ? .darkBlue : .lightBlue)

@@ -3,10 +3,13 @@ import SwiftUI
 struct ChatBubbleView: View {
     @ObservedObject var model: ChatModel
     var index: Int? = nil
+    var enableTypewriter: Bool = true
 
     private var displayedText: String {
         if let i = index, model.messages.indices.contains(i) {
             return model.messages[i]
+        } else if enableTypewriter {
+            return model.typedText
         } else {
             return model.currentText
         }
@@ -26,6 +29,16 @@ struct ChatBubbleView: View {
                     Rectangle()
                         .fill(Color.darkBlue)
                 )
+        }
+        .onAppear {
+            if enableTypewriter && index == nil {
+                model.startTypingAnimation()
+            }
+        }
+        .onChange(of: model.currentIndex) { _, _ in
+            if enableTypewriter && index == nil {
+                model.startTypingAnimation()
+            }
         }
     }
 }

@@ -1,0 +1,134 @@
+{
+  "fill" : {
+    "automatic-gradient" : "extended-srgb:0.00000,0.47843,1.00000,1.00000"
+  },
+  "groups" : [
+    {
+      "hidden" : false,
+      "layers" : [
+        {
+          "glass" : true,
+          "image-name" : "Rectangle 230.png",
+          "name" : "Rectangle 230",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0.6382653903460778,
+              316.5
+            ]
+          }
+        },
+        {
+          "glass" : true,
+          "image-name" : "Rectangle 233.png",
+          "name" : "Rectangle 233",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0.6382653903460778,
+              -308
+            ]
+          }
+        },
+        {
+          "image-name" : "Rectangle 235.png",
+          "name" : "Rectangle 235",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0,
+              -424.5
+            ]
+          }
+        },
+        {
+          "blend-mode" : "normal",
+          "hidden" : false,
+          "image-name" : "Rectangle 234.png",
+          "name" : "Rectangle 234",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -18.160813987689608,
+              422.5
+            ]
+          }
+        },
+        {
+          "glass" : true,
+          "image-name" : "Frame 197.png",
+          "name" : "Frame 197",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0,
+              27
+            ]
+          }
+        },
+        {
+          "glass" : false,
+          "image-name" : "Frame 196.png",
+          "name" : "Frame 196",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0,
+              27
+            ]
+          }
+        },
+        {
+          "glass" : false,
+          "image-name" : "Frame 195 2.png",
+          "name" : "Frame 195 2",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0,
+              -3
+            ]
+          }
+        },
+        {
+          "hidden" : false,
+          "image-name" : "Frame 194.png",
+          "name" : "Frame 194"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "blend-mode" : "normal",
+      "layers" : [
+        {
+          "hidden" : true,
+          "image-name" : "Frame 185.jpg",
+          "name" : "Frame 185"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

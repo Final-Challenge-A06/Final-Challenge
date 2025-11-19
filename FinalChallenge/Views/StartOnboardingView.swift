@@ -11,6 +11,7 @@ struct StartOnboardingView: View {
     @ObservedObject var bottomItemsVM: BottomItemSelectionViewModel
     @StateObject private var chatVM = ChatModel()
     @EnvironmentObject var flowVM: AppFlowViewModel
+    @State private var isPulsing = false
     
     var body: some View {
         ZStack {
@@ -42,7 +43,16 @@ struct StartOnboardingView: View {
                     Text("Tap to continue")
                         .font(.custom("Audiowide", size: 18))
                         .foregroundColor(.white)
+                        .scaleEffect(isPulsing ? 1.2 : 1.0)
+                        .animation(
+                            .easeInOut(duration: 0.8)
+                            .repeatForever(autoreverses: true),
+                            value: isPulsing
+                        )
                         .offset(y: 420)
+                        .onAppear {
+                            isPulsing = true
+                        }
                 }
                 
                 BottomItemSelectionView(viewModel: bottomItemsVM)
@@ -58,7 +68,11 @@ struct StartOnboardingView: View {
         .onChange(of: chatVM.currentIndex) { _, _ in
             SoundManager.shared.play(.robotTalk)
         }
+        .onDisappear {
+            SoundManager.shared.stop()
+        }
         .onTapGesture {
+            SoundManager.shared.play(.bubbleClick)
             guard !chatVM.messages.isEmpty else { return }
             let lastIndex = chatVM.messages.count - 1
             if chatVM.currentIndex < lastIndex {

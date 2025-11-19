@@ -8,6 +8,7 @@ final class CircleStepViewModel: ObservableObject {
 //    private var totalSteps: Int
     private var goalSteps: [Int]
     private var passedSteps: Int
+    private var claimedSteps: Set<Int>
     
     // For adjusting stones size and position
     private let sizeNormal: CGFloat = 172
@@ -22,20 +23,22 @@ final class CircleStepViewModel: ObservableObject {
     }
 
     // Inisialisasi nilai awal dan langsung hitung model langkah untuk UI.
-    init(goalSteps:[Int], passedSteps: Int) {
+    init(goalSteps:[Int], passedSteps: Int, claimedSteps: Set<Int> = []) {
 //        self.totalSteps = totalSteps
         self.goalSteps = goalSteps
         self.passedSteps = passedSteps
+        self.claimedSteps = claimedSteps
         calculateSteps()
     }
 
     // Update total/passed steps bila berubah lalu hitung ulang model langkah.
-    func updateSteps(goalSteps: [Int], passedSteps: Int) {
+    func updateSteps(goalSteps: [Int], passedSteps: Int, claimedSteps: Set<Int> = []) {
 //        guard self.totalSteps != totalSteps || self.passedSteps != passedSteps else { return }
-        guard self.goalSteps != goalSteps || self.passedSteps != passedSteps else { return }
+        guard self.goalSteps != goalSteps || self.passedSteps != passedSteps || self.claimedSteps != claimedSteps else { return }
 //        self.totalSteps = totalSteps
         self.goalSteps = goalSteps
         self.passedSteps = passedSteps
+        self.claimedSteps = claimedSteps
         calculateSteps()
     }
 
@@ -98,7 +101,8 @@ final class CircleStepViewModel: ObservableObject {
                     rotation: rotation,
                     isUnlocked: isUnlocked,
                     isCheckpoint: isCheckpoint || isIntermediateCheckpoint,
-                    isGoal: isGoal
+                    isGoal: isGoal,
+                    isClaimed: claimedSteps.contains(step)
                 )
             )
         }
