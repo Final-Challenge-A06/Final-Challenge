@@ -95,13 +95,25 @@ struct GoalView: View {
     
     private var circleStepSection: some View {
         VStack {
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack {
-                    circleStepContent
+            ScrollViewReader { proxy in
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack {
+                        circleStepContent
+                    }
+                    .padding(.horizontal, 12)
                 }
-                .padding(.horizontal, 12)
+                .frame(height: 960)
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        scrollToTarget(proxy: proxy)
+                    }
+                }
+                .onChange(of: goals) { _, _ in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        scrollToTarget(proxy: proxy)
+                    }
+                }
             }
-            .frame(height: 960)
         }
         .background(frameTopBackground)
     }
@@ -254,6 +266,7 @@ struct GoalView: View {
                         title: meta.title,
                         imageBaseName: meta.imageName,
                         onClaim: {
+                            SoundManager.shared.play(.reward)
                             handleClaimAction(for: meta)
                         }
                     )
