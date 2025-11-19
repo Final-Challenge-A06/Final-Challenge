@@ -218,30 +218,7 @@ struct GoalView: View {
                 }
                 .zIndex(5)
             }
-
-            // Circle step claim modal
-            if showCircleClaimModal, let step = pendingCircleClaimStep {
-                CenteredModal(isPresented: $showCircleClaimModal) {
-                    if let meta = getRewardMeta(for: step.id) {
-                        ClaimModalView(
-                            title: meta.title,
-                            imageName: meta.imageName,
-                            onClaim: {
-                                goalVm.openClaim(for: meta, context: context)
-                                goalVm.confirmClaim(context: context)
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-                                let currentGoalStepsList = goals.map { $0.totalSteps }
-                                let claimedSteps = goalVm.getClaimedSteps(context: context)
-                                circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
-                                showCircleClaimModal = false
-                                pendingCircleClaimStep = nil
-                            }
-                        )
-                    }
-                }
-                .zIndex(6)
-            }
+            circleClaimOverlay
         }
         .onAppear {
             // Buat StreakManager sekali

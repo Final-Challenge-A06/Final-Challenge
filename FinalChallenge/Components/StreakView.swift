@@ -23,8 +23,8 @@ struct StreakView: View {
                     .symbolEffect(.bounce, value: streakManager.currentStreak)
                 
                 Text("\(streakManager.currentStreak)")
-                    .font(.title)
                     .foregroundColor(.white)
+                    .font(.custom("audiowide", size: 30))
             }
         }
     }

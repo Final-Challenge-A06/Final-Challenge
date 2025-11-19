@@ -81,7 +81,7 @@ struct OnboardingView: View {
                         
                         VStack(spacing: 50) {
                             Text(onboardingVM.currentPage?.title ?? "")
-                                .font(.custom("audiowide", size: 24))
+                                .font(.custom("audiowide", size: 26))
                                 .foregroundStyle(Color(.white))
                                 .scaleEffect(showTitle ? 1 : 0.5)
                                 .opacity(showTitle ? 1 : 0)
@@ -98,7 +98,7 @@ struct OnboardingView: View {
                             
                             if onboardingVM.currentIndex < onboardingVM.pages.count - 1 {
                                 Text(typedText)
-                                    .font(.custom("audiowide", size: 14))
+                                    .font(.custom("audiowide", size: 20))
                                     .multilineTextAlignment(.center)
                                     .foregroundStyle(Color(.white))
                                     .frame(width: 300, height: 60, alignment: .top)
