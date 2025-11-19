@@ -57,21 +57,21 @@ struct GoalModalStep1View: View {
                 .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 10)
             
             Text(displayedText)
-            .font(.custom("audiowide", size: 16))
-            .multilineTextAlignment(.center)
-            .foregroundStyle(.white)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
-            .frame(maxWidth: 250, alignment: .center)
-            .fixedSize(horizontal: false, vertical: true)
-            .background(
-                Rectangle()
-                    .fill(Color.darkBlue)
-            )
-            .offset(x: -170, y: 220 + dialogOffset)
-            .rotationEffect(.degrees(dialogRotation))
-            .opacity(dialogOpacity)
-            .scaleEffect(dialogScale)
+                .font(.custom("audiowide", size: 16))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .frame(maxWidth: 250, alignment: .center)
+                .fixedSize(horizontal: false, vertical: true)
+                .background(
+                    Rectangle()
+                        .fill(Color.darkBlue)
+                )
+                .offset(x: -170, y: 220 + dialogOffset)
+                .rotationEffect(.degrees(dialogRotation))
+                .opacity(dialogOpacity)
+                .scaleEffect(dialogScale)
             
             VStack(alignment: .leading, spacing: 20) {
                 Text("Name your dream thing *")
@@ -154,12 +154,14 @@ struct GoalModalStep1View: View {
                             vm.selectedItem = nil
                             vm.validateStep1()
                         } label: {
-                            Image(systemName: "trash.circle.fill")
-                                .font(.system(size: 22))
-                                .foregroundColor(.red)
+                            Image(systemName: "xmark")
+                                .font(.system(size: 30))
+                                .foregroundColor(.white)
                                 .shadow(radius: 3)
+                                .background(Circle().fill(Color.yellowButton))
                         }
-                        .padding(8)
+                        .padding(.trailing, -10)
+                        .padding(.top, -15)
                         .buttonStyle(.plain)
                     }
                 }

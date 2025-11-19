@@ -225,8 +225,21 @@ final class GoalViewModel: ObservableObject {
     
     // MARK: - Circle Tap
     func onCircleTap() {
-        activeStep = 1
+        resetFormForNewGoal()
         showGoalModal = true
+    }
+    
+    func resetFormForNewGoal() {
+        _goalName = ""
+        priceText = ""
+        selectedItem = nil
+        selectedImage = nil
+        selectedDays = []
+        amountText = ""
+        
+        isStep1Valid = false
+        isStep2Valid = false
+        activeStep = 1
     }
     
     // MARK: - Reward Claim Flow
