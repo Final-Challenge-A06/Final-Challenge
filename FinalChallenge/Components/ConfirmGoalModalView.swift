@@ -54,7 +54,7 @@ struct ConfirmGoalModalView: View {
         .padding(40)
         .background(
             RoundedRectangle(cornerRadius: 30)
-                .fill(.ultraThinMaterial.opacity(0.5))
+                .fill(.thinMaterial)
         )
         .padding(.horizontal, 24)
     }
