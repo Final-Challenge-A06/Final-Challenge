@@ -180,7 +180,7 @@ struct GoalModalStep1View: View {
                 HStack {
                     Spacer()
                     Button {
-                        SoundManager.shared.play(.bubbleClick)
+                        SoundManager.shared.play(.buttonClick)
                         onNext()
                     } label: {
                         Image(systemName: "arrow.right")

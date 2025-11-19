@@ -354,6 +354,23 @@ struct GoalView: View {
         chatVMHolder.vm?.updateMessage(goals: goals)
     }
     
+    private func scrollToTarget(proxy: ScrollViewProxy) {
+        // 1. Get all goals except active goals
+        let previousGoals = goals.dropLast()
+        
+        // 2. Count total steps from passed goals
+        let previousStepsCount = previousGoals.reduce(0) { $0 + $1.totalSteps }
+        
+        // 3. Determine target ID
+        let targetStepID = previousStepsCount + 1
+        
+        print("Scrolling to step ID: \(targetStepID + 1)")
+        
+        withAnimation(.spring()) {
+            proxy.scrollTo(targetStepID, anchor: .bottom)
+        }
+    }
+    
     private func vmRewardMeta(for item: RewardState) -> RewardModel? {
         let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
