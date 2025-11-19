@@ -101,7 +101,7 @@ struct BLEConnectionModalView: View {
                     Text(isBusy ? "Scanning..." : "Scan for Device")
                         .font(.custom("audiowide", size: 16))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 80)
+                        .padding(.horizontal, 100)
                         .padding(.vertical, 10)
                         .background(Color.yellowButton, in: RoundedRectangle(cornerRadius: 50))
                 }
