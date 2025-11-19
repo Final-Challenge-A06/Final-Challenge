@@ -60,68 +60,82 @@ struct GoalView: View {
             
             VStack {
                 VStack {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        VStack() {
-                            CircleStepView(
-                                viewModel: circleVM,
-                                goalImage: {
-                                    // Ambil gambar dari goal terakhir (goal aktif)
-                                    if let lastGoal = goals.last,
-                                       let imageData = lastGoal.imageData,
-                                       let uiImage = UIImage(data: imageData) {
-                                        return uiImage
-                                    }
-                                    return nil
-                                }(),
-                                leadingContent: {
-                                    if goals.isEmpty || goalVm.currentGoalIsClaimed {
-                                        Button {
-                                            SoundManager.shared.play(.buttonClick)
-                                            goalVm.onCircleTap()
-                                        } label: {
-                                            Image("setGoalButton")
+                    ScrollViewReader { proxy in
+                        ScrollView(.vertical, showsIndicators: false) {
+                            VStack() {
+                                CircleStepView(
+                                    viewModel: circleVM,
+                                    goalImage: {
+                                        // Ambil gambar dari goal terakhir (goal aktif)
+                                        if let lastGoal = goals.last,
+                                           let imageData = lastGoal.imageData,
+                                           let uiImage = UIImage(data: imageData) {
+                                            return uiImage
                                         }
-                                        .padding(.bottom, -70)
-                                        .zIndex(2)
-                                    }
-                                    
-                                    if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
-                                        Button {
-                                            SoundManager.shared.play(.goalFinish)
-                                            bleVM.sendResetToDevice()
-                                            goalVm.currentGoalIsClaimed = true
-                                        } label: {
-                                            Image("unlockButton")
+                                        return nil
+                                    }(),
+                                    leadingContent: {
+                                        if goals.isEmpty || goalVm.currentGoalIsClaimed {
+                                            Button {
+                                                SoundManager.shared.play(.buttonClick)
+                                                goalVm.onCircleTap()
+                                            } label: {
+                                                Image("setGoalButton")
+                                            }
+                                            .padding(.bottom, -70)
+                                            .zIndex(2)
                                         }
-                                        .padding(.bottom, -150)
-                                        .zIndex(2)
+                                        
+                                        if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
+                                            Button {
+                                                SoundManager.shared.play(.goalFinish)
+                                                bleVM.sendResetToDevice()
+                                                goalVm.currentGoalIsClaimed = true
+                                            } label: {
+                                                Image("unlockButton")
+                                            }
+                                            .padding(.bottom, -150)
+                                            .zIndex(2)
+                                        }
+                                    },
+                                    onTap: { step in
+                                        // Jika step adalah checkpoint/goal yang unlocked tapi belum di-claim, buka modal
+                                        if (step.isCheckpoint || step.isGoal), step.isUnlocked, !step.isClaimed {
+                                            pendingCircleClaimStep = step
+                                            showCircleClaimModal = true
+                                            return
+                                        }
+                                        
+                                        // Legacy behavior untuk step yang sudah di-claim
+                                        if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
+                                            goalVm.tryOpenClaim(for: step.id, context: context)
+                                            return
+                                        }
                                     }
-                                },
-                                onTap: { step in
-                                    // Jika step adalah checkpoint/goal yang unlocked tapi belum di-claim, buka modal
-                                    if (step.isCheckpoint || step.isGoal), step.isUnlocked, !step.isClaimed {
-                                        pendingCircleClaimStep = step
-                                        showCircleClaimModal = true
-                                        return
-                                    }
-                                    
-                                    // Legacy behavior untuk step yang sudah di-claim
-                                    if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
-                                        goalVm.tryOpenClaim(for: step.id, context: context)
-                                        return
-                                    }
-                                }
-                            )
-                            .padding(.vertical, 60)
-                            .padding(.bottom, 180)
-                            .frame(maxWidth: .infinity)
-                            .contentShape(Rectangle())
-                            .offset(y: circleStepOffset)
-                            .opacity(circleStepOpacity)
+                                )
+                                .padding(.vertical, 60)
+                                .padding(.bottom, 180)
+                                .frame(maxWidth: .infinity)
+                                .contentShape(Rectangle())
+                                .offset(y: circleStepOffset)
+                                .opacity(circleStepOpacity)
+                            }
+                            .padding(.horizontal, 12)
+                            
+                            Spacer().frame(height: 1).id("bottomAnchor")
                         }
-                        .padding(.horizontal, 12)
+                        .frame(height: 960)
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                scrollToTarget(proxy: proxy)
+                            }
+                        }
+                        .onChange(of: goals) { _, _ in
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                scrollToTarget(proxy: proxy)
+                            }
+                        }
                     }
-                    .frame(height: 960)
                 }
                 .background(
                     Image("frame_top")
@@ -272,6 +286,23 @@ struct GoalView: View {
         }
         .onChange(of: goalVm.currentGoalIsClaimed) { _, _ in
             chatVMHolder.vm?.updateMessage(goals: goals)
+        }
+    }
+    
+    private func scrollToTarget(proxy: ScrollViewProxy) {
+        // 1. Get all goals except active goals
+        let previousGoals = goals.dropLast()
+        
+        // 2. Count total steps from passed goals
+        let previousStepsCount = previousGoals.reduce(0) { $0 + $1.totalSteps }
+        
+        // 3. Determine target ID
+        let targetStepID = previousStepsCount + 1
+        
+        print("Scrolling to step ID: \(targetStepID + 1)")
+        
+        withAnimation(.spring()) {
+            proxy.scrollTo(targetStepID, anchor: .bottom)
         }
     }
     

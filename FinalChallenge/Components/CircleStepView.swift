@@ -47,6 +47,7 @@ struct CircleStepView<LeadingContent: View>: View {
                         }
                         .contentShape(Circle())
                     }
+                    .id(step.id)
                     .buttonStyle(.plain)
                     .disabled((step.isCheckpoint || step.isGoal) && !step.isUnlocked)
                     
