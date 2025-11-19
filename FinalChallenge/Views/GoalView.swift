@@ -222,7 +222,7 @@ struct GoalView: View {
                     .padding(10)
                     .background(.yellowButton, in: Circle())
             }
-            .offset(x: 450, y: -630)
+            .offset(x: 420, y: -620)
             
             Image("robot")
                 .offset(x: -500 + robotOffset, y: 350 + robotFloatOffset)

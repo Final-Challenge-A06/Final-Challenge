@@ -64,17 +64,17 @@ struct BLEConnectionModalView: View {
             // Status view
             VStack {
                 Text("Status")
-                    .font(.custom("audiowide", size: 20))
+                    .font(.custom("audiowide", size: 24))
                     .foregroundColor(.white)
                 
                 Text(statusString)
-                    .font(.custom("audiowide", size: 20))
+                    .font(.custom("audiowide", size: 24))
                     .foregroundColor(statusColor)
                 
                 // If connected, show device name
                 if bleVM.state == .connected {
                     Text(bleVM.connectedName)
-                        .font(.caption)
+                        .font(.custom("audiowide", size: 20))
                         .foregroundColor(.white.opacity(0.8))
                 }
             }
