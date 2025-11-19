@@ -31,6 +31,7 @@ struct ClaimModalView: View {
                     .foregroundStyle(Color.white)
                 
                 Button {
+                    SoundManager.shared.play(.buttonClick)
                     onClaim()
                 } label: {
                     Image(systemName: "checkmark")

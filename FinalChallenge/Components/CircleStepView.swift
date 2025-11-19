@@ -59,6 +59,7 @@ struct CircleStepView<LeadingContent: View>: View {
                     // Claim button untuk checkpoint/goal yang sudah unlocked tapi belum di-claim
                     if step.isCheckpoint && step.isUnlocked && !step.isClaimed {
                         Button {
+                            SoundManager.shared.play(.reward)
                             onTap(step)
                         } label: {
                             Image("claimButton")

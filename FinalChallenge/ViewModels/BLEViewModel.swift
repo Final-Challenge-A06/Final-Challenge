@@ -313,6 +313,8 @@ final class BLEViewModel: ObservableObject {
             let days = goalVM.savingDaysArray
             streakManager?.recordSaving(for: days)
             streakCount = streakManager?.currentStreak ?? 0
+            
+            SoundManager.shared.play(.moneyIn)
         }
 
         amount = incoming - lastBalance

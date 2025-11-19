@@ -90,6 +90,7 @@ struct BLETestView: View {
                 .padding(.bottom, 50)
                 
                 Button {
+                    SoundManager.shared.play(.buttonClick)
                     bleVM.startScan()
                 } label: {
                     Text("+Link your Bot")
@@ -133,6 +134,8 @@ struct BLETestView: View {
                         bleVM.tapSetup()
                         withAnimation(.spring()) {
                             showFindDevice = false
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             flowVM.markPairedOnce()
                             flowVM.goToStartOnboarding()
                         }

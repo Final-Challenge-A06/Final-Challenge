@@ -76,6 +76,7 @@ struct GoalView: View {
                                 leadingContent: {
                                     if goals.isEmpty || goalVm.currentGoalIsClaimed {
                                         Button {
+                                            SoundManager.shared.play(.buttonClick)
                                             goalVm.onCircleTap()
                                         } label: {
                                             Image("setGoalButton")
@@ -86,6 +87,7 @@ struct GoalView: View {
                                     
                                     if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
                                         Button {
+                                            SoundManager.shared.play(.goalFinish)
                                             bleVM.sendResetToDevice()
                                             goalVm.currentGoalIsClaimed = true
                                         } label: {
@@ -167,6 +169,7 @@ struct GoalView: View {
                 Spacer()
                 
                 Button {
+                    SoundManager.shared.play(.buttonClick)
                     showBLESettingsModal = true
                 } label: {
                     Image(systemName: "gearshape.fill")
@@ -204,30 +207,30 @@ struct GoalView: View {
                 }
                 .zIndex(5)
             }
-            circleClaimOverlay
+
             // Circle step claim modal
-//            if showCircleClaimModal, let step = pendingCircleClaimStep {
-//                CenteredModal(isPresented: $showCircleClaimModal) {
-//                    if let meta = getRewardMeta(for: step.id) {
-//                        ClaimModalView(
-//                            title: meta.title,
-//                            imageName: meta.imageName,
-//                            onClaim: {
-//                                goalVm.openClaim(for: meta, context: context)
-//                                goalVm.confirmClaim(context: context)
-//                                goalVm.loadRewardsForView(context: context)
-//                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-//                                let currentGoalStepsList = goals.map { $0.totalSteps }
-//                                let claimedSteps = goalVm.getClaimedSteps(context: context)
-//                                circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
-//                                showCircleClaimModal = false
-//                                pendingCircleClaimStep = nil
-//                            }
-//                        )
-//                    }
-//                }
-//                .zIndex(6)
-//            }
+            if showCircleClaimModal, let step = pendingCircleClaimStep {
+                CenteredModal(isPresented: $showCircleClaimModal) {
+                    if let meta = getRewardMeta(for: step.id) {
+                        ClaimModalView(
+                            title: meta.title,
+                            imageName: meta.imageName,
+                            onClaim: {
+                                goalVm.openClaim(for: meta, context: context)
+                                goalVm.confirmClaim(context: context)
+                                goalVm.loadRewardsForView(context: context)
+                                bottomItemsVM.setItems(goalVm.rewardViewItems)
+                                let currentGoalStepsList = goals.map { $0.totalSteps }
+                                let claimedSteps = goalVm.getClaimedSteps(context: context)
+                                circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+                                showCircleClaimModal = false
+                                pendingCircleClaimStep = nil
+                            }
+                        )
+                    }
+                }
+                .zIndex(6)
+            }
         }
         .onAppear {
             // Buat StreakManager sekali
