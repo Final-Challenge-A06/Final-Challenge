@@ -62,7 +62,17 @@ struct StartOnboardingView: View {
             .offset(y: 160)
         }
         .contentShape(Rectangle())
+        .onAppear {
+            SoundManager.shared.play(.robotTalk)
+        }
+        .onChange(of: chatVM.currentIndex) { _, _ in
+            SoundManager.shared.play(.robotTalk)
+        }
+        .onDisappear {
+            SoundManager.shared.stop()
+        }
         .onTapGesture {
+            SoundManager.shared.play(.bubbleClick)
             guard !chatVM.messages.isEmpty else { return }
             let lastIndex = chatVM.messages.count - 1
             if chatVM.currentIndex < lastIndex {

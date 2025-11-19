@@ -10,6 +10,8 @@ import Combine
 
 final class BottomItemSelectionViewModel: ObservableObject {
     @Published private(set) var items: [RewardState] = []
+    @Published var selectedID: String?
+    @Published var animatingID: String?
     
     var onSelect: ((RewardState) -> Void)? // Dipanggil saat item dipilih dari UI.
     
@@ -27,25 +29,24 @@ final class BottomItemSelectionViewModel: ObservableObject {
     // Tangani tap: jika claimable ubah ke claimed lalu panggil callback; lainnya hanya panggil callback.
     func handleTap(on item: RewardState) {
         guard let idx = items.firstIndex(of: item) else { return }
+        guard items[idx].state == .claimed else { return }
         
-        switch items[idx].state {
-        case .claimable:
-            items[idx].state = .claimed
-            NotificationCenter.default.post(
-                name: .didSelectAccessory,
-                object: nil,
-                userInfo: ["glasses": items[idx].imageName]
-            )
-            onSelect?(items[idx])
-            
-        case .claimed, .locked:
-            // Tetap post kalau kamu mau aksesori yg udah claimed bisa dikirim ulang
-            NotificationCenter.default.post(
-                name: .didSelectAccessory,
-                object: nil,
-                userInfo: ["photoName": items[idx].imageName]
-            )
-            onSelect?(items[idx])
+        selectedID = items[idx].id
+        animatingID = items[idx].id
+        
+        // Kirim ke IoT
+        NotificationCenter.default.post(
+            name: .didSelectAccessory,
+            object: nil,
+            userInfo: ["photoName": items[idx].imageName]
+        )
+        
+        onSelect?(items[idx])
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + (0.18 * 7 * 3)) {
+            if self.animatingID == item.id {
+                self.animatingID = nil
+            }
         }
     }
     
@@ -60,9 +61,7 @@ final class BottomItemSelectionViewModel: ObservableObject {
         switch item.state {
         case .claimed:
             return .claimed(imageName: item.imageName)
-        case .claimable:
-            return .claimable
-        case .locked:
+        case .claimable, .locked:
             return .locked
         }
     }

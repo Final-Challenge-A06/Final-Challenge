@@ -55,6 +55,7 @@ struct BLEConnectionModalView: View {
                 Spacer()
                 
                 Button {
+                    SoundManager.shared.play(.buttonCloseClick)
                     onCancel()
                 } label: {
                     Image("closeButton")
@@ -84,6 +85,7 @@ struct BLEConnectionModalView: View {
             if bleVM.state == .connected {
                 // Disconnect button
                 Button {
+                    SoundManager.shared.play(.buttonCloseClick)
                     bleVM.disconnect()
                 } label: {
                     Text("Disconnect")
@@ -96,6 +98,7 @@ struct BLEConnectionModalView: View {
             } else {
                 // Scan or Connect button
                 Button {
+                    SoundManager.shared.play(.buttonClick)
                     bleVM.startScan(isReconnect: true)
                 } label: {
                     Text(isBusy ? "Scanning..." : "Scan for Device")

@@ -123,10 +123,6 @@ final class GoalViewModel: ObservableObject {
             try context.save()
             print("✅ Berhasil simpan goal:", goal.name)
             
-            // Buat progress entity baru untuk goal ini
-            //            latestGoal = goal
-            //            totalSteps = goal.totalSteps
-            
             let progressEntity = SavingProgressEntity(
                 goalID: goal.id,
                 totalSaving: 0,
@@ -136,13 +132,6 @@ final class GoalViewModel: ObservableObject {
             try context.save()
             
             self.currentGoalIsClaimed = false
-            
-            //            currentProgress = progressEntity
-            //            passedSteps = 0
-            //            totalSaving = 0
-            
-            // Refresh katalog reward
-            //            rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
         } catch {
             print("❌ Gagal simpan:", error.localizedDescription)
         }
@@ -194,21 +183,6 @@ final class GoalViewModel: ObservableObject {
         let previousGoalId = latestGoal?.id
         latestGoal = goals.last
         
-        //        if let goal = latestGoal {
-        //            totalSteps = goal.totalSteps
-        //
-        //            if previousGoalId != goal.name {
-        //                loadProgress(for: goal, context: context)
-        //            }
-        //        } else {
-        //            totalSteps = 0
-        //            passedSteps = 0
-        //            totalSaving = 0
-        //            currentProgress = nil
-        //        }
-        //
-        //        rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
-        
         // MARK: 1. Handle jika tidak ada goal sama sekali
         if goals.isEmpty {
             totalSteps = 0
@@ -227,32 +201,25 @@ final class GoalViewModel: ObservableObject {
         var cumulativeTotalSteps = 0
         var cumulativePassedSteps = 0
         
-        // Tambah semua total steps dari goal yang sudah selesai
         for goal in completedGoals {
             cumulativeTotalSteps += goal.totalSteps
-            cumulativePassedSteps += goal.totalSteps // Goal selesai 100% passed
+            cumulativePassedSteps += goal.totalSteps
         }
         
         // MARK: 4. Load progress untuk goal saat ini
-        // Jika goal aktif berubah, load progress dari SwiftData
         if previousGoalId != currentGoal.id {
             loadProgress(for: currentGoal, context: context)
         }
         
         // MARK: 5. Gabungkan progres goal aktif ke total kumulatif
         cumulativeTotalSteps += currentGoal.totalSteps
-        
-        // `self.passedSteps` sekarang berisi langkah HANYA untuk goal saat ini (dari loadProgress)
-        // Tambahkan itu ke total kumulatif
         cumulativePassedSteps += self.passedSteps
         
         // MARK: 6. Set @Published variables untuk UI
-        // Update CircleStepViewModel secara otomatis
         self.totalSteps = cumulativeTotalSteps
         self.passedSteps = cumulativePassedSteps
         
         // MARK: 7. Update reward
-        // Katalog reward sekarang harus berdasarkan total steps kumulatif
         self.rewardCatalog = RewardCatalog.rewards(forTotalSteps: cumulativeTotalSteps)
     }
     
@@ -299,6 +266,7 @@ final class GoalViewModel: ObservableObject {
         }
         do {
             try context.save()
+            loadRewardsForView(context: context)
         } catch {
             print("❌ Save reward failed:", error.localizedDescription)
         }
@@ -313,20 +281,23 @@ final class GoalViewModel: ObservableObject {
     
     func loadRewardsForView(context: ModelContext) {
         let entities = fetchAllRewards(context: context)
+        
         rewardViewItems = rewardCatalog.map { meta in
             if let ent = entities.first(where: { $0.id == meta.id }) {
+                // Sudah pernah dibuat di confirmClaim
                 return RewardState(
                     id: ent.id,
                     title: ent.title,
                     imageName: ent.imageName,
-                    state: ent.claimed ? .claimed : (meta.step <= passedSteps ? .claimable : .locked)
+                    state: ent.claimed ? .claimed : .locked
                 )
             } else {
+                // Belum pernah di-claim → tetap locked di bottom bar
                 return RewardState(
                     id: meta.id,
                     title: meta.title,
                     imageName: meta.imageName,
-                    state: meta.step <= passedSteps ? .claimable : .locked
+                    state: .locked
                 )
             }
         }
@@ -409,83 +380,60 @@ final class GoalViewModel: ObservableObject {
     
     // MARK: - NEW: Progress dari BLE balance
     func updateProgressFromBLEBalance(_ balance: Int64, allGoals: [GoalModel], context: ModelContext) {
-        //        guard let goal = latestGoal, goal.amountPerSave > 0 else {
-        //            passedSteps = 0
-        //            totalSaving = Int(balance)
-        //            saveProgress(context: context)
-        //            return
-        //        }
-        //        // sinkronkan totalSaving dengan saldo device (opsional tapi biasanya diinginkan)
-        //        totalSaving = Int(balance)
-        //        let computed = Int(balance) / goal.amountPerSave
-        //        let clamped = min(computed, totalSteps)
-        //        if clamped != passedSteps {
-        //            passedSteps = clamped
-        //        }
-        //        saveProgress(context: context)
-        
-        // 1. Validasi: Pastikan ada goal aktif
         guard let currentGoal = allGoals.last, currentGoal.amountPerSave > 0 else {
-            // Tidak ada goal aktif / amountPerSave = 0
             self.totalSaving = Int(balance)
-            //            if currentProgress != nil {
-            //                saveProgress(currentGoalSaving: Int(balance), currentGoalPassedSteps: 0, context: context)
-            //            }
-            // `updateGoals` sudah mengatur `passedSteps` kumulatif (dari goal lama)
-            // Jadi kita tidak perlu mengaturnya di sini.
             return
         }
+        
+        let oldCumulativePassedSteps = self.passedSteps
+        let wasGoalFinished = (oldCumulativePassedSteps >= self.totalSteps && self.totalSteps > 0)
         
         // Hitung progres hanya untuk goal saat ini
         var newTotalSavingCurrentGoal = Int(balance)
         var newPassedStepsCurrentGoal = 0
         
-        // Cek skenario: Apakah kita baru saja menekan "Take Your Money"?
         if self.currentGoalIsClaimed && balance == 0 {
-            // YA. Ini adalah reset setelah goal selesai.
-            // Saldo device 0, tapi 'passedSteps' untuk goal ini harus 100% (totalSteps-nya).
             newTotalSavingCurrentGoal = 0
-            newPassedStepsCurrentGoal = currentGoal.totalSteps // <-- KUNCI 1: Anggap step-nya penuh
+            newPassedStepsCurrentGoal = currentGoal.totalSteps
             
         } else if currentGoal.amountPerSave > 0 {
-            // TIDAK. Ini adalah update progres normal.
             newTotalSavingCurrentGoal = Int(balance)
             let calculatedSteps = newTotalSavingCurrentGoal / currentGoal.amountPerSave
-            // KUNCI 2: Pastikan step tidak melebihi total step goal SAAT INI
             newPassedStepsCurrentGoal = min(calculatedSteps, currentGoal.totalSteps)
             
         } else {
-            // Skenario normal, tapi amountPerSave = 0 (tidak bisa hitung progres)
             newTotalSavingCurrentGoal = Int(balance)
             newPassedStepsCurrentGoal = 0
         }
         
-        // 2. Simpan progres saat ini ke database (SavingProgressEntity)
         saveProgress(
             currentGoalSaving: newTotalSavingCurrentGoal,
             currentGoalPassedSteps: newPassedStepsCurrentGoal,
             context: context
         )
         
-        // Hitung progres kumulatif untuk ui
         let completedGoals = allGoals.dropLast()
         var cumulativeTotalSteps = 0
         var cumulativePassedSteps = 0
         
-        // 3. Tambahkan semua goal yang sudah selesai
         for goal in completedGoals {
             cumulativeTotalSteps += goal.totalSteps
             cumulativePassedSteps += goal.totalSteps
         }
         
-        // 4. Tambahkan progres goal saat ini
         cumulativeTotalSteps += currentGoal.totalSteps
-        cumulativePassedSteps += newPassedStepsCurrentGoal // ambil dari hitungan baru di atas
+        cumulativePassedSteps += newPassedStepsCurrentGoal
+        
+        if cumulativePassedSteps > oldCumulativePassedSteps {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                SoundManager.shared.play(.stoneProgress)
+            }
+        }
         
         // 5. Update @Published properties untuk ui (CircleStepView)
         self.totalSteps = cumulativeTotalSteps
         self.passedSteps = cumulativePassedSteps
-        self.totalSaving = newTotalSavingCurrentGoal // update total saving di ui
+        self.totalSaving = newTotalSavingCurrentGoal
     }
 }
 

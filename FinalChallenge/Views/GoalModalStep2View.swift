@@ -86,6 +86,7 @@ struct GoalModalStep2View: View {
             
             VStack(alignment: .leading, spacing: 30) {
                 Button {
+                    SoundManager.shared.play(.buttonCloseClick)
                     onBack()
                 } label: {
                     Image(systemName: "chevron.left")
@@ -93,7 +94,7 @@ struct GoalModalStep2View: View {
                         .frame(width: 10, height: 20)
                         .foregroundStyle(Color.black)
                         .padding(15)
-                        .background(Color.yellow.opacity(0.8), in: Circle())
+                        .background(Color.yellow.opacity(0.7), in: Circle())
                 }
                 
                 Text("Pick your saving days")
@@ -138,7 +139,7 @@ struct GoalModalStep2View: View {
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)
-                    .background(.greenButton, in: RoundedRectangle(cornerRadius: 12))
+                    .background(.greenButton.opacity(100/255), in: RoundedRectangle(cornerRadius: 12))
                 
                 if vm.amountValue > 0 && vm.amountValue < 1_000 {
                     Text("Minimum amount per save is Rp1.000.")
@@ -160,6 +161,7 @@ struct GoalModalStep2View: View {
                     Spacer()
                     
                     Button(action: {
+                        SoundManager.shared.play(.buttonClick)
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
                             showConfirm = true
                         }
@@ -171,7 +173,7 @@ struct GoalModalStep2View: View {
                             .padding(.horizontal, 50)
                             .background(
                                 vm.isStep2Valid
-                                ? Color.yellowButton
+                                ? Color.yellow.opacity(0.7)
                                 : Color.gray.opacity(0.4),
                                 in: Capsule()
                             )
@@ -217,6 +219,9 @@ struct GoalModalStep2View: View {
         .navigationBarBackButtonHidden(true)
         .onAppear {
             startAnimations()
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+//                SoundManager.shared.play(.robotTalk)
+//            }
         }
     }
     
