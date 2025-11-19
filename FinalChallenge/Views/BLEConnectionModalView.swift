@@ -34,7 +34,7 @@ struct BLEConnectionModalView: View {
         case .failed:
             return .red
         default:
-            return .yellowButton
+            return .yellow
         }
     }
     
@@ -43,24 +43,29 @@ struct BLEConnectionModalView: View {
     }
     
     var body: some View {
-        VStack(spacing: 25) {
+        VStack(spacing: 20) {
             HStack {
+                Spacer()
+                Spacer()
+                
+                Text("Device Connection")
+                    .font(.custom("audiowide", size: 32))
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
                 Button {
                     onCancel()
                 } label: {
                     Image("closeButton")
                 }
-                
-                Text("Device Connection")
-                    .font(.custom("audiowide", size: 24))
-                    .foregroundColor(.white)
             }
             
             // Status view
             VStack {
-                Text("STATUS")
-                    .font(.custom("audiowide", size: 14))
-                    .foregroundColor(.white.opacity(0.7))
+                Text("Status")
+                    .font(.custom("audiowide", size: 20))
+                    .foregroundColor(.white)
                 
                 Text(statusString)
                     .font(.custom("audiowide", size: 20))
@@ -73,9 +78,7 @@ struct BLEConnectionModalView: View {
                         .foregroundColor(.white.opacity(0.8))
                 }
             }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color.black.opacity(0.2), in: RoundedRectangle(cornerRadius: 10))
+            .padding(.bottom, 30)
             
             // Action button
             if bleVM.state == .connected {
@@ -84,10 +87,10 @@ struct BLEConnectionModalView: View {
                     bleVM.disconnect()
                 } label: {
                     Text("Disconnect")
-                        .font(.headline)
+                        .font(.custom("audiowide", size: 16))
                         .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 80)
+                        .padding(.vertical, 10)
                         .background(Color.red.opacity(0.8), in: RoundedRectangle(cornerRadius: 12))
                 }
             } else {
@@ -96,28 +99,24 @@ struct BLEConnectionModalView: View {
                     bleVM.startScan(isReconnect: true)
                 } label: {
                     Text(isBusy ? "Scanning..." : "Scan for Device")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.yellowButton, in: RoundedRectangle(cornerRadius: 12))
+                        .font(.custom("audiowide", size: 16))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 80)
+                        .padding(.vertical, 10)
+                        .background(Color.yellowButton, in: RoundedRectangle(cornerRadius: 50))
                 }
                 .disabled(isBusy)
             }
         }
-        .padding(30)
+        .padding(.horizontal, 190)
+        .padding(.bottom, 40)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
-                .overlay(Image("frame_top").opacity(0.5))
-                .shadow(radius: 10)
+            Image("modal_gift")
         )
-        .padding(40)
     }
 }
 
 #Preview {
     BLEConnectionModalView(onCancel: {})
         .environmentObject(BLEViewModel())
-        .background(Color.gray)
 }
