@@ -82,7 +82,7 @@ struct GoalModalStep1View: View {
                     .textInputAutocapitalization(.words)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)
-                    .background(.greenButton, in: RoundedRectangle(cornerRadius: 12))
+                    .background(.greenButton.opacity(100/255), in: RoundedRectangle(cornerRadius: 12))
                 
                 Text("How much does it cost? *")
                     .font(.custom("audiowide", size: 28))
@@ -99,7 +99,7 @@ struct GoalModalStep1View: View {
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)
-                    .background(.greenButton, in: RoundedRectangle(cornerRadius: 12))
+                    .background(.greenButton.opacity(100/255), in: RoundedRectangle(cornerRadius: 12))
                 
                 if vm.priceValue > 0 && vm.priceValue < 50_000 {
                     Text("Minimum goal is Rp50.000")
@@ -116,7 +116,7 @@ struct GoalModalStep1View: View {
                 PhotosPicker(selection: $vm.selectedItem, matching: .images, photoLibrary: .shared()) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.greenButton)
+                            .fill(Color.greenButton).opacity(100/255)
                             .frame(height: 140)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
@@ -145,6 +145,24 @@ struct GoalModalStep1View: View {
                         }
                     }
                 }
+                .overlay(alignment: .topTrailing) {
+                    if vm.selectedImage != nil {
+                        Button {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                vm.selectedImage = nil
+                            }
+                            vm.selectedItem = nil
+                            vm.validateStep1()
+                        } label: {
+                            Image(systemName: "trash.circle.fill")
+                                .font(.system(size: 22))
+                                .foregroundColor(.red)
+                                .shadow(radius: 3)
+                        }
+                        .padding(8)
+                        .buttonStyle(.plain)
+                    }
+                }
                 .onChange(of: vm.selectedItem, initial: false) { _, newItem in
                     Task {
                         if let data = try? await newItem?.loadTransferable(type: Data.self),
@@ -169,7 +187,7 @@ struct GoalModalStep1View: View {
                             .padding(.horizontal, 50)
                             .background(
                                 vm.isStep1Valid
-                                ? Color.yellow.opacity(0.8)
+                                ? Color.yellow.opacity(0.7)
                                 : Color.gray.opacity(0.4),
                                 in: Capsule()
                             )

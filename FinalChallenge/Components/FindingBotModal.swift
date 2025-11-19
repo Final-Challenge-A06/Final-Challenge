@@ -59,7 +59,7 @@ struct FindingBotModal: View {
                             .foregroundColor(.white)
                             .padding(.vertical, 10)
                             .padding(.horizontal, 100)
-                            .background(Color.yellowButton)
+                            .background(Color.yellow.opacity(0.7))
                             .cornerRadius(30)
                     }
                     .buttonStyle(.plain)

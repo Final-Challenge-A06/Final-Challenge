@@ -34,7 +34,7 @@ struct BLEConnectionModalView: View {
         case .failed:
             return .red
         default:
-            return .yellowButton
+            return .yellow.opacity(0.7)
         }
     }
     
@@ -103,7 +103,7 @@ struct BLEConnectionModalView: View {
                         .foregroundColor(.black)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.yellowButton, in: RoundedRectangle(cornerRadius: 12))
+                        .background(Color.yellow.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
                 }
                 .disabled(isBusy)
             }

@@ -100,7 +100,7 @@ struct BLETestView: View {
                 .buttonStyle(.plain)
                 .padding(.vertical, 12)
                 .padding(.horizontal, 100)
-                .background(Color.yellowButton)
+                .background(Color.yellow.opacity(0.7))
                 .cornerRadius(20)
                 .scaleEffect(isButtonPulsing ? 1.05 : buttonScale)
                 .opacity(buttonOpacity)
