@@ -398,6 +398,10 @@ final class GoalViewModel: ObservableObject {
             return
         }
         
+        let oldCumulativePassedSteps = self.passedSteps
+        let wasGoalFinished = (oldCumulativePassedSteps >= self.totalSteps && self.totalSteps > 0)
+        
+        // Hitung progres hanya untuk goal saat ini
         var newTotalSavingCurrentGoal = Int(balance)
         var newPassedStepsCurrentGoal = 0
         
@@ -433,6 +437,13 @@ final class GoalViewModel: ObservableObject {
         cumulativeTotalSteps += currentGoal.totalSteps
         cumulativePassedSteps += newPassedStepsCurrentGoal
         
+        if cumulativePassedSteps > oldCumulativePassedSteps {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                SoundManager.shared.play(.stoneProgress)
+            }
+        }
+        
+        // 5. Update @Published properties untuk ui (CircleStepView)
         self.totalSteps = cumulativeTotalSteps
         self.passedSteps = cumulativePassedSteps
         self.totalSaving = newTotalSavingCurrentGoal

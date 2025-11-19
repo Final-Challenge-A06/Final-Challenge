@@ -180,6 +180,7 @@ struct GoalModalStep1View: View {
                 HStack {
                     Spacer()
                     Button {
+                        SoundManager.shared.play(.bubbleClick)
                         onNext()
                     } label: {
                         Image(systemName: "arrow.right")
@@ -207,6 +208,9 @@ struct GoalModalStep1View: View {
         }
         .onAppear {
             startAnimations()
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+//                SoundManager.shared.play(.robotTalk)
+//            }
         }
     }
     

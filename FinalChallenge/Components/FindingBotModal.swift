@@ -19,7 +19,10 @@ struct FindingBotModal: View {
                     .frame(width: 450)
                 
                 // Close button
-                Button(action: onClose) {
+                Button(action: {
+                    SoundManager.shared.play(.buttonCloseClick)
+                    onClose()
+                }) {
                     Image("closeButton")
                         .resizable()
                         .scaledToFit()
@@ -47,7 +50,10 @@ struct FindingBotModal: View {
                             .foregroundColor(.white.opacity(0.9))
                     }
                     
-                    Button(action: onSetup) {
+                    Button(action: {
+                        SoundManager.shared.play(.buttonClick)
+                        onSetup()
+                    }) {
                         Text("Connect")
                             .font(.custom("Audiowide", size: 16))
                             .foregroundColor(.white)

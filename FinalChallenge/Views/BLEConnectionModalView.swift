@@ -34,7 +34,7 @@ struct BLEConnectionModalView: View {
         case .failed:
             return .red
         default:
-            return .yellow.opacity(0.7)
+            return .yellow
         }
     }
     
@@ -43,81 +43,83 @@ struct BLEConnectionModalView: View {
     }
     
     var body: some View {
-        VStack(spacing: 25) {
+        VStack(spacing: 20) {
             HStack {
+                Spacer()
+                Spacer()
+                
+                Text("Device Connection")
+                    .font(.custom("audiowide", size: 32))
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
                 Button {
+                    SoundManager.shared.play(.buttonCloseClick)
                     onCancel()
                 } label: {
                     Image("closeButton")
                 }
-                
-                Text("Device Connection")
-                    .font(.custom("audiowide", size: 24))
-                    .foregroundColor(.white)
             }
             
             // Status view
             VStack {
-                Text("STATUS")
-                    .font(.custom("audiowide", size: 14))
-                    .foregroundColor(.white.opacity(0.7))
+                Text("Status")
+                    .font(.custom("audiowide", size: 24))
+                    .foregroundColor(.white)
                 
                 Text(statusString)
-                    .font(.custom("audiowide", size: 20))
+                    .font(.custom("audiowide", size: 24))
                     .foregroundColor(statusColor)
                 
                 // If connected, show device name
                 if bleVM.state == .connected {
                     Text(bleVM.connectedName)
-                        .font(.caption)
+                        .font(.custom("audiowide", size: 20))
                         .foregroundColor(.white.opacity(0.8))
                 }
             }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color.black.opacity(0.2), in: RoundedRectangle(cornerRadius: 10))
+            .padding(.bottom, 30)
             
             // Action button
             if bleVM.state == .connected {
                 // Disconnect button
                 Button {
+                    SoundManager.shared.play(.buttonCloseClick)
                     bleVM.disconnect()
                 } label: {
                     Text("Disconnect")
-                        .font(.headline)
+                        .font(.custom("audiowide", size: 16))
                         .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 80)
+                        .padding(.vertical, 10)
                         .background(Color.red.opacity(0.8), in: RoundedRectangle(cornerRadius: 12))
                 }
             } else {
                 // Scan or Connect button
                 Button {
+                    SoundManager.shared.play(.buttonClick)
                     bleVM.startScan(isReconnect: true)
                 } label: {
                     Text(isBusy ? "Scanning..." : "Scan for Device")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.yellow.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
+                        .font(.custom("audiowide", size: 16))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 100)
+                        .padding(.vertical, 10)
+                        .background(Color.yellowButton, in: RoundedRectangle(cornerRadius: 50))
                 }
                 .disabled(isBusy)
             }
         }
-        .padding(30)
+        .padding(.horizontal, 190)
+        .padding(.bottom, 40)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
-                .overlay(Image("frame_top").opacity(0.5))
-                .shadow(radius: 10)
+            Image("modal_gift")
         )
-        .padding(40)
     }
 }
 
 #Preview {
     BLEConnectionModalView(onCancel: {})
         .environmentObject(BLEViewModel())
-        .background(Color.gray)
 }

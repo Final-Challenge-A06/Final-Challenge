@@ -3,15 +3,18 @@ import SwiftUI
 struct CircleStepView<LeadingContent: View>: View {
     @ObservedObject var viewModel: CircleStepViewModel
     var onTap: (StepDisplayModel) -> Void
+    var goalImage: UIImage?
     
     @ViewBuilder let leadingContent: () -> LeadingContent
     
     init(
         viewModel: CircleStepViewModel,
+        goalImage: UIImage? = nil,
         @ViewBuilder leadingContent: @escaping () -> LeadingContent,
         onTap: @escaping (StepDisplayModel) -> Void
     ) {
         self.viewModel = viewModel
+        self.goalImage = goalImage
         self.leadingContent = leadingContent
         self.onTap = onTap
     }
@@ -47,9 +50,14 @@ struct CircleStepView<LeadingContent: View>: View {
                     .buttonStyle(.plain)
                     .disabled((step.isCheckpoint || step.isGoal) && !step.isUnlocked)
                     
-                    // Claim button untuk checkpoint/goal yang sudah unlocked tapi belum di-claim
-                    if (step.isCheckpoint || step.isGoal) && step.isUnlocked && !step.isClaimed {
+                    if step.isGoal && !step.isUnlocked {
+                        ImageGoalView(goalImage: goalImage)
+                            .offset(x: 0, y: -160)
+                    }
+                    
+                    if step.isCheckpoint && step.isUnlocked && !step.isClaimed {
                         Button {
+                            SoundManager.shared.play(.reward)
                             onTap(step)
                         } label: {
                             Image("claimButton")
@@ -57,9 +65,10 @@ struct CircleStepView<LeadingContent: View>: View {
                         .offset(x: 0, y: -80)
                     }
                 }
-                .padding(.vertical, -40)
+                .padding(.vertical, 0)
             }
         }
+        .padding(.top, 220)
         .frame(width: viewModel.requiredWidth)
     }
 }
@@ -67,9 +76,10 @@ struct CircleStepView<LeadingContent: View>: View {
 extension CircleStepView where LeadingContent == EmptyView {
     init(
         viewModel: CircleStepViewModel,
+        goalImage: UIImage? = nil,
         onTap: @escaping (StepDisplayModel) -> Void
     ){
-        self.init(viewModel: viewModel, leadingContent: { EmptyView() }, onTap: onTap)
+        self.init(viewModel: viewModel, goalImage: goalImage, leadingContent: { EmptyView() }, onTap: onTap)
     }
 }
 
@@ -78,7 +88,7 @@ extension CircleStepView where LeadingContent == EmptyView {
         Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40).ignoresSafeArea()
         ScrollView {
             CircleStepView(
-                viewModel: CircleStepViewModel(goalSteps: [5], passedSteps: 2)
+                viewModel: CircleStepViewModel(goalSteps: [10], passedSteps: 8)
             ) { step in
                 print("Tapped step:", step.id)
             }

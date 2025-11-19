@@ -64,9 +64,19 @@ struct GoalView: View {
                         VStack() {
                             CircleStepView(
                                 viewModel: circleVM,
+                                goalImage: {
+                                    // Ambil gambar dari goal terakhir (goal aktif)
+                                    if let lastGoal = goals.last,
+                                       let imageData = lastGoal.imageData,
+                                       let uiImage = UIImage(data: imageData) {
+                                        return uiImage
+                                    }
+                                    return nil
+                                }(),
                                 leadingContent: {
                                     if goals.isEmpty || goalVm.currentGoalIsClaimed {
                                         Button {
+                                            SoundManager.shared.play(.buttonClick)
                                             goalVm.onCircleTap()
                                         } label: {
                                             Image("setGoalButton")
@@ -77,6 +87,7 @@ struct GoalView: View {
                                     
                                     if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
                                         Button {
+                                            SoundManager.shared.play(.goalFinish)
                                             bleVM.sendResetToDevice()
                                             goalVm.currentGoalIsClaimed = true
                                         } label: {
@@ -158,6 +169,7 @@ struct GoalView: View {
                 Spacer()
                 
                 Button {
+                    SoundManager.shared.play(.buttonClick)
                     showBLESettingsModal = true
                 } label: {
                     Image(systemName: "gearshape.fill")
@@ -169,6 +181,17 @@ struct GoalView: View {
                 .padding(.trailing, 20)
             }
             .offset(y: -530)
+            
+            Button {
+                showBLESettingsModal = true
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 36))
+                    .foregroundColor(.white)
+                    .padding(10)
+                    .background(.yellowButton, in: Circle())
+            }
+            .offset(x: 420, y: -620)
             
             Image("robot")
                 .offset(x: -500 + robotOffset, y: 350 + robotFloatOffset)
