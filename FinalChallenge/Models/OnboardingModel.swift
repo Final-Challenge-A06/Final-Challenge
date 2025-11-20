@@ -66,7 +66,7 @@ extension OnboardingModel {
         
         OnboardingModel(
             title: "Goal Complete!",
-            imageName: "robot",
+            imageName: "onboarding_5",
             description: "You’ve finished your goal and Billo’s ready to open! Take your savings and start a new goal to keep going.",
             offsetX: -350, offsetY: 60, rotationDegrees: -20
         ),
