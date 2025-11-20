@@ -39,10 +39,22 @@ struct CircleStepView<LeadingContent: View>: View {
 
                             if (step.isCheckpoint || step.isGoal) && !step.isUnlocked {
                                 Image(systemName: "lock.fill")
-                                    .font(.system(size: 28, weight: .bold))
+                                    .font(.system(size: 24, weight: .bold))
                                     .foregroundStyle(.white.opacity(0.9))
                                     .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
-                                    .offset(y: -40)
+                                    .offset(y: -30)
+                            } else if step.isCheckpoint && step.isUnlocked {
+                                Image(systemName: "lock.open.fill")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundStyle(.white.opacity(0.9))
+                                    .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+                                    .offset(y: -30)
+                            } else if step.isGoal && step.isUnlocked {
+                                Image(systemName: "trophy.fill")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundStyle(.white.opacity(0.9))
+                                    .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+                                    .offset(y: -30)
                             }
                         }
                         .contentShape(Circle())
