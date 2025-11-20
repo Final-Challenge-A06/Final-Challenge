@@ -232,6 +232,8 @@ struct GoalView: View {
     private var robotAndChatLayer: some View {
         Group {
             Image("robot")
+                .resizable()
+                .frame(width: 170, height: 250)
                 .offset(x: -500 + robotOffset, y: 350 + robotFloatOffset)
                 .rotationEffect(Angle(degrees: robotRotation))
                 .opacity(robotOpacity)

@@ -156,6 +156,8 @@ struct OnboardingView: View {
                     if let page = onboardingVM.currentPage,
                        onboardingVM.currentIndex < onboardingVM.pages.count - 1 {
                         Image("robot")
+                            .resizable()
+                            .frame(width: 140, height: 220)
                             .offset(x: page.offsetX, y: page.offsetY + robotBounce)
                             .rotationEffect(.degrees(page.rotationDegrees))
                             .animation(

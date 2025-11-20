@@ -32,7 +32,7 @@ struct FindingBotModal: View {
                 .offset(x: 160, y: -180)
                 
                 // Content
-                VStack(spacing: 14) {
+                VStack(spacing: 8) {
                     Text("Find Bot")
                         .font(.custom("Audiowide", size: 24))
                         .foregroundColor(.white)
@@ -40,8 +40,8 @@ struct FindingBotModal: View {
                     
                     Image("robot")
                         .resizable()
+                        .frame(width: 128, height: 180)
                         .scaledToFit()
-                        .frame(height: 128)
                         .padding(.top, 4)
                     
                     if let name = connectedName, !name.isEmpty {
