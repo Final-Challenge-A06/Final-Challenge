@@ -77,7 +77,7 @@ struct OnboardingView: View {
                         .disabled(onboardingVM.currentIndex == 0)
                         .offset(x: -50, y: -100)
                         
-                        VStack(spacing: 20) {
+                        VStack(spacing: 12) {
                             Text(onboardingVM.currentPage?.title ?? "")
                                 .font(.custom("audiowide", size: 26))
                                 .foregroundStyle(Color(.white))
@@ -92,7 +92,7 @@ struct OnboardingView: View {
                                         .degrees(showImage ? 0 : 15),
                                         axis: (x: 1, y: 0, z: 0)
                                     )
-                                    .frame(width: 300, height: 250)
+                                    .frame(width: 300, height: 300)
                             }
                             
                             if onboardingVM.currentIndex < onboardingVM.pages.count - 1 {
