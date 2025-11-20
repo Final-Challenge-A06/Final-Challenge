@@ -77,7 +77,7 @@ struct OnboardingView: View {
                         .contentShape(Rectangle())
                         .opacity(onboardingVM.currentIndex > 0 ? 1 : 0.4)
                         .disabled(onboardingVM.currentIndex == 0)
-                        .offset(x: -70, y: -100)
+                        .offset(x: -10, y: -100)
                         
                         VStack(spacing: 50) {
                             Text(onboardingVM.currentPage?.title ?? "")
@@ -98,10 +98,11 @@ struct OnboardingView: View {
                             
                             if onboardingVM.currentIndex < onboardingVM.pages.count - 1 {
                                 Text(typedText)
-                                    .font(.custom("audiowide", size: 20))
+                                    .font(.custom("audiowide", size: 18))
                                     .multilineTextAlignment(.center)
                                     .foregroundStyle(Color(.white))
-                                    .frame(width: 300, height: 60, alignment: .top)
+                                    .frame(width: 400, alignment: .top)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                             
                             if onboardingVM.currentIndex == max(onboardingVM.pages.count - 1, 0) {
@@ -120,6 +121,7 @@ struct OnboardingView: View {
                                 .scaleEffect(buttonScale)
                                 .opacity(showButton ? 1 : 0)
                                 .offset(y: showButton ? 0 : 20)
+                                .padding(.horizontal, 50)
                             }
                             
                             HStack(spacing: 12) {
@@ -149,7 +151,7 @@ struct OnboardingView: View {
                         .contentShape(Rectangle())
                         .opacity(onboardingVM.currentIndex < onboardingVM.pages.count - 1 ? 1 : 0.4)
                         .disabled(onboardingVM.currentIndex >= onboardingVM.pages.count - 1)
-                        .offset(x: 70, y: -100)
+                        .offset(x: 10, y: -100)
                     }
                     .zIndex(1)
                     

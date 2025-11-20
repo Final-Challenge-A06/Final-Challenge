@@ -106,7 +106,10 @@ struct GoalView: View {
                                     }
                                     
                                     // Legacy behavior untuk step yang sudah di-claim
-                                    if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
+                                    if (step.isCheckpoint || step.isGoal),
+                                       step.id <= goalVm.passedSteps,
+                                       step.isClaimed
+                                    {
                                         goalVm.tryOpenClaim(for: step.id, context: context)
                                         return
                                     }
@@ -280,8 +283,30 @@ struct GoalView: View {
     }
     
     private func getRewardMeta(for stepId: Int) -> RewardModel? {
-        let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
-        return catalog.first(where: { $0.step == stepId })
+        let goalSteps = goals.map { $0.totalSteps }
+        guard !goalSteps.isEmpty else { return nil }
+        
+        var remaining = stepId
+        var goalIndex = 0
+        var relativeStep = stepId
+        
+        for (idx, stepsInGoal) in goalSteps.enumerated() {
+            if remaining <= stepsInGoal {
+                goalIndex = idx
+                relativeStep = remaining
+                break
+            } else {
+                remaining -= stepsInGoal
+            }
+        }
+        
+        guard goalIndex < goalSteps.count else { return nil }
+        
+        let stepsOfThatGoal = goalSteps[goalIndex]
+        
+        let catalog = RewardCatalog.rewards(forTotalSteps: stepsOfThatGoal)
+        
+        return catalog.first(where: { $0.step == relativeStep })
     }
     
     private var circleClaimOverlay: some View {
@@ -300,7 +325,8 @@ struct GoalView: View {
                                     bottomItemsVM.setItems(goalVm.rewardViewItems)
                                     
                                     let currentGoalStepsList = goals.map { $0.totalSteps }
-                                    let claimedSteps = goalVm.getClaimedSteps(context: context)
+                                    var claimedSteps = goalVm.getClaimedSteps(context: context)
+                                    claimedSteps.insert(step.id)
                                     circleVM.updateSteps(
                                         goalSteps: currentGoalStepsList,
                                         passedSteps: goalVm.passedSteps,

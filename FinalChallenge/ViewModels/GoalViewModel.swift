@@ -95,7 +95,7 @@ final class GoalViewModel: ObservableObject {
         !selectedDays.isEmpty &&
         priceValue > 0 &&
         amountValue >= 1_000 &&
-        amountValue <= priceValue
+        amountValue < priceValue
     }
     
     // MARK: - Save Goal
