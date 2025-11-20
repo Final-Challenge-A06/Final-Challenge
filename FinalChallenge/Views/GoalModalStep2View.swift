@@ -62,7 +62,7 @@ struct GoalModalStep2View: View {
             
             Image("robot")
                 .resizable()
-                .frame(width: 200, height: 250)
+                .frame(width: 170, height: 250)
                 .offset(x: 400, y: 300 + robotOffset)
                 .rotationEffect(.degrees(robotRotation))
                 .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 10)

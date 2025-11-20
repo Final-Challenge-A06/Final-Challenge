@@ -51,7 +51,7 @@ struct GoalModalStep1View: View {
             
             Image("robot")
                 .resizable()
-                .frame(width: 200, height: 250)
+                .frame(width: 170, height: 250)
                 .offset(x: -350, y: 250 + robotOffset)
                 .rotationEffect(.degrees(robotRotation))
                 .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 10)
@@ -180,7 +180,7 @@ struct GoalModalStep1View: View {
                 HStack {
                     Spacer()
                     Button {
-                        SoundManager.shared.play(.bubbleClick)
+                        SoundManager.shared.play(.buttonClick)
                         onNext()
                     } label: {
                         Image(systemName: "arrow.right")

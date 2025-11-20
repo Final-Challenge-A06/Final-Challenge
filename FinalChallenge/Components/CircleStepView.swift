@@ -27,6 +27,19 @@ struct CircleStepView<LeadingContent: View>: View {
             ForEach(viewModel.steps) { step in
                 ZStack {
                     Button {
+                        // Prioritaskan toggle untuk step goal yang sudah selesai (unlocked).
+                        if step.isGoal && step.isUnlocked {
+                            viewModel.toggleGoalImageVisibility(for: step.id)
+                            return
+                        }
+                        
+                        // Jika checkpoint/goal unlocked tapi belum di-claim → buka modal klaim.
+                        if (step.isCheckpoint || step.isGoal), step.isUnlocked, !step.isClaimed {
+                            onTap(step)
+                            return
+                        }
+                        
+                        // Default fallback
                         onTap(step)
                     } label: {
                         ZStack {
@@ -39,19 +52,34 @@ struct CircleStepView<LeadingContent: View>: View {
 
                             if (step.isCheckpoint || step.isGoal) && !step.isUnlocked {
                                 Image(systemName: "lock.fill")
-                                    .font(.system(size: 28, weight: .bold))
+                                    .font(.system(size: 24, weight: .bold))
                                     .foregroundStyle(.white.opacity(0.9))
                                     .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
-                                    .offset(y: -40)
+                                    .offset(y: -30)
+                            } else if step.isCheckpoint && step.isUnlocked {
+                                Image(systemName: "lock.open.fill")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundStyle(.white.opacity(0.9))
+                                    .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+                                    .offset(y: -30)
+                            } else if step.isGoal && step.isUnlocked {
+                                Image(systemName: "trophy.fill")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundStyle(.white.opacity(0.9))
+                                    .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+                                    .offset(y: -30)
                             }
                         }
                         .contentShape(Circle())
                     }
+                    .id(step.id)
                     .buttonStyle(.plain)
                     .disabled((step.isCheckpoint || step.isGoal) && !step.isUnlocked)
                     
-                    if step.isGoal && !step.isUnlocked {
-                        ImageGoalView(goalImage: goalImage)
+                    // Tampilkan gambar goal kalau user sudah toggle untuk step goal ini.
+                    if step.isGoalImageVisible {
+                        let image = viewModel.goalImagesByEndStep[step.id] ?? goalImage
+                        ImageGoalView(goalImage: image)
                             .offset(x: 0, y: -160)
                     }
                     

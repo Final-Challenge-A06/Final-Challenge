@@ -170,6 +170,11 @@ final class BLEViewModel: ObservableObject {
             
             self.saveLastPeripheralID(p.identifier)
             UserDefaults.standard.set(true, forKey: StoreKey.hasPairedOnce)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                print("Force reading value after connect")
+                self.mgr.readValue()
+            }
         }
         
         mgr.onFail = { [weak self] err in

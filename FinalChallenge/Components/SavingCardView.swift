@@ -46,7 +46,7 @@ struct SavingCardView: View {
     }
 
     private var progressBarWidth: CGFloat {
-        let innerWidth: CGFloat = 400 - 44
+        let innerWidth: CGFloat = 400 - 32
         return innerWidth * progress
     }
     
@@ -72,7 +72,7 @@ struct SavingCardView: View {
 #Preview {
     ZStack {
         HStack {
-            SavingCardView(title: "Hirono Blindbox", current: 100000, target: 180_000)
+            SavingCardView(title: "Hirono Blindbox", current: 100000, target: 100_000)
             Spacer()
         }
         .padding(.leading, 24)

@@ -27,7 +27,10 @@ struct BottomItemSelectionView: View {
                             )
                             .frame(width: 160, height: 120)
                             .contentShape(Rectangle())
-                            .onTapGesture { viewModel.handleTap(on: item) }
+                            .onTapGesture {
+                                SoundManager.shared.play(.reward)
+                                viewModel.handleTap(on: item)
+                            }
                             .overlay(alignment: .trailing) {
                                 if index < viewModel.items.count - 1 {
                                     separator
