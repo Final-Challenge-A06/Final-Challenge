@@ -73,13 +73,11 @@ struct OnboardingView: View {
                                 .frame(width: 15, height: 25)
                                 .foregroundStyle(Color(.white))
                         }
-                        .padding(24)
-                        .contentShape(Rectangle())
                         .opacity(onboardingVM.currentIndex > 0 ? 1 : 0.4)
                         .disabled(onboardingVM.currentIndex == 0)
-                        .offset(x: -70, y: -100)
+                        .offset(x: -50, y: -100)
                         
-                        VStack(spacing: 50) {
+                        VStack(spacing: 20) {
                             Text(onboardingVM.currentPage?.title ?? "")
                                 .font(.custom("audiowide", size: 26))
                                 .foregroundStyle(Color(.white))
@@ -94,6 +92,7 @@ struct OnboardingView: View {
                                         .degrees(showImage ? 0 : 15),
                                         axis: (x: 1, y: 0, z: 0)
                                     )
+                                    .frame(width: 300, height: 250)
                             }
                             
                             if onboardingVM.currentIndex < onboardingVM.pages.count - 1 {
@@ -101,7 +100,7 @@ struct OnboardingView: View {
                                     .font(.custom("audiowide", size: 20))
                                     .multilineTextAlignment(.center)
                                     .foregroundStyle(Color(.white))
-                                    .frame(width: 300, height: 60, alignment: .top)
+                                    .frame(width: 420, height: 80, alignment: .top)
                             }
                             
                             if onboardingVM.currentIndex == max(onboardingVM.pages.count - 1, 0) {
@@ -145,11 +144,9 @@ struct OnboardingView: View {
                                 .frame(width: 15, height: 25)
                                 .foregroundStyle(Color(.white))
                         }
-                        .padding(24)
-                        .contentShape(Rectangle())
                         .opacity(onboardingVM.currentIndex < onboardingVM.pages.count - 1 ? 1 : 0.4)
                         .disabled(onboardingVM.currentIndex >= onboardingVM.pages.count - 1)
-                        .offset(x: 70, y: -100)
+                        .offset(x: 50, y: -100)
                     }
                     .zIndex(1)
                     
