@@ -39,19 +39,24 @@ struct BLETestView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
-                Image("robot_frame")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 550)
-                    .scaleEffect(robotScale)
-                    .opacity(robotOpacity)
-                    .rotationEffect(.degrees(robotRotation))
-                    .offset(y: robotFloating ? -10 : 10)
-                    .animation(
-                        .easeInOut(duration: 2.0)
-                        .repeatForever(autoreverses: true),
-                        value: robotFloating
-                    )
+                ZStack {
+                    Image("robot_frame")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 550)
+                        
+                    Image("robot")
+                        .offset(x: 10, y: 40)
+                }
+                .scaleEffect(robotScale)
+                .opacity(robotOpacity)
+                .rotationEffect(.degrees(robotRotation))
+                .offset(y: robotFloating ? -10 : 10)
+                .animation(
+                    .easeInOut(duration: 2.0)
+                    .repeatForever(autoreverses: true),
+                    value: robotFloating
+                )
                 
                 VStack(spacing: 8) {
                     if case .scanning = bleVM.state {
