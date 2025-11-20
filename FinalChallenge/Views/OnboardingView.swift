@@ -75,7 +75,7 @@ struct OnboardingView: View {
                         }
                         .opacity(onboardingVM.currentIndex > 0 ? 1 : 0.4)
                         .disabled(onboardingVM.currentIndex == 0)
-                        .offset(x: -50, y: -100)
+                        .offset(x: -10, y: -100)
                         
                         VStack(spacing: 12) {
                             Text(onboardingVM.currentPage?.title ?? "")
@@ -97,7 +97,7 @@ struct OnboardingView: View {
                             
                             if onboardingVM.currentIndex < onboardingVM.pages.count - 1 {
                                 Text(typedText)
-                                    .font(.custom("audiowide", size: 20))
+                                    .font(.custom("audiowide", size: 18))
                                     .multilineTextAlignment(.center)
                                     .foregroundStyle(Color(.white))
                                     .frame(width: 420, height: 80, alignment: .top)
@@ -119,6 +119,7 @@ struct OnboardingView: View {
                                 .scaleEffect(buttonScale)
                                 .opacity(showButton ? 1 : 0)
                                 .offset(y: showButton ? 0 : 20)
+                                .padding(.horizontal, 50)
                             }
                             
                             HStack(spacing: 12) {
@@ -146,7 +147,7 @@ struct OnboardingView: View {
                         }
                         .opacity(onboardingVM.currentIndex < onboardingVM.pages.count - 1 ? 1 : 0.4)
                         .disabled(onboardingVM.currentIndex >= onboardingVM.pages.count - 1)
-                        .offset(x: 50, y: -100)
+                        .offset(x: 10, y: -100)
                     }
                     .zIndex(1)
                     

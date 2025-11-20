@@ -154,7 +154,7 @@ struct GoalModalStep1View: View {
                             vm.selectedItem = nil
                             vm.validateStep1()
                         } label: {
-                            Image(systemName: "xmark")
+                            Image(systemName: "xmark.circle")
                                 .font(.system(size: 30))
                                 .foregroundColor(.white)
                                 .shadow(radius: 3)
