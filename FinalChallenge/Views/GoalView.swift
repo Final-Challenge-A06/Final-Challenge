@@ -142,6 +142,19 @@ struct GoalView: View {
         return nil
     }
     
+    // NEW: peta gambar goal lama -> step goal akhir kumulatif
+    private var goalImagesByEndStep: [Int: UIImage] {
+        var mapping: [Int: UIImage] = [:]
+        var cumulative = 0
+        for goal in goals {
+            cumulative += goal.totalSteps
+            if let data = goal.imageData, let img = UIImage(data: data) {
+                mapping[cumulative] = img
+            }
+        }
+        return mapping
+    }
+    
     @ViewBuilder
     private var circleLeadingButtons: some View {
         if goals.isEmpty || goalVm.currentGoalIsClaimed {
@@ -327,6 +340,9 @@ struct GoalView: View {
         let goalStepsList = goals.map { $0.totalSteps }
         let claimedSteps = goalVm.getClaimedSteps(context: context)
         circleVM.updateSteps(goalSteps: goalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+        // NEW: update peta gambar goal per step goal akhir
+        circleVM.updateGoalImagesByEndStep(goalImagesByEndStep)
+        
         bleVM.setContext(context)
         bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
         
@@ -348,6 +364,9 @@ struct GoalView: View {
         let newGoalStepsList = newGoals.map { $0.totalSteps }
         let claimedSteps = goalVm.getClaimedSteps(context: context)
         circleVM.updateSteps(goalSteps: newGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+        // NEW: update peta gambar setiap kali goals berubah
+        circleVM.updateGoalImagesByEndStep(goalImagesByEndStep)
+        
         chatVMHolder.vm?.updateMessage(goals: newGoals)
     }
     
@@ -366,6 +385,9 @@ struct GoalView: View {
         let currentGoalStepsList = goals.map { $0.totalSteps }
         let claimedSteps = goalVm.getClaimedSteps(context: context)
         circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+        // NEW: pastikan mapping tetap terbarui
+        circleVM.updateGoalImagesByEndStep(goalImagesByEndStep)
+        
         chatVMHolder.vm?.updateMessage(goals: goals)
     }
     
@@ -463,3 +485,4 @@ final class ChatVMHolder: ObservableObject {
 #Preview {
     GoalView().environmentObject(BLEViewModel())
 }
+

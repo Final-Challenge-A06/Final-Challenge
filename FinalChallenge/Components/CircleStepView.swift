@@ -27,6 +27,19 @@ struct CircleStepView<LeadingContent: View>: View {
             ForEach(viewModel.steps) { step in
                 ZStack {
                     Button {
+                        // Prioritaskan toggle untuk step goal yang sudah selesai (unlocked).
+                        if step.isGoal && step.isUnlocked {
+                            viewModel.toggleGoalImageVisibility(for: step.id)
+                            return
+                        }
+                        
+                        // Jika checkpoint/goal unlocked tapi belum di-claim → buka modal klaim.
+                        if (step.isCheckpoint || step.isGoal), step.isUnlocked, !step.isClaimed {
+                            onTap(step)
+                            return
+                        }
+                        
+                        // Default fallback
                         onTap(step)
                     } label: {
                         ZStack {
@@ -51,8 +64,10 @@ struct CircleStepView<LeadingContent: View>: View {
                     .buttonStyle(.plain)
                     .disabled((step.isCheckpoint || step.isGoal) && !step.isUnlocked)
                     
-                    if step.isGoal && !step.isUnlocked {
-                        ImageGoalView(goalImage: goalImage)
+                    // Tampilkan gambar goal kalau user sudah toggle untuk step goal ini.
+                    if step.isGoalImageVisible {
+                        let image = viewModel.goalImagesByEndStep[step.id] ?? goalImage
+                        ImageGoalView(goalImage: image)
                             .offset(x: 0, y: -160)
                     }
                     
