@@ -51,7 +51,7 @@ struct GoalModalStep1View: View {
             
             Image("robot")
                 .resizable()
-                .frame(width: 200, height: 250)
+                .frame(width: 170, height: 250)
                 .offset(x: -350, y: 250 + robotOffset)
                 .rotationEffect(.degrees(robotRotation))
                 .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 10)
@@ -154,7 +154,7 @@ struct GoalModalStep1View: View {
                             vm.selectedItem = nil
                             vm.validateStep1()
                         } label: {
-                            Image(systemName: "xmark")
+                            Image(systemName: "xmark.circle")
                                 .font(.system(size: 30))
                                 .foregroundColor(.white)
                                 .shadow(radius: 3)

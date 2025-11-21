@@ -10,6 +10,11 @@ final class CircleStepViewModel: ObservableObject {
     private var passedSteps: Int
     private var claimedSteps: Set<Int>
     
+    // NEW: mapping step goal akhir -> UIImage untuk goal tersebut
+    @Published private(set) var goalImagesByEndStep: [Int: UIImage] = [:]
+    // NEW: state visibilitas per step goal akhir
+    private var visibleGoalImageSteps: Set<Int> = []
+    
     // For adjusting stones size and position
     private let sizeNormal: CGFloat = 172
     private let sizeCheckpoint: CGFloat = 246
@@ -39,6 +44,24 @@ final class CircleStepViewModel: ObservableObject {
         self.goalSteps = goalSteps
         self.passedSteps = passedSteps
         self.claimedSteps = claimedSteps
+        calculateSteps()
+    }
+    
+    // NEW: update peta gambar goal lama (key = step akhir goal)
+    func updateGoalImagesByEndStep(_ mapping: [Int: UIImage]) {
+        self.goalImagesByEndStep = mapping
+        // pastikan step model ikut reflect visibilitas saat ini
+        calculateSteps()
+    }
+    
+    // NEW: toggle visibilitas gambar untuk step goal akhir tertentu
+    func toggleGoalImageVisibility(for stepId: Int) {
+        if visibleGoalImageSteps.contains(stepId) {
+            visibleGoalImageSteps.remove(stepId)
+        } else {
+            visibleGoalImageSteps.insert(stepId)
+        }
+        // update steps agar UI refresh
         calculateSteps()
     }
 
@@ -91,6 +114,9 @@ final class CircleStepViewModel: ObservableObject {
             let isUnlocked = (step <= safePassed)
             let imageName = isUnlocked ? "ss_after" : "ss_before"
             let rotation: Double = isLarge ? 0 : (isLeft ?  tiltAngle : -tiltAngle)
+            
+            // NEW: visibilitas default false, kecuali sudah ditandai di visibleGoalImageSteps
+            let isVisible = visibleGoalImageSteps.contains(step)
 
             result.append(
                 StepDisplayModel(
@@ -102,7 +128,8 @@ final class CircleStepViewModel: ObservableObject {
                     isUnlocked: isUnlocked,
                     isCheckpoint: isCheckpoint || isIntermediateCheckpoint,
                     isGoal: isGoal,
-                    isClaimed: claimedSteps.contains(step)
+                    isClaimed: claimedSteps.contains(step),
+                    isGoalImageVisible: isVisible
                 )
             )
         }

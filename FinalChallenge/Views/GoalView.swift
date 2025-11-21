@@ -142,6 +142,19 @@ struct GoalView: View {
         return nil
     }
     
+    // NEW: peta gambar goal lama -> step goal akhir kumulatif
+    private var goalImagesByEndStep: [Int: UIImage] {
+        var mapping: [Int: UIImage] = [:]
+        var cumulative = 0
+        for goal in goals {
+            cumulative += goal.totalSteps
+            if let data = goal.imageData, let img = UIImage(data: data) {
+                mapping[cumulative] = img
+            }
+        }
+        return mapping
+    }
+    
     @ViewBuilder
     private var circleLeadingButtons: some View {
         if goals.isEmpty || goalVm.currentGoalIsClaimed {
@@ -232,6 +245,8 @@ struct GoalView: View {
     private var robotAndChatLayer: some View {
         Group {
             Image("robot")
+                .resizable()
+                .frame(width: 170, height: 250)
                 .offset(x: -500 + robotOffset, y: 350 + robotFloatOffset)
                 .rotationEffect(Angle(degrees: robotRotation))
                 .opacity(robotOpacity)
@@ -325,6 +340,9 @@ struct GoalView: View {
         let goalStepsList = goals.map { $0.totalSteps }
         let claimedSteps = goalVm.getClaimedSteps(context: context)
         circleVM.updateSteps(goalSteps: goalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+        // NEW: update peta gambar goal per step goal akhir
+        circleVM.updateGoalImagesByEndStep(goalImagesByEndStep)
+        
         bleVM.setContext(context)
         bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
         
@@ -346,6 +364,9 @@ struct GoalView: View {
         let newGoalStepsList = newGoals.map { $0.totalSteps }
         let claimedSteps = goalVm.getClaimedSteps(context: context)
         circleVM.updateSteps(goalSteps: newGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+        // NEW: update peta gambar setiap kali goals berubah
+        circleVM.updateGoalImagesByEndStep(goalImagesByEndStep)
+        
         chatVMHolder.vm?.updateMessage(goals: newGoals)
     }
     
@@ -364,6 +385,9 @@ struct GoalView: View {
         let currentGoalStepsList = goals.map { $0.totalSteps }
         let claimedSteps = goalVm.getClaimedSteps(context: context)
         circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+        // NEW: pastikan mapping tetap terbarui
+        circleVM.updateGoalImagesByEndStep(goalImagesByEndStep)
+        
         chatVMHolder.vm?.updateMessage(goals: goals)
     }
     
@@ -390,9 +414,66 @@ struct GoalView: View {
     }
     
     private func getRewardMeta(for stepId: Int) -> RewardModel? {
-        let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
-        return catalog.first(where: { $0.step == stepId })
+        let goalSteps = goals.map { $0.totalSteps }
+        guard !goalSteps.isEmpty else { return nil }
+        
+        var remaining = stepId
+        var goalIndex = 0
+        var relativeStep = stepId
+        
+        for (idx, stepsInGoal) in goalSteps.enumerated() {
+            if remaining <= stepsInGoal {
+                goalIndex = idx
+                relativeStep = remaining
+                break
+            } else {
+                remaining -= stepsInGoal
+            }
+        }
+        
+        guard goalIndex < goalSteps.count else { return nil }
+        
+        let stepsOfThatGoal = goalSteps[goalIndex]
+        
+        let catalog = RewardCatalog.rewards(forTotalSteps: stepsOfThatGoal)
+        
+        return catalog.first(where: { $0.step == relativeStep })
     }
+    
+    private var circleClaimOverlay: some View {
+            Group {
+                if showCircleClaimModal, let step = pendingCircleClaimStep {
+                    CenteredModal(isPresented: $showCircleClaimModal) {
+                        if let meta = getRewardMeta(for: step.id) {
+                            ClaimModalView(
+                                title: meta.title,
+                                imageBaseName: meta.imageName,
+                                onClaim: {
+                                    // sama persis dengan yang kamu punya tadi:
+                                    goalVm.openClaim(for: meta, context: context)
+                                    goalVm.confirmClaim(context: context)
+                                    goalVm.loadRewardsForView(context: context)
+                                    bottomItemsVM.setItems(goalVm.rewardViewItems)
+                                    
+                                    let currentGoalStepsList = goals.map { $0.totalSteps }
+                                    var claimedSteps = goalVm.getClaimedSteps(context: context)
+                                    claimedSteps.insert(step.id)
+                                    circleVM.updateSteps(
+                                        goalSteps: currentGoalStepsList,
+                                        passedSteps: goalVm.passedSteps,
+                                        claimedSteps: claimedSteps
+                                    )
+                                    
+                                    showCircleClaimModal = false
+                                    pendingCircleClaimStep = nil
+                                }
+                            )
+                        }
+                    }
+                    .zIndex(6)
+                }
+            }
+        }
     
     private func startEntranceAnimations() {
         // Frame top slide down from top
@@ -461,3 +542,4 @@ final class ChatVMHolder: ObservableObject {
 #Preview {
     GoalView().environmentObject(BLEViewModel())
 }
+

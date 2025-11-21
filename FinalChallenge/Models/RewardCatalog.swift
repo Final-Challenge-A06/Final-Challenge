@@ -28,7 +28,7 @@ enum RewardCatalog {
         }
 
         // 2) Checkpoint kelipatan 7
-        let checkpointBaseNames = ["mataMuterBiru", "mataBulatPink", "mataNgedipBiru"]
+        let checkpointBaseNames = ["mataBulatPink", "mataNgedipBiru", "mataWinkBiru", "mataNgedipPink", "mataWinkPink"]
         var imageIndex = 0
 
         for step in stride(from: 7, to: totalSteps, by: 7) {

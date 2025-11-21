@@ -34,11 +34,12 @@ struct StartOnboardingView: View {
                         .offset(y: 260)
                     
                     Image("robot")
+                        .resizable()
+                        .frame(width: 170, height: 250)
                         .offset(x: -150, y: 50)
                         .rotationEffect(.degrees(-10))
                     
                     ChatBubbleView(model: chatVM)
-                        .offset(y: -50)
                     
                     Text("Tap to continue")
                         .font(.custom("Audiowide", size: 18))
