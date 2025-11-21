@@ -17,5 +17,8 @@ struct StepDisplayModel: Identifiable {
     let isUnlocked: Bool
     let isCheckpoint: Bool
     let isGoal: Bool
+    var isClaimed: Bool = false
+    // NEW: kontrol tampil/sembunyi gambar goal per-step (default: tidak tampil)
+    var isGoalImageVisible: Bool = false
 }
 

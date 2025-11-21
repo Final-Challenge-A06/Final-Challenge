@@ -14,17 +14,19 @@ import SwiftData
 final class GoalViewModel: ObservableObject {
     // MARK: - Step 1 Fields
     @Published private var _goalName: String = ""
-    @Published private var _priceText: Int = 0
+    @Published var priceText: String = ""
+    
     @Published var selectedItem: PhotosPickerItem? = nil
     @Published var selectedImage: UIImage? = nil
     
     // MARK: - Step 2 Fields
     @Published var selectedDays: Set<String> = []
-    @Published private var _amountText: Int = 0
+    @Published var amountText: String = ""
     
     // MARK: - Modal & Flow State
     @Published var showGoalModal: Bool = false
     @Published var activeStep: Int = 1
+    @Published var currentGoalIsClaimed: Bool = false
     
     // MARK: - Reward Claim Modal
     @Published var showClaimModal: Bool = false
@@ -47,6 +49,9 @@ final class GoalViewModel: ObservableObject {
     var formattedTotalSaving: String {
         numberFormatter.string(from: NSNumber(value: totalSaving)) ?? "\(totalSaving)"
     }
+    private func formatWithGrouping(_ value: Int) -> String {
+        numberFormatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
     private let numberFormatter: NumberFormatter = {
         let nf = NumberFormatter()
         nf.numberStyle = .decimal
@@ -64,20 +69,12 @@ final class GoalViewModel: ObservableObject {
         }
     }
     
-    var priceText: String {
-        get { _priceText == 0 ? "" : "\(_priceText)" }
-        set {
-            _priceText = Int(newValue) ?? 0
-            validateStep1()
-        }
+    var priceValue: Int {
+        Int(priceText) ?? 0
     }
     
-    var amountText: String {
-        get { _amountText == 0 ? "" : "\(_amountText)" }
-        set {
-            _amountText = Int(newValue) ?? 0
-            validateStep2()
-        }
+    var amountValue: Int {
+        Int(amountText) ?? 0
     }
     
     var savingDaysArray: [String] {
@@ -89,18 +86,23 @@ final class GoalViewModel: ObservableObject {
     @Published var isStep2Valid: Bool = false
     
     func validateStep1() {
-        isStep1Valid = !goalName.trimmingCharacters(in: .whitespaces).isEmpty && _priceText > 0 && selectedImage != nil
+        let trimmedName = goalName.trimmingCharacters(in: .whitespacesAndNewlines)
+        isStep1Valid = !trimmedName.isEmpty && priceValue >= 50_000
     }
     
     func validateStep2() {
-        isStep2Valid = !selectedDays.isEmpty && _amountText > 0
+        isStep2Valid =
+        !selectedDays.isEmpty &&
+        priceValue > 0 &&
+        amountValue >= 1_000 &&
+        amountValue < priceValue
     }
     
     // MARK: - Save Goal
     func saveGoal(context: ModelContext) {
         guard !goalName.isEmpty,
-              Int(priceText) != nil,
-              Int(amountText) != nil,
+              priceValue > 0,
+              amountValue > 0,
               !selectedDays.isEmpty else {
             print("❌ Tidak bisa simpan, data belum lengkap")
             return
@@ -110,10 +112,10 @@ final class GoalViewModel: ObservableObject {
         
         let goal = GoalModel(
             name: goalName,
-            targetPrice: _priceText,
+            targetPrice: priceValue,
             imageData: imageData,
             savingDays: Array(selectedDays),
-            amountPerSave: _amountText
+            amountPerSave: amountValue
         )
         context.insert(goal)
         
@@ -121,24 +123,15 @@ final class GoalViewModel: ObservableObject {
             try context.save()
             print("✅ Berhasil simpan goal:", goal.name)
             
-            // Buat progress entity baru untuk goal ini
-            latestGoal = goal
-            totalSteps = goal.totalSteps
-            
             let progressEntity = SavingProgressEntity(
-                goalID: goal.name,
+                goalID: goal.id,
                 totalSaving: 0,
                 passedSteps: 0
             )
             context.insert(progressEntity)
             try context.save()
             
-            currentProgress = progressEntity
-            passedSteps = 0
-            totalSaving = 0
-            
-            // Refresh katalog reward
-            rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
+            self.currentGoalIsClaimed = false
         } catch {
             print("❌ Gagal simpan:", error.localizedDescription)
         }
@@ -146,7 +139,7 @@ final class GoalViewModel: ObservableObject {
     
     // MARK: - Load Progress dari SwiftData
     func loadProgress(for goal: GoalModel, context: ModelContext) {
-        let goalID = goal.name
+        let goalID = goal.id
         let descriptor = FetchDescriptor<SavingProgressEntity>(
             predicate: #Predicate { $0.goalID == goalID }
         )
@@ -170,16 +163,16 @@ final class GoalViewModel: ObservableObject {
     }
     
     // MARK: - Save Progress ke SwiftData
-    private func saveProgress(context: ModelContext) {
+    private func saveProgress(currentGoalSaving: Int, currentGoalPassedSteps: Int, context: ModelContext) {
         guard let progress = currentProgress else { return }
         
-        progress.totalSaving = totalSaving
-        progress.passedSteps = passedSteps
+        progress.totalSaving = currentGoalSaving
+        progress.passedSteps = currentGoalPassedSteps
         progress.updatedAt = Date()
         
         do {
             try context.save()
-            print("✅ Progress saved: totalSaving=\(totalSaving), passedSteps=\(passedSteps)")
+            print("✅ Progress saved: totalSaving=\(currentGoalSaving), passedSteps=\(currentGoalPassedSteps)")
         } catch {
             print("❌ Save progress failed:", error.localizedDescription)
         }
@@ -187,29 +180,66 @@ final class GoalViewModel: ObservableObject {
     
     // MARK: - Update Goals
     func updateGoals(_ goals: [GoalModel], context: ModelContext) {
-        let previousGoalId = latestGoal?.name
+        let previousGoalId = latestGoal?.id
         latestGoal = goals.last
         
-        if let goal = latestGoal {
-            totalSteps = goal.totalSteps
-            
-            if previousGoalId != goal.name {
-                loadProgress(for: goal, context: context)
-            }
-        } else {
+        // MARK: 1. Handle jika tidak ada goal sama sekali
+        if goals.isEmpty {
             totalSteps = 0
             passedSteps = 0
             totalSaving = 0
             currentProgress = nil
+            rewardCatalog = []
+            return
         }
         
-        rewardCatalog = RewardCatalog.rewards(forTotalSteps: totalSteps)
+        // MARK: 2. Pisahkan goals
+        let currentGoal = goals.last!
+        let completedGoals = goals.dropLast()
+        
+        // MARK: 3. Hitung progres kumulatif
+        var cumulativeTotalSteps = 0
+        var cumulativePassedSteps = 0
+        
+        for goal in completedGoals {
+            cumulativeTotalSteps += goal.totalSteps
+            cumulativePassedSteps += goal.totalSteps
+        }
+        
+        // MARK: 4. Load progress untuk goal saat ini
+        if previousGoalId != currentGoal.id {
+            loadProgress(for: currentGoal, context: context)
+        }
+        
+        // MARK: 5. Gabungkan progres goal aktif ke total kumulatif
+        cumulativeTotalSteps += currentGoal.totalSteps
+        cumulativePassedSteps += self.passedSteps
+        
+        // MARK: 6. Set @Published variables untuk UI
+        self.totalSteps = cumulativeTotalSteps
+        self.passedSteps = cumulativePassedSteps
+        
+        // MARK: 7. Update reward
+        self.rewardCatalog = RewardCatalog.rewards(forTotalSteps: cumulativeTotalSteps)
     }
     
     // MARK: - Circle Tap
     func onCircleTap() {
-        activeStep = 1
+        resetFormForNewGoal()
         showGoalModal = true
+    }
+    
+    func resetFormForNewGoal() {
+        _goalName = ""
+        priceText = ""
+        selectedItem = nil
+        selectedImage = nil
+        selectedDays = []
+        amountText = ""
+        
+        isStep1Valid = false
+        isStep2Valid = false
+        activeStep = 1
     }
     
     // MARK: - Reward Claim Flow
@@ -249,6 +279,7 @@ final class GoalViewModel: ObservableObject {
         }
         do {
             try context.save()
+            loadRewardsForView(context: context)
         } catch {
             print("❌ Save reward failed:", error.localizedDescription)
         }
@@ -263,23 +294,39 @@ final class GoalViewModel: ObservableObject {
     
     func loadRewardsForView(context: ModelContext) {
         let entities = fetchAllRewards(context: context)
+        
         rewardViewItems = rewardCatalog.map { meta in
             if let ent = entities.first(where: { $0.id == meta.id }) {
+                // Sudah pernah dibuat di confirmClaim
                 return RewardState(
                     id: ent.id,
                     title: ent.title,
                     imageName: ent.imageName,
-                    state: ent.claimed ? .claimed : (meta.step <= passedSteps ? .claimable : .locked)
+                    state: ent.claimed ? .claimed : .locked
                 )
             } else {
+                // Belum pernah di-claim → tetap locked di bottom bar
                 return RewardState(
                     id: meta.id,
                     title: meta.title,
                     imageName: meta.imageName,
-                    state: meta.step <= passedSteps ? .claimable : .locked
+                    state: .locked
                 )
             }
         }
+    }
+    
+    func getClaimedSteps(context: ModelContext) -> Set<Int> {
+        let entities = fetchAllRewards(context: context)
+        var claimedSteps: Set<Int> = []
+        
+        for meta in rewardCatalog {
+            if let entity = entities.first(where: { $0.id == meta.id }), entity.claimed {
+                claimedSteps.insert(meta.step)
+            }
+        }
+        
+        return claimedSteps
     }
     
     // MARK: - SwiftData helpers
@@ -312,7 +359,7 @@ final class GoalViewModel: ObservableObject {
         guard amount > 0 else { return }
         totalSaving += amount
         recalcPassedStepsFromSaving()
-        saveProgress(context: context)
+        saveProgress(currentGoalSaving: totalSaving, currentGoalPassedSteps: passedSteps, context: context)
     }
     
     private func recalcPassedStepsFromSaving() {
@@ -329,8 +376,8 @@ final class GoalViewModel: ObservableObject {
     
     func resetProgress(context: ModelContext) {
         totalSaving = 0
-        passedSteps = 0
-        saveProgress(context: context)
+        //        passedSteps = 0
+        saveProgress(currentGoalSaving: 0, currentGoalPassedSteps: 0, context: context)
     }
     
     // MARK: - Update lastBalance ke SwiftData
@@ -345,21 +392,61 @@ final class GoalViewModel: ObservableObject {
     }
     
     // MARK: - NEW: Progress dari BLE balance
-    func updateProgressFromBLEBalance(_ balance: Int64, context: ModelContext) {
-        guard let goal = latestGoal, goal.amountPerSave > 0 else {
-            passedSteps = 0
-            totalSaving = Int(balance)
-            saveProgress(context: context)
+    func updateProgressFromBLEBalance(_ balance: Int64, allGoals: [GoalModel], context: ModelContext) {
+        guard let currentGoal = allGoals.last, currentGoal.amountPerSave > 0 else {
+            self.totalSaving = Int(balance)
             return
         }
-        // sinkronkan totalSaving dengan saldo device (opsional tapi biasanya diinginkan)
-        totalSaving = Int(balance)
-        let computed = Int(balance) / goal.amountPerSave
-        let clamped = min(computed, totalSteps)
-        if clamped != passedSteps {
-            passedSteps = clamped
+        
+        let oldCumulativePassedSteps = self.passedSteps
+        let wasGoalFinished = (oldCumulativePassedSteps >= self.totalSteps && self.totalSteps > 0)
+        
+        // Hitung progres hanya untuk goal saat ini
+        var newTotalSavingCurrentGoal = Int(balance)
+        var newPassedStepsCurrentGoal = 0
+        
+        if self.currentGoalIsClaimed && balance == 0 {
+            newTotalSavingCurrentGoal = 0
+            newPassedStepsCurrentGoal = currentGoal.totalSteps
+            
+        } else if currentGoal.amountPerSave > 0 {
+            newTotalSavingCurrentGoal = Int(balance)
+            let calculatedSteps = newTotalSavingCurrentGoal / currentGoal.amountPerSave
+            newPassedStepsCurrentGoal = min(calculatedSteps, currentGoal.totalSteps)
+            
+        } else {
+            newTotalSavingCurrentGoal = Int(balance)
+            newPassedStepsCurrentGoal = 0
         }
-        saveProgress(context: context)
+        
+        saveProgress(
+            currentGoalSaving: newTotalSavingCurrentGoal,
+            currentGoalPassedSteps: newPassedStepsCurrentGoal,
+            context: context
+        )
+        
+        let completedGoals = allGoals.dropLast()
+        var cumulativeTotalSteps = 0
+        var cumulativePassedSteps = 0
+        
+        for goal in completedGoals {
+            cumulativeTotalSteps += goal.totalSteps
+            cumulativePassedSteps += goal.totalSteps
+        }
+        
+        cumulativeTotalSteps += currentGoal.totalSteps
+        cumulativePassedSteps += newPassedStepsCurrentGoal
+        
+        if cumulativePassedSteps > oldCumulativePassedSteps {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                SoundManager.shared.play(.stoneProgress)
+            }
+        }
+        
+        // 5. Update @Published properties untuk ui (CircleStepView)
+        self.totalSteps = cumulativeTotalSteps
+        self.passedSteps = cumulativePassedSteps
+        self.totalSaving = newTotalSavingCurrentGoal
     }
 }
 

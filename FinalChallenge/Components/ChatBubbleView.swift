@@ -1,29 +1,52 @@
 import SwiftUI
 
 struct ChatBubbleView: View {
-    var text: String
+    @ObservedObject var model: ChatModel
+    var index: Int? = nil
+    var enableTypewriter: Bool = true
+
+    private var displayedText: String {
+        if let i = index, model.messages.indices.contains(i) {
+            return model.messages[i]
+        } else if enableTypewriter {
+            return model.typedText
+        } else {
+            return model.currentText
+        }
+    }
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color(white: 0.96))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.black.opacity(0.1), lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
-                .frame(width: 200, height: 60)
-
-            Text(text)
-                .font(.footnote)
-                .foregroundStyle(.black.opacity(0.8))
-                .padding(.vertical, 10)
+        ZStack() {
+            Text(displayedText)
+                .font(.custom("audiowide", size: 20))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white)
+                .padding(.vertical, 8)
                 .padding(.horizontal, 12)
-                .frame(width: 200, alignment: .leading)
+                .frame(maxWidth: 250, alignment: .center)
+                .fixedSize(horizontal: false, vertical: true)
+                .background(
+                    Rectangle()
+                        .fill(Color.darkBlue)
+                )
+        }
+        .onAppear {
+            if enableTypewriter && index == nil {
+                model.startTypingAnimation()
+            }
+        }
+        .onChange(of: model.currentIndex) { _, _ in
+            if enableTypewriter && index == nil {
+                model.startTypingAnimation()
+            }
         }
     }
 }
 
 #Preview {
-    ChatBubbleView(text: "Let’s start! Try putting some\nmoney into your piggy bank.")
+    let vm = ChatModel()
+    return VStack(spacing: 16) {
+        ChatBubbleView(model: vm)
+        ChatBubbleView(model: vm, index: 1)
+    }
 }

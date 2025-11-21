@@ -6,25 +6,38 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct StreakView: View {
     @ObservedObject var streakManager: StreakManager
     
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "flame.fill")
-                .foregroundColor(.orange)
-                .font(.title2)
-                .symbolEffect(.bounce, value: streakManager.currentStreak)
+        ZStack{
+            Image("background_streak")
             
-            Text("\(streakManager.currentStreak)-day streak")
-                .font(.headline)
-                .foregroundColor(.white)
+            VStack(spacing: 8) {
+                Image(systemName: "flame.fill")
+                    .resizable()
+                    .frame(width: 40, height: 52)
+                    .foregroundColor(.orange)
+                    .symbolEffect(.bounce, value: streakManager.currentStreak)
+                
+                Text("\(streakManager.currentStreak)")
+                    .foregroundColor(.white)
+                    .font(.custom("audiowide", size: 30))
+            }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(Color(.sRGB, red: 0.18, green: 0.35, blue: 0.45))
-        .cornerRadius(16)
-        .shadow(radius: 4)
     }
+}
+
+#Preview {
+    let container = try! ModelContainer(
+        for: GoalModel.self, RewardEntity.self, SavingProgressEntity.self, StreakEntity.self,
+        configurations: .init(isStoredInMemoryOnly: true)
+    )
+    let manager = StreakManager(context: container.mainContext)
+    manager.currentStreak = 5
+    return StreakView(streakManager: manager)
+        .padding()
+        .modelContainer(container)
 }

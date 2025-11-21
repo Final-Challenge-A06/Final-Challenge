@@ -7,53 +7,56 @@ struct FindingBotModal: View {
     
     var body: some View {
         VStack {
-            ZStack() {
+            ZStack {
                 Image("background_modal")
                     .resizable()
-                    .scaledToFit()
+                    .scaledToFill()
+                    .frame(height: 900)
                 
-                // Background modal image
-                Image("modalFindingBot")
+                Image("modal_finding_bot")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 450)
+                    .frame(width: 550)
                 
-                // Close button
-                Button(action: onClose) {
-                    Image("closeButton")
+                Button(action: {
+                    SoundManager.shared.play(.buttonCloseClick)
+                    onClose()
+                }) {
+                    Image("close_button")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 100, height: 100)
                 }
                 .buttonStyle(.plain)
-                .offset(x: 160, y: -180)
+                .offset(x: 200, y: -205)
                 
-                // Content
-                VStack(spacing: 14) {
-                    Text("Find Bot")
-                        .font(.custom("Audiowide", size: 24))
+                VStack(spacing: 16) {
+                    Text("Finding Bot...")
+                        .font(.custom("Audiowide", size: 30))
                         .foregroundColor(.white)
                         .padding(.top, 60)
                     
                     Image("robot")
                         .resizable()
+                        .frame(width: 150, height: 200)
                         .scaledToFit()
-                        .frame(height: 128)
-                        .padding(.top, 4)
                     
                     if let name = connectedName, !name.isEmpty {
                         Text(name)
-                            .font(.custom("Audiowide", size: 16))
+                            .font(.custom("Audiowide", size: 24))
                             .foregroundColor(.white.opacity(0.9))
                     }
                     
-                    Button(action: onSetup) {
+                    Button(action: {
+                        SoundManager.shared.play(.buttonClick)
+                        onSetup()
+                    }) {
                         Text("Connect")
-                            .font(.custom("Audiowide", size: 16))
+                            .font(.custom("Audiowide", size: 24))
                             .foregroundColor(.white)
                             .padding(.vertical, 10)
                             .padding(.horizontal, 100)
-                            .background(Color.yellowButton)
+                            .background(Color.yellow.opacity(0.7))
                             .cornerRadius(30)
                     }
                     .buttonStyle(.plain)
@@ -68,9 +71,9 @@ struct FindingBotModal: View {
 
 #Preview {
     ZStack {
-        Color.black.opacity(0.25).ignoresSafeArea()
+        Color.black.opacity(0.5).ignoresSafeArea()
         FindingBotModal(
-            connectedName: "ESP32 Roboo",
+            connectedName: "Billo",
             onClose: {},
             onSetup: {}
         )

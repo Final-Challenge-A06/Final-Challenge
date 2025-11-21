@@ -6,7 +6,11 @@ struct GoalView: View {
     
     @StateObject private var goalVm = GoalViewModel()
     @StateObject private var bottomItemsVM = BottomItemSelectionViewModel()
-    @StateObject private var circleVM = CircleStepViewModel(totalSteps: 0, passedSteps: 0)
+    @StateObject private var circleVM = CircleStepViewModel(goalSteps: [], passedSteps: 0)
+    
+    // Chat dependencies
+    @StateObject private var chatModel = ChatModel()
+    @StateObject private var chatVMHolder = ChatVMHolder()
     
     @StateObject private var streakManagerHolder = OptionalStreakManagerHolder()
     @Environment(\.modelContext) private var context
@@ -19,233 +23,523 @@ struct GoalView: View {
     
     @State private var showSavingModal = false
     @State private var savingAmountText = ""
+    @State private var showBLESettingsModal = false
+    
+    // Claim modal state
+    @State private var showCircleClaimModal = false
+    @State private var pendingCircleClaimStep: StepDisplayModel? = nil
+    
+    // Starter reward path (first money only)
+    @AppStorage("hasCompletedTrial") private var hasCompletedTrial: Bool = false
+    @State private var showStarterClaim = false
+    @State private var showStarterReward = false
+    
+    // Animation states
+    @State private var savingCardOffset: CGFloat = -200
+    @State private var savingCardOpacity: Double = 0
+    @State private var streakViewOffset: CGFloat = 200
+    @State private var streakViewOpacity: Double = 0
+    @State private var circleStepOffset: CGFloat = 100
+    @State private var circleStepOpacity: Double = 0
+    @State private var bottomItemsOffset: CGFloat = 300
+    @State private var bottomItemsOpacity: Double = 0
+    @State private var robotOffset: CGFloat = -100
+    @State private var robotOpacity: Double = 0
+    @State private var robotFloatOffset: CGFloat = 0
+    @State private var robotRotation: Double = -10
+    @State private var chatBubbleScale: Double = 0
+    @State private var chatBubbleOpacity: Double = 0
+    @State private var frameTopOffset: CGFloat = -50
+    @State private var frameTopOpacity: Double = 0
     
     var body: some View {
         ZStack {
-            Image("bg_main")
-                .resizable()
-                .ignoresSafeArea()
-            
-            VStack {
-                VStack {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        VStack() {
-                            if goals.isEmpty {
-                                Button {
-                                    goalVm.onCircleTap()
-                                } label: {
-                                    SetGoalView()
-                                }
-                            }
-                            
-                            CircleStepView(
-                                viewModel: circleVM
-                            ) { step in
-                                if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
-                                    goalVm.tryOpenClaim(for: step.id, context: context)
-                                    return
-                                }
-                                
-                                if step.isGoal {
-                                    goalVm.onCircleTap()
-                                    return
-                                }
-                            }
-                            .padding(.vertical, 60)
-                            .padding(.bottom, 180)
-                            .frame(maxWidth: .infinity)
-                            .contentShape(Rectangle())
-                        }
-                        .padding(.horizontal, 12)
-                    }
-                    
-                    // Button complete goal
-                    if goalVm.passedSteps >= goalVm.totalSteps, goalVm.totalSteps > 0 {
-                        VStack(spacing: 20) {
-                            Text("Goal Complete!")
-                                .font(.title.bold())
-                                .foregroundColor(.white)
-                            
-                            Button {
-                                bleVM.sendResetToDevice()
-                                goalVm.resetProgress(context: context)
-                            } label: {
-                                Text("Take Your Money")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .frame(maxWidth: .infinity)
-                                    .cornerRadius(18)
-                                    .shadow(radius: 4)
-                            }
-                            .padding(.horizontal, 40)
-                        }
-                        .padding(.bottom, 220)
-                    }
-                    
-                    ZStack (alignment: .trailing) {
-                        if let sm = bleVM.streakManager {
-                                StreakView(streakManager: sm)
-                                    .padding(.top, 10)
-                            }
-                        Spacer()
-                        HStack {
-                            SavingCardView(
-                                title: "My Saving",
-                                totalSaving: String(bleVM.lastBalance)
-                            )
-                            .onTapGesture {
-                                savingAmountText = ""
-                                showSavingModal = true
-                            }
-                            Spacer()
-                        }
-                    }
-                }
-                .frame(height: 1100)
-                .background(
-                    RoundedRectangle(cornerRadius: 34)
-                        .fill(.ultraThinMaterial)
-                        .opacity(0.4)
-                )
-                
-                // 3) Panel Reward bawah
-                VStack {
-                    ZStack (alignment: .topLeading){
-                        BottomItemSelectionView(viewModel: bottomItemsVM)
-                            .onAppear {
-                                // Hook selection callback
-                                bottomItemsVM.onSelect = { item in
-                                    if item.state == .claimable,
-                                       let meta = vmRewardMeta(for: item) {
-                                        goalVm.openClaim(for: meta, context: context)
-                                    }
-                                }
-                                // Initial load and sync items
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-                            }
-                            .onChange(of: goalVm.passedSteps) { _, _ in
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-                            }
-                            .onChange(of: goalVm.rewardViewItems) { _, newItems in
-                                bottomItemsVM.setItems(newItems)
-                            }
-                    }
-                }
-                .padding(.vertical, 20)
-            }
-            .padding(40)
-            
-            // Modal Set Goal
-            if goalVm.showGoalModal {
-                CenteredModal(isPresented: $goalVm.showGoalModal) {
-                    if goalVm.activeStep == 1 {
-                        GoalModalStep1View(
-                            vm: goalVm,
-                            onNext: { goalVm.goToNextStep() },
-                            onClose: { goalVm.closeModal() }
-                        )
-                    } else {
-                        GoalModalStep2View(
-                            vm: goalVm,
-                            onDone: {
-                                goalVm.saveGoal(context: context)
-                                // Segera refresh reward dan sinkronkan ke panel bawah
-                                goalVm.loadRewardsForView(context: context)
-                                bottomItemsVM.setItems(goalVm.rewardViewItems)
-                                goalVm.closeModal()
-                            },
-                            onBack: { goalVm.activeStep = 1 }
-                        )
-                    }
-                }
-                .zIndex(2)
-            }
-            
-            // Modal Claim Reward
-            if goalVm.showClaimModal, let meta = goalVm.pendingClaim {
-                CenteredModal(isPresented: $goalVm.showClaimModal) {
-                    BottomClaimModalView(
-                        title: meta.title,
-                        imageName: meta.imageName,
-                        onCancel: { goalVm.cancelClaim() },
-                        onClaim: {
-                            goalVm.confirmClaim(context: context)
-                            goalVm.loadRewardsForView(context: context)
-                            bottomItemsVM.setItems(goalVm.rewardViewItems)
-                        }
-                    )
-                }
-                .zIndex(3)
-            }
-            
-            // Modal Input Saving
-            if showSavingModal {
-                CenteredModal(isPresented: $showSavingModal) {
-                    SavingInputModalView(
-                        title: "Add Saving",
-                        amountText: $savingAmountText,
-                        onCancel: { showSavingModal = false },
-                        onSave: { _ in
-                            // Tidak lagi mengubah progress dari modal.
-                            showSavingModal = false
-                            // Jika ingin, bisa tetap refresh UI, tapi tidak perlu mengubah vm.
-                            goalVm.loadRewardsForView(context: context)
-                            bottomItemsVM.setItems(goalVm.rewardViewItems)
-                        }
-                    )
-                }
-                .zIndex(4)
-            }
+            backgroundLayer
+            mainContentLayer
+            topBarLayer
+            settingsButtonLayer
+            robotAndChatLayer
+            modalsLayer
         }
-        .onAppear {
-            // Create StreakManager once when context is available
-            if streakManagerHolder.manager == nil {
-                streakManagerHolder.manager = StreakManager(context: context)
-            }
-            goalVm.updateGoals(goals, context: context)
-            goalVm.loadRewardsForView(context: context)
-            bottomItemsVM.setItems(goalVm.rewardViewItems)
-            // sync circle VM initial state
-            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
-            bleVM.setContext(context)
-            bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
-        }
+        .onAppear(perform: handleOnAppear)
         .onChange(of: goals) { _, newGoals in
-            goalVm.updateGoals(newGoals, context: context)
-            goalVm.loadRewardsForView(context: context)
-            bottomItemsVM.setItems(goalVm.rewardViewItems)
-            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
+            handleGoalsChange(newGoals)
         }
-        .onChange(of: goalVm.totalSteps) { _, _ in
-            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
+        .onChange(of: goalVm.passedSteps) { _, newSteps in
+            handlePassedStepsChange(newSteps)
         }
-        .onChange(of: goalVm.passedSteps) { _, _ in
-            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
-        }
-        // NEW: sinkronkan progress dari BLE (gunakan lastBalance kumulatif)
         .onChange(of: bleVM.lastBalance) { _, newBalance in
-            goalVm.updateProgressFromBLEBalance(newBalance, context: context)
-            goalVm.loadRewardsForView(context: context)
-            bottomItemsVM.setItems(goalVm.rewardViewItems)
-            circleVM.updateSteps(totalSteps: goalVm.totalSteps, passedSteps: goalVm.passedSteps)
+            handleBalanceChange(Int(newBalance))
+        }
+        .onChange(of: goalVm.currentGoalIsClaimed) {
+            chatVMHolder.vm?.updateMessage(goals: goals)
         }
     }
     
-    // Helper: cari RewardMeta dari item panel
+    // MARK: - Layer Views
+    
+    private var backgroundLayer: some View {
+        Image("background_main")
+            .resizable()
+            .ignoresSafeArea()
+    }
+    
+    private var mainContentLayer: some View {
+        VStack {
+            circleStepSection
+            bottomItemsSection
+        }
+        .offset(y: 50)
+        .padding(.horizontal, 40)
+    }
+    
+    private var circleStepSection: some View {
+        VStack {
+            ScrollViewReader { proxy in
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack {
+                        circleStepContent
+                    }
+                    .padding(.horizontal, 12)
+                }
+                .frame(height: 960)
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        scrollToTarget(proxy: proxy)
+                    }
+                }
+                .onChange(of: goals) { _, _ in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        scrollToTarget(proxy: proxy)
+                    }
+                }
+            }
+        }
+        .background(frameTopBackground)
+    }
+    
+    private var circleStepContent: some View {
+        CircleStepView(
+            viewModel: circleVM,
+            goalImage: currentGoalImage,
+            leadingContent: { circleLeadingButtons },
+            onTap: handleCircleStepTap
+        )
+        .padding(.vertical, 60)
+        .padding(.bottom, 180)
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .offset(y: circleStepOffset)
+        .opacity(circleStepOpacity)
+    }
+    
+    private var currentGoalImage: UIImage? {
+        if let lastGoal = goals.last,
+           let imageData = lastGoal.imageData,
+           let uiImage = UIImage(data: imageData) {
+            return uiImage
+        }
+        return nil
+    }
+    
+    // NEW: peta gambar goal lama -> step goal akhir kumulatif
+    private var goalImagesByEndStep: [Int: UIImage] {
+        var mapping: [Int: UIImage] = [:]
+        var cumulative = 0
+        for goal in goals {
+            cumulative += goal.totalSteps
+            if let data = goal.imageData, let img = UIImage(data: data) {
+                mapping[cumulative] = img
+            }
+        }
+        return mapping
+    }
+    
+    @ViewBuilder
+    private var circleLeadingButtons: some View {
+        if goals.isEmpty || goalVm.currentGoalIsClaimed {
+            Button {
+                SoundManager.shared.play(.buttonClick)
+                goalVm.onCircleTap()
+            } label: {
+                Image("set_goal_button")
+            }
+            .padding(.bottom, -70)
+            .zIndex(2)
+        }
+        
+        if (goalVm.passedSteps >= goalVm.totalSteps && goalVm.totalSteps > 0) && !goalVm.currentGoalIsClaimed {
+            Button {
+                SoundManager.shared.play(.goalFinish)
+                bleVM.sendResetToDevice()
+                goalVm.currentGoalIsClaimed = true
+            } label: {
+                Image("unlockButton")
+            }
+            .padding(.bottom, -150)
+            .zIndex(2)
+        }
+    }
+    
+    private var frameTopBackground: some View {
+        Image("frame_top")
+            .offset(y: frameTopOffset)
+            .opacity(frameTopOpacity)
+    }
+    
+    private var bottomItemsSection: some View {
+        BottomItemSelectionView(viewModel: bottomItemsVM)
+            .padding(.top, 50)
+            .offset(y: bottomItemsOffset)
+            .opacity(bottomItemsOpacity)
+            .onAppear {
+                goalVm.loadRewardsForView(context: context)
+                bottomItemsVM.setItems(goalVm.rewardViewItems)
+            }
+            .onChange(of: goalVm.passedSteps) { _, _ in
+                goalVm.loadRewardsForView(context: context)
+                bottomItemsVM.setItems(goalVm.rewardViewItems)
+            }
+            .onChange(of: goalVm.rewardViewItems) { _, newItems in
+                bottomItemsVM.setItems(newItems)
+            }
+    }
+    
+    private var topBarLayer: some View {
+        HStack {
+            Spacer()
+            
+            SavingCardView(
+                title: goals.last?.name ?? "Hirono Blindbox",
+                current: goalVm.totalSaving,
+                target: goals.last?.targetPrice ?? 0
+            )
+            .padding(.trailing, 20)
+            .offset(x: savingCardOffset)
+            .opacity(savingCardOpacity)
+            
+            if let sm = bleVM.streakManager {
+                StreakView(streakManager: sm)
+                    .offset(x: streakViewOffset)
+                    .opacity(streakViewOpacity)
+            }
+            
+            Spacer()
+        }
+        .offset(y: -530)
+    }
+    
+    private var settingsButtonLayer: some View {
+        Button {
+            showBLESettingsModal = true
+        } label: {
+            Image(systemName: "gearshape.fill")
+                .font(.system(size: 36))
+                .foregroundColor(.white)
+                .padding(10)
+                .background(.yellowButton, in: Circle())
+        }
+        .offset(x: 420, y: -620)
+    }
+    
+    private var robotAndChatLayer: some View {
+        Group {
+            Image("robot")
+                .resizable()
+                .frame(width: 170, height: 250)
+                .offset(x: -500 + robotOffset, y: 350 + robotFloatOffset)
+                .rotationEffect(Angle(degrees: robotRotation))
+                .opacity(robotOpacity)
+            
+            ChatBubbleView(model: chatModel)
+                .offset(x: -300, y: 350)
+                .scaleEffect(chatBubbleScale)
+                .opacity(chatBubbleOpacity)
+        }
+    }
+    
+    @ViewBuilder
+    private var modalsLayer: some View {
+        if goalVm.showGoalModal {
+            ShowGoalModalView(goalVm: goalVm, bottomItemsVM: bottomItemsVM)
+        }
+        
+        if showBLESettingsModal {
+            CenteredModal(isPresented: $showBLESettingsModal) {
+                BLEConnectionModalView(
+                    onCancel: { showBLESettingsModal = false }
+                )
+                .environmentObject(bleVM)
+            }
+            .zIndex(5)
+        }
+        
+        if showCircleClaimModal, let step = pendingCircleClaimStep {
+            CenteredModal(isPresented: $showCircleClaimModal) {
+                if let meta = getRewardMeta(for: step.id) {
+                    ClaimModalView(
+                        title: meta.title,
+                        imageBaseName: meta.imageName,
+                        onClaim: {
+                            SoundManager.shared.play(.reward)
+                            handleClaimAction(for: meta)
+                        }
+                    )
+                }
+            }
+            .zIndex(6)
+        }
+    }
+    
+    // MARK: - Event Handlers
+    
+    private func handleCircleStepTap(_ step: StepDisplayModel) {
+        // Jika step adalah checkpoint/goal yang unlocked tapi belum di-claim, buka modal
+        if (step.isCheckpoint || step.isGoal), step.isUnlocked, !step.isClaimed {
+            pendingCircleClaimStep = step
+            showCircleClaimModal = true
+            return
+        }
+        
+        // Legacy behavior untuk step yang sudah di-claim
+        if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
+            goalVm.tryOpenClaim(for: step.id, context: context)
+            return
+        }
+    }
+    
+    private func handleClaimAction(for meta: RewardModel) {
+        goalVm.openClaim(for: meta, context: context)
+        goalVm.confirmClaim(context: context)
+        goalVm.loadRewardsForView(context: context)
+        bottomItemsVM.setItems(goalVm.rewardViewItems)
+        
+        let currentGoalStepsList = goals.map { $0.totalSteps }
+        let claimedSteps = goalVm.getClaimedSteps(context: context)
+        circleVM.updateSteps(
+            goalSteps: currentGoalStepsList,
+            passedSteps: goalVm.passedSteps,
+            claimedSteps: claimedSteps
+        )
+        
+        showCircleClaimModal = false
+        pendingCircleClaimStep = nil
+    }
+    
+    private func handleOnAppear() {
+        // Buat StreakManager sekali
+        bleVM.setContext(context)
+        if streakManagerHolder.manager == nil {
+            streakManagerHolder.manager = StreakManager(context: context)
+        }
+        goalVm.updateGoals(goals, context: context)
+        goalVm.loadRewardsForView(context: context)
+        bottomItemsVM.setItems(goalVm.rewardViewItems)
+        
+        // sync circle VM initial state
+        let goalStepsList = goals.map { $0.totalSteps }
+        let claimedSteps = goalVm.getClaimedSteps(context: context)
+        circleVM.updateSteps(goalSteps: goalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+        // NEW: update peta gambar goal per step goal akhir
+        circleVM.updateGoalImagesByEndStep(goalImagesByEndStep)
+        
+        bleVM.setContext(context)
+        bleVM.streakManager?.evaluateMissedDay(for: goalVm.savingDaysArray)
+        
+        // Inisialisasi ChatViewModel setelah bleVM tersedia dari Environment
+        if chatVMHolder.vm == nil {
+            chatVMHolder.vm = ChatViewModel(chat: chatModel, goalVM: goalVm, bleVM: bleVM)
+        }
+        chatVMHolder.vm?.updateMessage(goals: goals)
+        
+        // Start entrance animations
+        startEntranceAnimations()
+    }
+    
+    private func handleGoalsChange(_ newGoals: [GoalModel]) {
+        goalVm.updateGoals(newGoals, context: context)
+        goalVm.loadRewardsForView(context: context)
+        bottomItemsVM.setItems(goalVm.rewardViewItems)
+        
+        let newGoalStepsList = newGoals.map { $0.totalSteps }
+        let claimedSteps = goalVm.getClaimedSteps(context: context)
+        circleVM.updateSteps(goalSteps: newGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+        // NEW: update peta gambar setiap kali goals berubah
+        circleVM.updateGoalImagesByEndStep(goalImagesByEndStep)
+        
+        chatVMHolder.vm?.updateMessage(goals: newGoals)
+    }
+    
+    private func handlePassedStepsChange(_ newPassedSteps: Int) {
+        let currentGoalStepsList = goals.map { $0.totalSteps }
+        let claimedSteps = goalVm.getClaimedSteps(context: context)
+        circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: newPassedSteps, claimedSteps: claimedSteps)
+        chatVMHolder.vm?.updateMessage(goals: goals)
+    }
+    
+    private func handleBalanceChange(_ newBalance: Int) {
+        goalVm.updateProgressFromBLEBalance(Int64(newBalance), allGoals: goals, context: context)
+        goalVm.loadRewardsForView(context: context)
+        bottomItemsVM.setItems(goalVm.rewardViewItems)
+        
+        let currentGoalStepsList = goals.map { $0.totalSteps }
+        let claimedSteps = goalVm.getClaimedSteps(context: context)
+        circleVM.updateSteps(goalSteps: currentGoalStepsList, passedSteps: goalVm.passedSteps, claimedSteps: claimedSteps)
+        // NEW: pastikan mapping tetap terbarui
+        circleVM.updateGoalImagesByEndStep(goalImagesByEndStep)
+        
+        chatVMHolder.vm?.updateMessage(goals: goals)
+    }
+    
+    private func scrollToTarget(proxy: ScrollViewProxy) {
+        // 1. Get all goals except active goals
+        let previousGoals = goals.dropLast()
+        
+        // 2. Count total steps from passed goals
+        let previousStepsCount = previousGoals.reduce(0) { $0 + $1.totalSteps }
+        
+        // 3. Determine target ID
+        let targetStepID = previousStepsCount + 1
+        
+        print("Scrolling to step ID: \(targetStepID + 1)")
+        
+        withAnimation(.spring()) {
+            proxy.scrollTo(targetStepID, anchor: .bottom)
+        }
+    }
+    
     private func vmRewardMeta(for item: RewardState) -> RewardModel? {
         let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
     }
+    
+    private func getRewardMeta(for stepId: Int) -> RewardModel? {
+        let goalSteps = goals.map { $0.totalSteps }
+        guard !goalSteps.isEmpty else { return nil }
+        
+        var remaining = stepId
+        var goalIndex = 0
+        var relativeStep = stepId
+        
+        for (idx, stepsInGoal) in goalSteps.enumerated() {
+            if remaining <= stepsInGoal {
+                goalIndex = idx
+                relativeStep = remaining
+                break
+            } else {
+                remaining -= stepsInGoal
+            }
+        }
+        
+        guard goalIndex < goalSteps.count else { return nil }
+        
+        let stepsOfThatGoal = goalSteps[goalIndex]
+        
+        let catalog = RewardCatalog.rewards(forTotalSteps: stepsOfThatGoal)
+        
+        return catalog.first(where: { $0.step == relativeStep })
+    }
+    
+    private var circleClaimOverlay: some View {
+            Group {
+                if showCircleClaimModal, let step = pendingCircleClaimStep {
+                    CenteredModal(isPresented: $showCircleClaimModal) {
+                        if let meta = getRewardMeta(for: step.id) {
+                            ClaimModalView(
+                                title: meta.title,
+                                imageBaseName: meta.imageName,
+                                onClaim: {
+                                    // sama persis dengan yang kamu punya tadi:
+                                    goalVm.openClaim(for: meta, context: context)
+                                    goalVm.confirmClaim(context: context)
+                                    goalVm.loadRewardsForView(context: context)
+                                    bottomItemsVM.setItems(goalVm.rewardViewItems)
+                                    
+                                    let currentGoalStepsList = goals.map { $0.totalSteps }
+                                    var claimedSteps = goalVm.getClaimedSteps(context: context)
+                                    claimedSteps.insert(step.id)
+                                    circleVM.updateSteps(
+                                        goalSteps: currentGoalStepsList,
+                                        passedSteps: goalVm.passedSteps,
+                                        claimedSteps: claimedSteps
+                                    )
+                                    
+                                    showCircleClaimModal = false
+                                    pendingCircleClaimStep = nil
+                                }
+                            )
+                        }
+                    }
+                    .zIndex(6)
+                }
+            }
+        }
+    
+    private func startEntranceAnimations() {
+        // Frame top slide down from top
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.1)) {
+            frameTopOffset = 0
+            frameTopOpacity = 1
+        }
+        
+        // Saving card slide in from left
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.8).delay(0.3)) {
+            savingCardOffset = 0
+            savingCardOpacity = 1
+        }
+        
+        // Streak view slide in from right
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.8).delay(0.5)) {
+            streakViewOffset = 0
+            streakViewOpacity = 1
+        }
+        
+        // Circle step view slide up from bottom
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.4)) {
+            circleStepOffset = 0
+            circleStepOpacity = 1
+        }
+        
+        // Bottom items slide up from bottom
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.6)) {
+            bottomItemsOffset = 0
+            bottomItemsOpacity = 1
+        }
+        
+        // Robot slide in from left
+        withAnimation(.spring(response: 0.9, dampingFraction: 0.7).delay(0.7)) {
+            robotOffset = 0
+            robotOpacity = 1
+        }
+        
+        // Robot floating animation (continuous)
+        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true).delay(1.0)) {
+            robotFloatOffset = -15
+        }
+        
+        // Robot subtle rotation (continuous)
+        withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true).delay(1.0)) {
+            robotRotation = -5
+        }
+        
+        // Chat bubble pop in with scale
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.6).delay(1.0)) {
+            chatBubbleScale = 1.0
+            chatBubbleOpacity = 1
+        }
+    }
 }
 
-// Helper holder to allow optional @StateObject-like storage
 final class OptionalStreakManagerHolder: ObservableObject {
     @Published var manager: StreakManager?
+}
+
+// Holder untuk ChatViewModel agar bisa dibuat setelah bleVM tersedia dari Environment
+final class ChatVMHolder: ObservableObject {
+    @Published var vm: ChatViewModel?
 }
 
 #Preview {
     GoalView().environmentObject(BLEViewModel())
 }
+

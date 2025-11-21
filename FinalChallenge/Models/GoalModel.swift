@@ -10,6 +10,9 @@ import Foundation
 
 @Model
 final class GoalModel {
+    @Attribute(.unique) var id: String
+    var createdAt: Date // untuk sorting
+    
     var name: String
     var targetPrice: Int
     var imageData: Data?
@@ -22,14 +25,18 @@ final class GoalModel {
     }
 
     init(
+        id: String = UUID().uuidString,
+        createdAt: Date = Date(),
         name: String,
         targetPrice: Int,
         imageData: Data? = nil,
         savingDays: [String],
-        amountPerSave: Int,
+        amountPerSave: Int, 
         totalSaving: Int = 0,
         passedSteps: Int = 0
     ) {
+        self.id = id
+        self.createdAt = createdAt
         self.name = name
         self.targetPrice = targetPrice
         self.imageData = imageData

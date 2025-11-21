@@ -10,15 +10,17 @@ import Combine
 
 final class BottomItemSelectionViewModel: ObservableObject {
     @Published private(set) var items: [RewardState] = []
+    @Published var selectedID: String?
+    @Published var animatingID: String?
     
-    var onSelect: ((RewardState) -> Void)? // Dipanggil saat item dipilih dari UI.
-
+    var onSelect: ((RewardState) -> Void)?
+    
     // Inisialisasi VM dengan daftar item awal dan callback seleksi.
     init(items: [RewardState] = [], onSelect: ((RewardState) -> Void)? = nil) {
         self.items = items
         self.onSelect = onSelect
     }
-
+    
     // Ganti seluruh daftar item yang ditampilkan.
     func setItems(_ newItems: [RewardState]) {
         items = newItems
@@ -27,13 +29,24 @@ final class BottomItemSelectionViewModel: ObservableObject {
     // Tangani tap: jika claimable ubah ke claimed lalu panggil callback; lainnya hanya panggil callback.
     func handleTap(on item: RewardState) {
         guard let idx = items.firstIndex(of: item) else { return }
-
-        switch items[idx].state {
-        case .claimable:
-            items[idx].state = .claimed
-            onSelect?(items[idx])
-        case .claimed, .locked:
-            onSelect?(items[idx])
+        guard items[idx].state == .claimed else { return }
+        
+        selectedID = items[idx].id
+        animatingID = items[idx].id
+        
+        // Kirim ke IoT
+        NotificationCenter.default.post(
+            name: .didSelectAccessory,
+            object: nil,
+            userInfo: ["photoName": items[idx].imageName]
+        )
+        
+        onSelect?(items[idx])
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + (0.18 * 7 * 3)) {
+            if self.animatingID == item.id {
+                self.animatingID = nil
+            }
         }
     }
     
@@ -42,15 +55,13 @@ final class BottomItemSelectionViewModel: ObservableObject {
         case claimable
         case locked
     }
-
+    
     // Petakan item ke bentuk presentasi UI (claimed/claimable/locked).
     func presentation(for item: RewardState) -> RewardPresentation {
         switch item.state {
         case .claimed:
             return .claimed(imageName: item.imageName)
-        case .claimable:
-            return .claimable
-        case .locked:
+        case .claimable, .locked:
             return .locked
         }
     }

@@ -2,42 +2,51 @@ import SwiftUI
 
 struct BottomItemSelectionView: View {
     @ObservedObject var viewModel: BottomItemSelectionViewModel
-
-    private let itemWidth: CGFloat = 160
-    private let itemHeight: CGFloat = 100
-    private let hSpacing: CGFloat = 24
-
+    
     var body: some View {
         ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: 24)
-                .fill(.ultraThinMaterial.opacity(0.4))
-                .frame(height: 140)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: hSpacing) {
-                    ForEach(Array(viewModel.items.enumerated()), id: \.element.id) { index, item in
-                        // Hanya konten, tanpa kartu latar per-item
-                        content(for: item)
-                            .frame(width: itemWidth, height: itemHeight)
+            Image("frame_bottom")
+                .opacity(0.3)
+            
+            if viewModel.items.isEmpty {
+                HStack {
+                    Text("Unlock collections by earning rewards")
+                        .font(.custom("audiowide", size: 30))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 24) {
+                        ForEach(Array(viewModel.items.enumerated()), id: \.element.id) { index, item in
+                            contentReward(
+                                for: item,
+                                isSelected: viewModel.selectedID == item.id
+                            )
+                            .frame(width: 160, height: 120)
                             .contentShape(Rectangle())
-                            .onTapGesture { viewModel.handleTap(on: item) }
-                            // Tambahkan separator di kanan setiap item kecuali yang terakhir
+                            .onTapGesture {
+                                SoundManager.shared.play(.reward)
+                                viewModel.handleTap(on: item)
+                            }
                             .overlay(alignment: .trailing) {
                                 if index < viewModel.items.count - 1 {
                                     separator
-                                        .frame(height: itemHeight - 12)
-                                        .offset(x: hSpacing / 2) // sejajarkan dengan spacing HStack
+                                        .frame(height: 88)
+                                        .offset(x: 12)
                                 }
                             }
+                        }
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 20)
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 20)
             }
         }
     }
-
-    // Garis pemisah vertikal dengan efek highlight seperti contoh
+    
     private var separator: some View {
         RoundedRectangle(cornerRadius: 2)
             .fill(
@@ -55,42 +64,66 @@ struct BottomItemSelectionView: View {
             .shadow(color: .white.opacity(0.25), radius: 2, x: 0, y: 0)
             .shadow(color: .black.opacity(0.15), radius: 1, x: 0, y: 0)
     }
-
+    
     @ViewBuilder
-    private func content(for item: RewardState) -> some View {
+    private func contentReward(for item: RewardState, isSelected: Bool) -> some View {
         switch viewModel.presentation(for: item) {
         case .claimed(let imageName):
-            Image(uiImage: UIImage(named: imageName) ?? UIImage(systemName: "gift.fill")!)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 120, height: 80)
+            VStack(spacing: 6) {
+                if isSelected && viewModel.animatingID == item.id {
+                    AnimatedAccessoryView(baseName: imageName)
+                        .frame(width: 120, height: 80)
+                } else {
+                    Image("\(imageName)1")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 120, height: 80)
+                }
 
-        case .claimable:
-            VStack(spacing: 8) {
-                Image(systemName: "gift.fill")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(.white)
-                Text("Tap to claim")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.9))
+                radioCircle(isSelected: isSelected)
             }
-
+            
+        case .claimable:
+            VStack(spacing: 6) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.6))
+                
+                radioCircle(isSelected: false, enabled: false)
+            }
+            
         case .locked:
-            Image(systemName: "lock.fill")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundStyle(.white.opacity(0.6))
+            VStack(spacing: 6) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.6))
+                
+                radioCircle(isSelected: false, enabled: false)
+            }
         }
+    }
+    
+    private func radioCircle(isSelected: Bool, enabled: Bool = true) -> some View {
+        ZStack {
+            Circle()
+                .strokeBorder(
+                    enabled ? Color.white.opacity(0.9) : Color.white.opacity(0.3),
+                    lineWidth: 2
+                )
+                .frame(width: 20, height: 20)
+            
+            if isSelected {
+                Circle()
+                    .fill(Color.yellow.opacity(0.9))
+                    .frame(width: 10, height: 10)
+            }
+        }
+        .opacity(enabled ? 1.0 : 0.4)
     }
 }
 
 #Preview {
-    let demoItems: [RewardState] = [
-        .init(id: "r1", title: "Glasses", imageName: "glasses", state: .claimed),
-        .init(id: "r2", title: "Reward2", imageName: "reward2", state: .claimable),
-        .init(id: "r3", title: "Reward3", imageName: "reward3", state: .locked),
-        .init(id: "r4", title: "Reward4", imageName: "reward4", state: .locked)
-    ]
-
+    let demoItems: [RewardState] = []
     let vm = BottomItemSelectionViewModel(items: demoItems)
     return ZStack {
         Color(.sRGB, red: 0.08, green: 0.32, blue: 0.40).ignoresSafeArea()
