@@ -81,6 +81,12 @@ struct CircleStepView<LeadingContent: View>: View {
                         let image = viewModel.goalImagesByEndStep[step.id] ?? goalImage
                         ImageGoalView(goalImage: image)
                             .offset(x: 0, y: -160)
+                            .onAppear {
+                                SoundManager.shared.play(.bubbleClick)
+                            }
+                            .onDisappear {
+                                SoundManager.shared.play(.buttonCloseClick)
+                            }
                     }
                     
                     if step.isCheckpoint && step.isUnlocked && !step.isClaimed {
