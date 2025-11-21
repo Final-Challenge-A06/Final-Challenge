@@ -27,7 +27,7 @@ struct CircleStepView<LeadingContent: View>: View {
             ForEach(viewModel.steps) { step in
                 ZStack {
                     Button {
-                        // Prioritaskan toggle untuk step goal yang sudah selesai (unlocked).
+                        // Toggle gambar goal hanya untuk step goal yang sudah selesai (unlocked).
                         if step.isGoal && step.isUnlocked {
                             viewModel.toggleGoalImageVisibility(for: step.id)
                             return
@@ -76,14 +76,16 @@ struct CircleStepView<LeadingContent: View>: View {
                     .buttonStyle(.plain)
                     .disabled((step.isCheckpoint || step.isGoal) && !step.isUnlocked)
                     
-                    // Tampilkan gambar goal kalau user sudah toggle untuk step goal ini.
-                    if step.isGoalImageVisible {
+                    // Tampilkan gambar goal kalau:
+                    // 1. Goal belum unlocked (masih aktif/belum tercapai) ATAU
+                    // 2. Goal sudah unlocked DAN user sudah toggle untuk step goal ini
+                    if step.isGoal && (!step.isUnlocked || step.isGoalImageVisible) {
                         let image = viewModel.goalImagesByEndStep[step.id] ?? goalImage
                         ImageGoalView(goalImage: image)
                             .offset(x: 0, y: -160)
                     }
                     
-                    if step.isCheckpoint && step.isUnlocked && !step.isClaimed {
+                    if step.isCheckpoint && gstep.isUnlocked && !step.isClaimed {
                         Button {
                             SoundManager.shared.play(.reward)
                             onTap(step)
