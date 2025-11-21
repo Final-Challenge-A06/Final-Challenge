@@ -34,7 +34,7 @@ struct GoalModalStep1View: View {
             Image("frame_top")
                 .offset(y: frameOffset)
             
-            Image("modal_setgoal")
+            Image("modal_goal")
                 .offset(y: modalOffset)
             
             Image("ss_before")
