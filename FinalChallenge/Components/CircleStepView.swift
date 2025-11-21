@@ -91,7 +91,7 @@ struct CircleStepView<LeadingContent: View>: View {
                             }
                     }
                     
-                    if step.isCheckpoint && gstep.isUnlocked && !step.isClaimed {
+                    if step.isCheckpoint && step.isUnlocked && !step.isClaimed {
                         Button {
                             SoundManager.shared.play(.reward)
                             onTap(step)
