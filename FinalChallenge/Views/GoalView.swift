@@ -162,7 +162,7 @@ struct GoalView: View {
                 SoundManager.shared.play(.buttonClick)
                 goalVm.onCircleTap()
             } label: {
-                Image("setGoalButton")
+                Image("set_goal_button")
             }
             .padding(.bottom, -70)
             .zIndex(2)
