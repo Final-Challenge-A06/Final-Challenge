@@ -13,7 +13,7 @@ struct FindingBotModal: View {
                     .scaledToFill()
                     .frame(height: 900)
                 
-                Image("modalFindingBot")
+                Image("modal_finding_bot")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 550)
@@ -22,7 +22,7 @@ struct FindingBotModal: View {
                     SoundManager.shared.play(.buttonCloseClick)
                     onClose()
                 }) {
-                    Image("closeButton")
+                    Image("close_button")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 100, height: 100)

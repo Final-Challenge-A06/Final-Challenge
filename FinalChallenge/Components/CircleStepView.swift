@@ -88,7 +88,7 @@ struct CircleStepView<LeadingContent: View>: View {
                             SoundManager.shared.play(.reward)
                             onTap(step)
                         } label: {
-                            Image("claimButton")
+                            Image("claim_button")
                         }
                         .offset(x: 0, y: -80)
                     }

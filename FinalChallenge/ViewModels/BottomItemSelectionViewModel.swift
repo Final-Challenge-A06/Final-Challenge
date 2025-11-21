@@ -13,7 +13,7 @@ final class BottomItemSelectionViewModel: ObservableObject {
     @Published var selectedID: String?
     @Published var animatingID: String?
     
-    var onSelect: ((RewardState) -> Void)? // Dipanggil saat item dipilih dari UI.
+    var onSelect: ((RewardState) -> Void)?
     
     // Inisialisasi VM dengan daftar item awal dan callback seleksi.
     init(items: [RewardState] = [], onSelect: ((RewardState) -> Void)? = nil) {
