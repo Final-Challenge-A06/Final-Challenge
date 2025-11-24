@@ -44,6 +44,11 @@ final class GoalViewModel: ObservableObject {
     @Published private(set) var rewardViewItems: [RewardState] = []
     private var rewardCatalog: [RewardModel] = []
     
+    // Dipakai GoalView untuk ambil meta reward berdasarkan step global.
+    func rewardMeta(forGlobalStep step: Int) -> RewardModel? {
+        rewardCatalog.first(where: { $0.step == step })
+    }
+    
     // MARK: - Saving
     @Published private(set) var totalSaving: Int = 0
     var formattedTotalSaving: String {
@@ -220,7 +225,8 @@ final class GoalViewModel: ObservableObject {
         self.passedSteps = cumulativePassedSteps
         
         // MARK: 7. Update reward
-        self.rewardCatalog = RewardCatalog.rewards(forTotalSteps: cumulativeTotalSteps)
+        let goalSteps = goals.map { $0.totalSteps }
+        self.rewardCatalog = Self.buildGlobalRewardCatalog(goalSteps: goalSteps)
     }
     
     // MARK: - Circle Tap
@@ -447,6 +453,50 @@ final class GoalViewModel: ObservableObject {
         self.totalSteps = cumulativeTotalSteps
         self.passedSteps = cumulativePassedSteps
         self.totalSaving = newTotalSavingCurrentGoal
+    }
+    
+    private static func buildGlobalRewardCatalog(goalSteps: [Int]) -> [RewardModel] {
+        guard !goalSteps.isEmpty else { return [] }
+        
+        var checkpointSteps: [Int] = []
+        var cumulative = 0
+        
+        for stepsInGoal in goalSteps {
+            // 1) Start tiap goal = checkpoint
+            let startGlobalStep = cumulative + 1
+            checkpointSteps.append(startGlobalStep)
+            
+            // 2) Checkpoint kelipatan 7 DI DALAM goal, tapi BUKAN step terakhir goal
+            if stepsInGoal > 1 {
+                for relative in 1..<stepsInGoal {   // < stepsInGoal → step goal TIDAK ikut
+                    if relative % 7 == 0 {
+                        let absolute = cumulative + relative
+                        checkpointSteps.append(absolute)
+                    }
+                }
+            }
+            
+            cumulative += stepsInGoal
+        }
+        
+        // Buang duplikat & urutkan
+        let uniqueSortedCheckpoints = Array(Set(checkpointSteps)).sorted()
+        
+        // Map ke RewardModel global index → mataKkBiru, mataNgedipPink, dst
+        var metas: [RewardModel] = []
+        for (index, step) in uniqueSortedCheckpoints.enumerated() {
+            let appearance = RewardCatalog.appearanceForGlobalIndex(index)
+            
+            let meta = RewardModel(
+                id: "reward.step.\(step)",
+                step: step,
+                title: appearance.title,
+                imageName: appearance.imageName
+            )
+            metas.append(meta)
+        }
+        
+        return metas
     }
 }
 
