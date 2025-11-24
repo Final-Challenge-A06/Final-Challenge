@@ -225,7 +225,8 @@ final class GoalViewModel: ObservableObject {
         self.passedSteps = cumulativePassedSteps
         
         // MARK: 7. Update reward
-        self.rewardCatalog = RewardCatalog.rewards(forTotalSteps: cumulativeTotalSteps)
+        let goalSteps = goals.map { $0.totalSteps }
+        self.rewardCatalog = Self.buildGlobalRewardCatalog(goalSteps: goalSteps)
     }
     
     // MARK: - Circle Tap
@@ -453,5 +454,84 @@ final class GoalViewModel: ObservableObject {
         self.passedSteps = cumulativePassedSteps
         self.totalSaving = newTotalSavingCurrentGoal
     }
+    
+    private static func buildGlobalRewardCatalog(goalSteps: [Int]) -> [RewardModel] {
+        guard !goalSteps.isEmpty else { return [] }
+        var checkpointSteps: [Int] = []
+        var cumulative = 0
+        
+        for (goalIndex, stepsInGoal) in goalSteps.enumerated() {
+            let startGlobalStep = cumulative + 1
+            checkpointSteps.append(startGlobalStep)
+            
+            var relative = 1
+            while relative <= stepsInGoal {
+                if relative % 7 == 0 {
+                    let absolute = cumulative + relative
+                    checkpointSteps.append(absolute)
+                }
+                relative += 1
+            }
+            cumulative += stepsInGoal
+        }
+        
+        let uniqueSortedCheckpoints = Array(Set(checkpointSteps)).sorted()
+        
+        var metas: [RewardModel] = []
+        for (index, step) in uniqueSortedCheckpoints.enumerated() {
+            let appearance = RewardCatalog.appearanceForGlobalIndex(index)
+            
+            let meta = RewardModel(
+                id: "reward.step.\(step)",
+                step: step,
+                title: appearance.title,
+                imageName: appearance.imageName,
+                
+            )
+            metas.append(meta)
+        }
+        return metas
+    }
+//        let totalSteps = goalSteps.reduce(0, +)
+//        guard totalSteps > 0 else { return [] }
+//        
+//        var goalStartSteps: Set<Int> = [1]
+//        var intermediateCheckpoints: Set<Int> = []
+//        
+//        var cumulative = 0
+//        for stepsInGoal in goalSteps {
+//            var relativeStep = 1
+//            while relativeStep <= stepsInGoal {
+//                if relativeStep <= stepsInGoal {
+//                    let absoluteStep = cumulative + relativeStep
+//                    intermediateCheckpoints.insert(absoluteStep)
+//                }
+//                relativeStep += 1
+//            }
+//            cumulative += stepsInGoal
+//        }
+//        
+//        var checkpointSteps: [Int] = []
+//        for step in 1...totalSteps {
+//            let isCheckpoint = goalStartSteps.contains(step) || intermediateCheckpoints.contains(step)
+//            if isCheckpoint {
+//                checkpointSteps.append(step)
+//            }
+//        }
+//        
+//        var metas: [RewardModel] = []
+//        for (index, step) in checkpointSteps.enumerated() {
+//            let appearance = RewardCatalog.appearanceForGlobalIndex(index)
+//            
+//            let meta = RewardModel(
+//                id: "reward.step.\(step)",
+//                step: step,
+//                title: appearance.title,
+//                imageName: appearance.imageName,
+//            )
+//            metas.append(meta)
+//        }
+//        return metas
+//    }
 }
 
