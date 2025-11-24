@@ -76,11 +76,10 @@ struct CircleStepView<LeadingContent: View>: View {
                     .buttonStyle(.plain)
                     .disabled((step.isCheckpoint || step.isGoal) && !step.isUnlocked)
                     
-                    // Tampilkan gambar goal kalau:
-                    // 1. Goal belum unlocked (masih aktif/belum tercapai) ATAU
-                    // 2. Goal sudah unlocked DAN user sudah toggle untuk step goal ini
                     if step.isGoal && (!step.isUnlocked || step.isGoalImageVisible) {
-                        let image = viewModel.goalImagesByEndStep[step.id] ?? goalImage
+                        let image: UIImage? = step.isUnlocked
+                            ? viewModel.goalImagesByEndStep[step.id]
+                            : (viewModel.goalImagesByEndStep[step.id] ?? goalImage)
                         ImageGoalView(goalImage: image)
                             .offset(x: 0, y: -160)
                             .onAppear {
