@@ -27,11 +27,14 @@ enum RewardCatalog {
             return metas
         }
 
-        // 2) Checkpoint kelipatan 7
+        // 2) Checkpoint kelipatan 7 (tidak termasuk step terakhir/goal)
         let checkpointBaseNames = ["mataBulatPink", "mataNgedipBiru", "mataWinkBiru", "mataNgedipPink", "mataWinkPink"]
         var imageIndex = 0
 
         for step in stride(from: 7, to: totalSteps, by: 7) {
+            // Skip jika checkpoint jatuh di step terakhir (goal)
+            guard step < totalSteps else { continue }
+            
             let baseName = checkpointBaseNames[imageIndex % checkpointBaseNames.count]
             imageIndex += 1
 
@@ -45,15 +48,7 @@ enum RewardCatalog {
             )
         }
 
-        // 3) Reward goal selesai (step terakhir)
-        metas.append(
-            RewardModel(
-                id: "reward.step.\(totalSteps)",
-                step: totalSteps,
-                title: "Goal Complete",
-                imageName: "mataNgedipBiru"
-            )
-        )
+        // Goal selesai (step terakhir) TIDAK mendapatkan reward
 
         return metas
     }
