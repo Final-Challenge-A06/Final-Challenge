@@ -44,6 +44,11 @@ final class GoalViewModel: ObservableObject {
     @Published private(set) var rewardViewItems: [RewardState] = []
     private var rewardCatalog: [RewardModel] = []
     
+    // Dipakai GoalView untuk ambil meta reward berdasarkan step global.
+    func rewardMeta(forGlobalStep step: Int) -> RewardModel? {
+        rewardCatalog.first(where: { $0.step == step })
+    }
+    
     // MARK: - Saving
     @Published private(set) var totalSaving: Int = 0
     var formattedTotalSaving: String {

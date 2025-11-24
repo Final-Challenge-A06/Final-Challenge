@@ -5,7 +5,7 @@ struct AnimatedAccessoryView: View {
     let baseName: String
     let frameCount: Int = 7
     let loopCount: Int = 3       
-    let frameDuration: Double = 0.18
+    let frameDuration: Double = 0.25
 
     @State private var currentFrame: Int = 1
     @State private var currentLoop: Int = 0

@@ -302,7 +302,10 @@ struct GoalView: View {
         }
         
         // Legacy behavior untuk step yang sudah di-claim
-        if (step.isCheckpoint || step.isGoal), step.id <= goalVm.passedSteps {
+        if step.isCheckpoint,
+           step.id <= goalVm.passedSteps,
+           step.isClaimed
+        {
             goalVm.tryOpenClaim(for: step.id, context: context)
             return
         }
@@ -412,68 +415,45 @@ struct GoalView: View {
         let catalog = RewardCatalog.rewards(forTotalSteps: goalVm.totalSteps)
         return catalog.first(where: { $0.id == item.id })
     }
-    
+
     private func getRewardMeta(for stepId: Int) -> RewardModel? {
-        let goalSteps = goals.map { $0.totalSteps }
-        guard !goalSteps.isEmpty else { return nil }
-        
-        var remaining = stepId
-        var goalIndex = 0
-        var relativeStep = stepId
-        
-        for (idx, stepsInGoal) in goalSteps.enumerated() {
-            if remaining <= stepsInGoal {
-                goalIndex = idx
-                relativeStep = remaining
-                break
-            } else {
-                remaining -= stepsInGoal
-            }
-        }
-        
-        guard goalIndex < goalSteps.count else { return nil }
-        
-        let stepsOfThatGoal = goalSteps[goalIndex]
-        
-        let catalog = RewardCatalog.rewards(forTotalSteps: stepsOfThatGoal)
-        
-        return catalog.first(where: { $0.step == relativeStep })
+        goalVm.rewardMeta(forGlobalStep: stepId)
     }
     
     private var circleClaimOverlay: some View {
-            Group {
-                if showCircleClaimModal, let step = pendingCircleClaimStep {
-                    CenteredModal(isPresented: $showCircleClaimModal) {
-                        if let meta = getRewardMeta(for: step.id) {
-                            ClaimModalView(
-                                title: meta.title,
-                                imageBaseName: meta.imageName,
-                                onClaim: {
-                                    // sama persis dengan yang kamu punya tadi:
-                                    goalVm.openClaim(for: meta, context: context)
-                                    goalVm.confirmClaim(context: context)
-                                    goalVm.loadRewardsForView(context: context)
-                                    bottomItemsVM.setItems(goalVm.rewardViewItems)
-                                    
-                                    let currentGoalStepsList = goals.map { $0.totalSteps }
-                                    var claimedSteps = goalVm.getClaimedSteps(context: context)
-                                    claimedSteps.insert(step.id)
-                                    circleVM.updateSteps(
-                                        goalSteps: currentGoalStepsList,
-                                        passedSteps: goalVm.passedSteps,
-                                        claimedSteps: claimedSteps
-                                    )
-                                    
-                                    showCircleClaimModal = false
-                                    pendingCircleClaimStep = nil
-                                }
-                            )
-                        }
+        Group {
+            if showCircleClaimModal, let step = pendingCircleClaimStep {
+                CenteredModal(isPresented: $showCircleClaimModal) {
+                    if let meta = getRewardMeta(for: step.id) {
+                        ClaimModalView(
+                            title: meta.title,
+                            imageBaseName: meta.imageName,
+                            onClaim: {
+                                // sama persis dengan yang kamu punya tadi:
+                                goalVm.openClaim(for: meta, context: context)
+                                goalVm.confirmClaim(context: context)
+                                goalVm.loadRewardsForView(context: context)
+                                bottomItemsVM.setItems(goalVm.rewardViewItems)
+                                
+                                let currentGoalStepsList = goals.map { $0.totalSteps }
+                                var claimedSteps = goalVm.getClaimedSteps(context: context)
+                                claimedSteps.insert(step.id)
+                                circleVM.updateSteps(
+                                    goalSteps: currentGoalStepsList,
+                                    passedSteps: goalVm.passedSteps,
+                                    claimedSteps: claimedSteps
+                                )
+                                
+                                showCircleClaimModal = false
+                                pendingCircleClaimStep = nil
+                            }
+                        )
                     }
-                    .zIndex(6)
                 }
+                .zIndex(6)
             }
         }
+    }
     
     private func startEntranceAnimations() {
         // Frame top slide down from top
