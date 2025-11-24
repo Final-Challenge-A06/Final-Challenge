@@ -38,7 +38,7 @@ struct BLETestView: View {
                 .scaledToFill()
                 .ignoresSafeArea()
             
-            VStack(spacing: 20) {
+            VStack() {
                 ZStack {
                     Image("robot_frame")
                         .resizable()
@@ -125,7 +125,7 @@ struct BLETestView: View {
             
             if showFindDevice {
                 Color.black.opacity(0.25)
-                    .ignoresSafeArea()
+                    .ignoresSafeArea(.all, edges: .all)
                     .transition(.opacity)
                 
                 FindingBotModal(
