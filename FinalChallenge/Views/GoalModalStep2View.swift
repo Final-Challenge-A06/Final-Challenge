@@ -45,7 +45,7 @@ struct GoalModalStep2View: View {
             Image("frame_top")
                 .offset(y: frameOffset)
             
-            Image("modal_setgoal")
+            Image("modal_goal")
                 .offset(y: modalOffset)
             
             Image("ss_before")
@@ -63,7 +63,7 @@ struct GoalModalStep2View: View {
             Image("robot")
                 .resizable()
                 .frame(width: 170, height: 250)
-                .offset(x: 400, y: 300 + robotOffset)
+                .offset(x: 350, y: 250 + robotOffset)
                 .rotationEffect(.degrees(robotRotation))
                 .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 10)
             
@@ -97,7 +97,7 @@ struct GoalModalStep2View: View {
                         .background(Color.yellow.opacity(0.7), in: Circle())
                 }
                 
-                Text("Pick your saving days")
+                Text("Pick your saving days *")
                     .font(.custom("audiowide", size: 24))
                     .foregroundStyle(Color.white)
                 
@@ -124,7 +124,7 @@ struct GoalModalStep2View: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
                 
-                Text("How much will you save each time?")
+                Text("How much will you save each time? *")
                     .font(.custom("audiowide", size: 24))
                     .foregroundStyle(Color.white)
                 

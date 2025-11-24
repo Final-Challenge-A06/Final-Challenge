@@ -58,7 +58,7 @@ struct BLEConnectionModalView: View {
                     SoundManager.shared.play(.buttonCloseClick)
                     onCancel()
                 } label: {
-                    Image("closeButton")
+                    Image("close_button")
                 }
             }
             

@@ -75,7 +75,7 @@ struct OnboardingView: View {
                         }
                         .opacity(onboardingVM.currentIndex > 0 ? 1 : 0.4)
                         .disabled(onboardingVM.currentIndex == 0)
-                        .offset(x: -10, y: -100)
+                        .offset(x: -40, y: -100)
                         
                         VStack(spacing: 12) {
                             Text(onboardingVM.currentPage?.title ?? "")
@@ -147,7 +147,7 @@ struct OnboardingView: View {
                         }
                         .opacity(onboardingVM.currentIndex < onboardingVM.pages.count - 1 ? 1 : 0.4)
                         .disabled(onboardingVM.currentIndex >= onboardingVM.pages.count - 1)
-                        .offset(x: 10, y: -100)
+                        .offset(x: 40, y: -100)
                     }
                     .zIndex(1)
                     

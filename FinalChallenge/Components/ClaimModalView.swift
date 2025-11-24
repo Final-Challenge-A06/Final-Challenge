@@ -7,10 +7,7 @@ struct ClaimModalView: View {
     
     var body: some View {
         ZStack {
-            Image("modal_bottom_shadow")
-                .offset(y: 380)
-            
-            Image("modal_setgoal")
+            Image("modal_goal")
             
             VStack(spacing: 20) {
                 Text("New Acessories")
