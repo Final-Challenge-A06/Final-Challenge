@@ -461,28 +461,28 @@ final class GoalViewModel: ObservableObject {
         var checkpointSteps: [Int] = []
         var cumulative = 0
         
+        // Rule 1: Reward on the first step
+        checkpointSteps.append(1)
+        
+        // Rule 2: Reward every checkpoint (multiple 7)
         for stepsInGoal in goalSteps {
-            // 1) Start tiap goal = checkpoint
-            let startGlobalStep = cumulative + 1
-            checkpointSteps.append(startGlobalStep)
-            
-            // 2) Checkpoint kelipatan 7 DI DALAM goal, tapi BUKAN step terakhir goal
-            if stepsInGoal > 1 {
-                for relative in 1..<stepsInGoal {   // < stepsInGoal → step goal TIDAK ikut
+            if stepsInGoal > 0 {
+                for relative in 1...stepsInGoal {
                     if relative % 7 == 0 {
                         let absolute = cumulative + relative
-                        checkpointSteps.append(absolute)
+                        if absolute != 1 {
+                            checkpointSteps.append(absolute)
+                        }
                     }
                 }
             }
-            
             cumulative += stepsInGoal
         }
         
-        // Buang duplikat & urutkan
+        // Remove duplicate and do sorting
         let uniqueSortedCheckpoints = Array(Set(checkpointSteps)).sorted()
         
-        // Map ke RewardModel global index → mataKkBiru, mataNgedipPink, dst
+        // Map to RewardModel global index → mataKkBiru, mataNgedipPink, etc.
         var metas: [RewardModel] = []
         for (index, step) in uniqueSortedCheckpoints.enumerated() {
             let appearance = RewardCatalog.appearanceForGlobalIndex(index)
@@ -495,7 +495,6 @@ final class GoalViewModel: ObservableObject {
             )
             metas.append(meta)
         }
-        
         return metas
     }
 }
